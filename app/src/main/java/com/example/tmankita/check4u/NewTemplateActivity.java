@@ -330,10 +330,11 @@ public class NewTemplateActivity extends AppCompatActivity {
         resizeButton.setLayoutParams(resizeButtonParam); // set defined layout params to Button
         resizeButton.setBackgroundResource(R.drawable.resize);
         resizeButton.setOnTouchListener(new View.OnTouchListener() {
+            int oldHeight;
+            int oldWidth;
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                int oldHeight;
-                int oldWidth;
+
                 int x = (int) motionEvent.getRawX() ;
                 int y = (int) motionEvent.getRawY() ;
                 String buttonTag = (String) view.getTag();
@@ -354,7 +355,7 @@ public class NewTemplateActivity extends AppCompatActivity {
                         int oldY = (int) motionEvent.getRawY();
                         int oldPermanentX = marksLocation.get(buttonTag).x;
                         int oldPermanentY = marksLocation.get(buttonTag).y;
-                        oldHeight = oldX - permanentX;
+                        oldHeight = oldX - oldPermanentX;
                         oldWidth = oldY - oldPermanentY;
                         break;
 
