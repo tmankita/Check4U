@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Camera.TouchActivity"
+    tools:ignore="MergeRootFrame"
+    android:id="@+id/container">
+
+
+    <com.example.tmankita.check4u.Camera.PreviewSurfaceView
+        android:id="@+id/preview_surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </com.example.tmankita.check4u.Camera.PreviewSurfaceView>
+
+    <com.example.tmankita.check4u.Camera.DrawingView
+        android:id="@+id/drawing_surface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    </com.example.tmankita.check4u.Camera.DrawingView>
+
+    <ImageButton
+        app:srcCompat="@drawable/aperture_camera"
+        android:id="@+id/capture_touch_activity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="41dp"
+        android:text="Capture"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+</android.support.constraint.ConstraintLayout>

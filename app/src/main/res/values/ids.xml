@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="answer_mark" type="id"/>
+    <item name="right_answer_mark" type="id"/>
+    <item name="question_mark" type="id"/>
+    <item name="barcode_mark" type="id"/>
+</resources>
