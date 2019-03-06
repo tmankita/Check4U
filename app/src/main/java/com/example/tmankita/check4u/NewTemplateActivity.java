@@ -115,6 +115,8 @@ public class NewTemplateActivity extends AppCompatActivity {
             private String draggedImageTag;
             private int X;
             private  int x_cord ,y_cord;
+            boolean dropped;
+
             @Override
             public boolean onDrag(View v, DragEvent event) {
                 X = (int) relativeLayout.getWidth();
@@ -141,11 +143,13 @@ public class NewTemplateActivity extends AppCompatActivity {
                         break;
 
                     case DragEvent.ACTION_DRAG_ENDED:
-                        // Do nothing
+                        if(dropped)
+                            updateLocation();
                         break;
 
                     case DragEvent.ACTION_DROP:
                         Log.i("Answer_Mark", "ACTION_DROP event");
+                        dropped=true;
                         // Find drag square
                         RelativeLayout mark_select = marks.get(draggedImageTag)._mark;
                         // Get his layout params
@@ -158,7 +162,6 @@ public class NewTemplateActivity extends AppCompatActivity {
                         mark_select.setVisibility(View.VISIBLE);
                         markToUpdate = mark_select;
                         relativeLayout.updateViewLayout(mark_select,params);
-                        updateLocation();
                         break;
 
                     default: break;
@@ -204,10 +207,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         updateLocation();
 
     }
-
-
-
-
+    
 
 
 
@@ -294,11 +294,10 @@ public class NewTemplateActivity extends AppCompatActivity {
         imageView.setLayoutParams(imageViewParam); // set defined layout params to ImageView
 
         // Create close button
-        int convert =(int) Math.floor(15*3.5);
         // set the layout params for Button
         RelativeLayout.LayoutParams closeButtonParam = new RelativeLayout.LayoutParams(
-                convert,
-                convert);
+                (int)(wrongMark.getHeight()*0.4),
+                (int)(wrongMark.getWidth()*0.4));
         Button closeButton = new Button(this);  // create a new Button
         closeButton.setTag(id);  // set Button's id
         closeButtonParam.addRule(RelativeLayout.ALIGN_PARENT_TOP); // set Button to the UPPER of ImageView
@@ -321,8 +320,8 @@ public class NewTemplateActivity extends AppCompatActivity {
 
         // Create resize button
         RelativeLayout.LayoutParams resizeButtonParam = new RelativeLayout.LayoutParams(
-                convert,
-                convert);
+                (int)(wrongMark.getHeight()*0.4),
+                (int)(wrongMark.getWidth()*0.4));
         Button resizeButton = new Button(this);  // create a new Button
         resizeButton.setTag(id);  // set Button's id
         resizeButtonParam.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, 1); // set Button to the Bottom of ImageView
@@ -332,6 +331,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         resizeButton.setOnTouchListener(new View.OnTouchListener() {
             int oldHeight;
             int oldWidth;
+            boolean update;
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
 
@@ -351,49 +351,55 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                     case MotionEvent.ACTION_DOWN:
                         Log.i("TAG", "touched down");
-                        int oldX = (int) motionEvent.getRawX();
-                        int oldY = (int) motionEvent.getRawY();
-                        int oldPermanentX = marksLocation.get(buttonTag).x;
-                        int oldPermanentY = marksLocation.get(buttonTag).y;
-                        oldHeight = oldX - oldPermanentX;
-                        oldWidth = oldY - oldPermanentY;
+                        oldHeight = (int) motionEvent.getRawX() ;
+                        oldHeight = (int) motionEvent.getRawY() ;
+                        update=false;
                         break;
 
                     case MotionEvent.ACTION_MOVE:
                          Log.i("TAG", "moving: (" + x + ", " + y + ")");
-
-                        double new_height =  y - permanentY;
-                        double new_width =  x - permanentX;
-
-                         if (new_height < 0 || new_width < 0){
-                             new_height = 0;
-                             new_width = 0;
+                        double new_height=0;
+                        double new_width=0;
+                        if(x > oldHeight) {
+                             new_height = x - permanentX;
+                             new_width = x - permanentX;
                          }
+                         else if(y > oldWidth)  {
+                            new_height = y - permanentY;
+                            new_width = y - permanentY;
+                        }
 
-                        // Get his layout params
-
-                        RelativeLayout.LayoutParams lParams = (RelativeLayout.LayoutParams) markSelectedLayout.getLayoutParams();
-                        RelativeLayout.LayoutParams rParams = (RelativeLayout.LayoutParams) resizeButton.getLayoutParams();
-                        RelativeLayout.LayoutParams cParams = (RelativeLayout.LayoutParams) closeButton.getLayoutParams();
-                        double proportion = (new_height * new_width)/(oldHeight * oldWidth) ;
-
-                        // resize layout
-                        lParams.height = (int) new_height;
-                        lParams.width = (int) new_width;
-                        // resize buttons
-                        rParams.height = (int) proportion * rParams.height;
-                        rParams.width = (int) proportion * rParams.width;
-                        cParams.height = (int) proportion * cParams.height;
-                        cParams.width = (int) proportion * cParams.width;
-                        // set the changes
-                        resizeButton.setLayoutParams(rParams);
-                        closeButton.setLayoutParams(cParams);
-                        markSelectedLayout.setLayoutParams(lParams);
-                        markSelectedLayout.setVisibility(View.VISIBLE);
+                            if (new_height < 0 || new_width < 0){
+                                 new_height = 0;
+                                new_width = 0;
+                            }
+                            // Get his layout params
+                            RelativeLayout.LayoutParams lParams = (RelativeLayout.LayoutParams) markSelectedLayout.getLayoutParams();
+                            RelativeLayout.LayoutParams rParams = (RelativeLayout.LayoutParams) resizeButton.getLayoutParams();
+                            RelativeLayout.LayoutParams cParams = (RelativeLayout.LayoutParams) closeButton.getLayoutParams();
+                            if(new_height!=0){
+                                update=true;
+                                // resize layout
+                                lParams.height = (int) new_height;
+                                lParams.width = (int) new_width;
+                                // resize buttons
+                                rParams.height = (int) (0.3*new_height);
+                                rParams.width = (int) (0.3*new_width);
+                                cParams.height = (int) (0.3*new_height);
+                                cParams.width = (int) (0.3*new_width);
+                                // set the changes
+                                resizeButton.setLayoutParams(rParams);
+                                closeButton.setLayoutParams(cParams);
+                                markSelectedLayout.setLayoutParams(lParams);
+                                markSelectedLayout.setVisibility(View.VISIBLE);
+                            }
 
                         break;
+
                     case MotionEvent.ACTION_UP:
                         Log.i("TAG", "touched up");
+                        if(update)
+                            updateLocation();
                         break;
                     case MotionEvent.ACTION_CANCEL:
                         Log.i("TAG", "touched CANCEL");
@@ -490,7 +496,6 @@ public class NewTemplateActivity extends AppCompatActivity {
         Matrix matrix = new Matrix();
         // RESIZE THE BIT MAP
         matrix.postScale(scaleWidth, scaleHeight);
-
         // "RECREATE" THE NEW BITMAP
         Bitmap resizedBitmap = Bitmap.createBitmap(
                 bm, 0, 0, width, height, matrix, false);
@@ -506,11 +511,12 @@ public class NewTemplateActivity extends AppCompatActivity {
                 String tag = (String) markToUpdate.getTag();
                 int [] location = new int[2];
                 markToUpdate.getLocationOnScreen(location);
-//                int x = (int) markToUpdate.getX();
-//                int y = (int) markToUpdate.getY();
-//                marksLocation.put( tag , new Point(x,y) );
-                marksLocation.put( tag , new Point(location[0],location[1]) );
-//                relativeLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+
+                if(marksLocation.containsKey(tag))
+                    marksLocation.remove(tag);
+
+                marksLocation.put( tag ,new Point(location[0],location[1]));
+                relativeLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
 
             }
         });
