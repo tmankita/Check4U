@@ -64,6 +64,7 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     //Helpers
     private RelativeLayout markToUpdate;
+    int threshold;
 
 
     public class Mark {
@@ -92,7 +93,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         rightMark           = (ImageView) findViewById(R.id.rightAns);
         questionMark        = (ImageView) findViewById(R.id.question);
         barcodeMark         = (ImageView) findViewById(R.id.ID_digit);
-
+        threshold           = 140;
 
 
 //        Bundle extras = getIntent().getExtras();
@@ -140,6 +141,47 @@ public class NewTemplateActivity extends AppCompatActivity {
                         Log.i("Mark", "Action is DragEvent.ACTION_DRAG_LOCATION");
                         x_cord = (int) event.getX();
                         y_cord = (int) event.getY();
+
+
+                        // Find drag square
+                        Mark mark = marks.get(draggedImageTag);
+                        RelativeLayout mark_select = mark._mark;
+                        int heigh = mark_select.getHeight();
+                        int width = mark_select.getWidth();
+
+                        Log.i("Answer_Mark", "x "+ x_cord + " y " + y_cord );
+                        // Get his layout params
+                        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mark_select.getLayoutParams();
+                        // Set the square location in the drop location
+                        params.removeRule(relativeLayout.CENTER_HORIZONTAL);
+                        params.removeRule(relativeLayout.CENTER_VERTICAL);
+
+                        if (threshold == width) {
+                            params.topMargin = y_cord + (int) (0.5 * heigh);
+                            params.rightMargin = X - x_cord - (int) (0.5 * width);
+                        }
+                        else if (threshold/3 > width) {
+                            Log.i("Answer_Mark", "heigh "+ heigh + " width " + width );
+                            params.topMargin = y_cord + (int) (3.5 * heigh);
+                            params.rightMargin = X - x_cord - (int) (0.5 * width);
+                        }
+                        else if (threshold > width) {
+                            Log.i("Answer_Mark", "heigh "+ heigh + " width " + width );
+                            params.topMargin = y_cord + (int) (2.5 * heigh);
+                            params.rightMargin = X - x_cord - (int) (0.5 * width);
+                        }
+                        else
+                        {
+                            params.topMargin = y_cord + (int) (0.1 * heigh);
+                            params.rightMargin = X - x_cord - (int) (0.6789 * width);
+                        }
+                        
+                        mark_select.setVisibility(View.VISIBLE);
+                        markToUpdate = mark_select;
+                        relativeLayout.updateViewLayout(mark_select,params);
+                        marks.remove(draggedImageTag);
+                        marks.put(draggedImageTag,new Mark (mark_select,mark._resizeButton,mark._closeButton));
+
                         break;
 
                     case DragEvent.ACTION_DRAG_ENDED:
@@ -150,18 +192,7 @@ public class NewTemplateActivity extends AppCompatActivity {
                     case DragEvent.ACTION_DROP:
                         Log.i("Answer_Mark", "ACTION_DROP event");
                         dropped=true;
-                        // Find drag square
-                        RelativeLayout mark_select = marks.get(draggedImageTag)._mark;
-                        // Get his layout params
-                        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mark_select.getLayoutParams();
-                        // Set the square location in the drop location
-                        params.removeRule(relativeLayout.CENTER_HORIZONTAL);
-                        params.removeRule(relativeLayout.CENTER_VERTICAL);
-                        params.topMargin = y_cord + 95; //95 is the drop offset
-                        params.rightMargin = X - x_cord - 63 ; //63 is the drop offset
-                        mark_select.setVisibility(View.VISIBLE);
-                        markToUpdate = mark_select;
-                        relativeLayout.updateViewLayout(mark_select,params);
+
                         break;
 
                     default: break;
@@ -207,7 +238,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         updateLocation();
 
     }
-    
+
 
 
 
@@ -337,8 +368,8 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                 int x = (int) motionEvent.getRawX() ;
                 int y = (int) motionEvent.getRawY() ;
-                String buttonTag = (String) view.getTag();
 
+                String buttonTag = (String) view.getTag();
                 Mark markSelected= marks.get(buttonTag);
                 RelativeLayout markSelectedLayout = markSelected._mark;
                 Button resizeButton = markSelected._resizeButton;
@@ -392,6 +423,8 @@ public class NewTemplateActivity extends AppCompatActivity {
                                 closeButton.setLayoutParams(cParams);
                                 markSelectedLayout.setLayoutParams(lParams);
                                 markSelectedLayout.setVisibility(View.VISIBLE);
+                                marks.remove(buttonTag);
+                                marks.put(buttonTag,new Mark(markSelectedLayout,resizeButton,closeButton));
                             }
 
                         break;
