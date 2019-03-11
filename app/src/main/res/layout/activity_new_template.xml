@@ -1,111 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+
+<com.otaliastudios.zoom.ZoomLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/Layout"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    >
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scrollbars="vertical|horizontal"
+    app:transformation="centerInside"
+    app:transformationGravity="auto"
+    app:alignment="center"
+    app:overScrollHorizontal="true"
+    app:overScrollVertical="true"
+    app:overPinchable="true"
+    app:horizontalPanEnabled="true"
+    app:verticalPanEnabled="true"
+    app:zoomEnabled="true"
+    app:flingEnabled="true"
+    app:minZoom="0.7"
+    app:minZoomType="zoom"
+    app:maxZoom="2.5"
+    app:maxZoomType="zoom"
+    app:animationDuration="280"
+    app:hasClickableChildren="true"
+    android:id="@+id/zoom_layout">
 
-
-    <ImageView
-        android:id="@+id/NewPicture"
-        android:layout_width="412dp"
-        android:layout_height="693dp"
-        android:layout_marginTop="47dp"
-        android:adjustViewBounds="false"
-        android:scaleType="fitXY"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
-
-    <TableRow
+    <RelativeLayout
+        android:id="@+id/Layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
+        android:layout_height="match_parent">
+
 
         <ImageView
-            android:id="@+id/wrongAns"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="15dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/square_wrong_answer"
-            android:onClick="createWrongMark"
-            app:layout_constraintBottom_toTopOf="@+id/NewPicture"
-            app:layout_constraintEnd_toStartOf="@+id/create"
-            app:layout_constraintStart_toEndOf="@+id/rightAns"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
-
-        <ImageView
-            android:id="@+id/rightAns"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/square_right_answer"
-            android:onClick="createRightMark"
-            app:layout_constraintBottom_toTopOf="@+id/NewPicture"
-            app:layout_constraintEnd_toStartOf="@+id/wrongAns"
-            app:layout_constraintStart_toEndOf="@+id/question"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
-
-        <ImageView
-            android:id="@+id/question"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/square_question"
-            android:onClick="createQuestionMark"
-            app:layout_constraintBottom_toTopOf="@+id/NewPicture"
-            app:layout_constraintEnd_toStartOf="@+id/rightAns"
-            app:layout_constraintStart_toEndOf="@+id/ID_digit"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
-
-        <ImageView
-            android:id="@+id/ID_digit"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/square_id_digits"
-            android:onClick="createBarcodeMark"
-            app:layout_constraintBottom_toTopOf="@+id/NewPicture"
-            app:layout_constraintEnd_toStartOf="@+id/question"
-            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            android:id="@+id/NewPicture"
+            android:layout_width="412dp"
+            android:layout_height="693dp"
+            android:layout_marginTop="47dp"
+            android:adjustViewBounds="false"
+            android:scaleType="fitXY"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            tools:srcCompat="@tools:sample/avatars" />
 
-        <Button
-            android:id="@+id/create"
-            android:layout_width="88dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="100dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="5dp"
-            android:text="Create"
-            app:layout_constraintEnd_toEndOf="@+id/NewPicture"
-            app:layout_constraintHorizontal_bias="0.494"
-            app:layout_constraintStart_toEndOf="@+id/wrongAns"
-            app:layout_constraintTop_toTopOf="@+id/NewPicture" />
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    </TableRow>
+            <ImageView
+                android:id="@+id/wrongAns"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="15dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/square_wrong_answer"
+                android:onClick="createWrongMark"
+                app:layout_constraintBottom_toTopOf="@+id/NewPicture"
+                app:layout_constraintEnd_toStartOf="@+id/create"
+                app:layout_constraintStart_toEndOf="@+id/rightAns"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <ImageView
+                android:id="@+id/rightAns"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/square_right_answer"
+                android:onClick="createRightMark"
+                app:layout_constraintBottom_toTopOf="@+id/NewPicture"
+                app:layout_constraintEnd_toStartOf="@+id/wrongAns"
+                app:layout_constraintStart_toEndOf="@+id/question"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <ImageView
+                android:id="@+id/question"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/square_question"
+                android:onClick="createQuestionMark"
+                app:layout_constraintBottom_toTopOf="@+id/NewPicture"
+                app:layout_constraintEnd_toStartOf="@+id/rightAns"
+                app:layout_constraintStart_toEndOf="@+id/ID_digit"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <ImageView
+                android:id="@+id/ID_digit"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@drawable/square_id_digits"
+                android:onClick="createBarcodeMark"
+                app:layout_constraintBottom_toTopOf="@+id/NewPicture"
+                app:layout_constraintEnd_toStartOf="@+id/question"
+                app:layout_constraintHorizontal_chainStyle="spread_inside"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0" />
+
+            <Button
+                android:id="@+id/create"
+                android:layout_width="88dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="100dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="5dp"
+                android:text="Create"
+                app:layout_constraintEnd_toEndOf="@+id/NewPicture"
+                app:layout_constraintHorizontal_bias="0.494"
+                app:layout_constraintStart_toEndOf="@+id/wrongAns"
+                app:layout_constraintTop_toTopOf="@+id/NewPicture" />
+
+        </TableRow>
 
 
-</RelativeLayout>
+    </RelativeLayout>
+</com.otaliastudios.zoom.ZoomLayout>

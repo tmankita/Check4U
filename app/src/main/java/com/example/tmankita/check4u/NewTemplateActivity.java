@@ -2,40 +2,31 @@ package com.example.tmankita.check4u;
 
 import android.content.ClipData;
 import android.content.ClipDescription;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Point;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.DragEvent;
 import android.view.GestureDetector;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+
 import android.widget.RelativeLayout;
 
-import org.opencv.android.Utils;
+import com.otaliastudios.zoom.ZoomLayout;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-import static android.widget.ImageView.ScaleType.CENTER;
 
 
 public class NewTemplateActivity extends AppCompatActivity {
@@ -44,27 +35,29 @@ public class NewTemplateActivity extends AppCompatActivity {
     private RelativeLayout relativeLayout;
     private HashMap<String,Mark> marks;
     private HashMap<String,Point> marksLocation;
+    private ZoomLayout zoomLayout;
 
     // Create a string for the View label
-    private static final String VIEW_WRONG_TAG = "WrongAnswerMarker";
-    private static final String VIEW_RIGHT_TAG = "RightAnswerMarker";
-    private static final String VIEW_QUESTION_TAG = "QuestionMarker";
-    private static final String VIEW_BARCODE_TAG = "BarcodeMarker";
+        private static final String VIEW_WRONG_TAG = "WrongAnswerMarker";
+        private static final String VIEW_RIGHT_TAG = "RightAnswerMarker";
+        private static final String VIEW_QUESTION_TAG = "QuestionMarker";
+        private static final String VIEW_BARCODE_TAG = "BarcodeMarker";
 
     //Counters for each Mark
-    private int counterWrong = 0;
-    private int counterRight = 0;
-    private int counterQuestion = 0;
+        private int counterWrong = 0;
+        private int counterRight = 0;
+        private int counterQuestion = 0;
 
     //Markers
-    private ImageView wrongMark;
-    private ImageView rightMark;
-    private ImageView questionMark;
-    private ImageView barcodeMark;
+        private ImageView wrongMark;
+        private ImageView rightMark;
+        private ImageView questionMark;
+        private ImageView barcodeMark;
+
 
     //Helpers
-    private RelativeLayout markToUpdate;
-    int threshold;
+        private RelativeLayout markToUpdate;
+        int threshold;
 
 
     public class Mark {
@@ -94,14 +87,26 @@ public class NewTemplateActivity extends AppCompatActivity {
         questionMark        = (ImageView) findViewById(R.id.question);
         barcodeMark         = (ImageView) findViewById(R.id.ID_digit);
         threshold           = 140;
+        zoomLayout          = findViewById(R.id.zoom_layout);
 
 
-//        Bundle extras = getIntent().getExtras();
-//        String imagePath = extras.getString("sheet");
-        String imagePath = "/storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg";
+        ViewGroup.LayoutParams params1 =  relativeLayout.getLayoutParams();
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        params1.height = displayMetrics.heightPixels;
+        params1.width = displayMetrics.widthPixels;
+        zoomLayout.setVisibility(View.VISIBLE);
+
+        Bundle extras = getIntent().getExtras();
+        String imagePath = extras.getString("sheet");
+
+//      /storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg
+//        String imagePath = "/storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg";
 
         image = (ImageView) findViewById(R.id.NewPicture);
-//  /storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg
+
+
+
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
@@ -111,6 +116,8 @@ public class NewTemplateActivity extends AppCompatActivity {
         int width = size.x;
         int height = size.y;
         image.setImageBitmap(getResizedBitmap(bitmap,width,height));
+
+
 
         image.setOnDragListener(new View.OnDragListener() {
             private String draggedImageTag;
@@ -175,7 +182,7 @@ public class NewTemplateActivity extends AppCompatActivity {
                             params.topMargin = y_cord + (int) (0.1 * heigh);
                             params.rightMargin = X - x_cord - (int) (0.6789 * width);
                         }
-                        
+
                         mark_select.setVisibility(View.VISIBLE);
                         markToUpdate = mark_select;
                         relativeLayout.updateViewLayout(mark_select,params);
@@ -201,6 +208,7 @@ public class NewTemplateActivity extends AppCompatActivity {
             }
         });
     }
+
 
 
     public void createWrongMark ( View v ) {
@@ -391,6 +399,7 @@ public class NewTemplateActivity extends AppCompatActivity {
                          Log.i("TAG", "moving: (" + x + ", " + y + ")");
                         double new_height=0;
                         double new_width=0;
+
                         if(x > oldHeight) {
                              new_height = x - permanentX;
                              new_width = x - permanentX;
@@ -425,14 +434,15 @@ public class NewTemplateActivity extends AppCompatActivity {
                                 markSelectedLayout.setVisibility(View.VISIBLE);
                                 marks.remove(buttonTag);
                                 marks.put(buttonTag,new Mark(markSelectedLayout,resizeButton,closeButton));
+                                updateLocation();
                             }
 
                         break;
 
                     case MotionEvent.ACTION_UP:
                         Log.i("TAG", "touched up");
-                        if(update)
-                            updateLocation();
+
+
                         break;
                     case MotionEvent.ACTION_CANCEL:
                         Log.i("TAG", "touched CANCEL");
@@ -456,19 +466,19 @@ public class NewTemplateActivity extends AppCompatActivity {
                 // add resize Button in RelativeLayout
                 markLayout.addView(resizeButton);
 
-                markLayout.setOnLongClickListener(new View.OnLongClickListener() {
-                    @Override
-                    public boolean onLongClick(View v) {
-                        ClipData.Item item = new ClipData.Item((CharSequence)v.getTag());
-                        String[] mimeTypes = {ClipDescription.MIMETYPE_TEXT_PLAIN};
-
-                        ClipData dragData = new ClipData(v.getTag().toString(),mimeTypes, item);
-                        View.DragShadowBuilder myShadow = new View.DragShadowBuilder();
-
-                        v.startDrag(dragData,myShadow,null,0);
-                        return true;
-                    }
-                });
+//                markLayout.setOnLongClickListener(new View.OnLongClickListener() {
+//                    @Override
+//                    public boolean onLongClick(View v) {
+//                        ClipData.Item item = new ClipData.Item((CharSequence)v.getTag());
+//                        String[] mimeTypes = {ClipDescription.MIMETYPE_TEXT_PLAIN};
+//
+//                        ClipData dragData = new ClipData(v.getTag().toString(),mimeTypes, item);
+//                        View.DragShadowBuilder myShadow = new View.DragShadowBuilder();
+//
+//                        v.startDrag(dragData,myShadow,null,0);
+//                        return true;
+//                    }
+//                });
 
                 break;
 

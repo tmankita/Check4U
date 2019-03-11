@@ -20,8 +20,9 @@ public class MainActivity extends AppCompatActivity {
         startActivity(Import);
     }
     public   void  NewTemplate(View view) {
-
-        Intent NewTemplate = new Intent(getApplicationContext(),NewTemplateActivity.class);
+        //TouchActivity.class
+        //NewTemplateActivity.class
+        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
         startActivity(NewTemplate);
     }
 
