@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     public   void  NewTemplate(View view) {
         //TouchActivity.class
         //NewTemplateActivity.class
-        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
+        Intent NewTemplate = new Intent(getApplicationContext(),NewTemplateActivity.class);
         startActivity(NewTemplate);
     }
 

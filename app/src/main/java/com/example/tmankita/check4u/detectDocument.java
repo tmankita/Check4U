@@ -18,7 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class detectDocument {
-
+// https://github.com/ctodobom/OpenNoteScanner/blob/master/app/src/main/java/com/todobom/opennotescanner/ImageProcessor.java
     /**
      *  Object that encapsulates the contour and 4 points that makes the larger
      *  rectangle on the image
