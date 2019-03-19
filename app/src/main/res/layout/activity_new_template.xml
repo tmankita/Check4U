@@ -6,7 +6,8 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/Layout1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        >
     <TableRow
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -93,6 +94,17 @@
 
     </TableRow>
 
+    <Button
+        android:id="@+id/copy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/marks_row"
+        android:layout_marginTop="60dp"
+        android:layout_marginRight="15dp"
+        android:onClick="copy"
+        android:text="Copy"
+        android:visibility="invisible" />
+
     <LinearLayout
         android:id="@+id/Layout2"
         android:layout_width="wrap_content"
@@ -100,9 +112,7 @@
 
         android:layout_marginTop="60dp">
 
-        <com.otaliastudios.zoom.ZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            xmlns:tools="http://schemas.android.com/tools"
+        <com.otaliastudios.zoom.ZoomLayout
             android:id="@+id/zoom_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -112,9 +122,9 @@
             app:flingEnabled="true"
             app:hasClickableChildren="true"
             app:horizontalPanEnabled="true"
-            app:maxZoom="2.5"
+            app:maxZoom="7"
             app:maxZoomType="zoom"
-            app:minZoom="0.7"
+            app:minZoom="1"
             app:minZoomType="zoom"
             app:overPinchable="true"
             app:overScrollHorizontal="true"
@@ -140,6 +150,8 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:srcCompat="@tools:sample/avatars" />
+
+
             </RelativeLayout>
 
         </com.otaliastudios.zoom.ZoomLayout>
