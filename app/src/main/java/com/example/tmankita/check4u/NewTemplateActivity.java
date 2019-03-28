@@ -23,6 +23,7 @@ import android.widget.ImageView;
 
 import android.widget.RelativeLayout;
 
+import com.otaliastudios.zoom.ZoomEngine;
 import com.otaliastudios.zoom.ZoomLayout;
 
 import org.opencv.core.Size;
@@ -40,8 +41,10 @@ public class NewTemplateActivity extends AppCompatActivity {
     private HashMap<String,Mark> marks;
     private HashMap<String,Point> marksLocation;
     private HashMap<String,Size> marksSize;
-    private ArrayList<Mark> marksTogether;
+    private HashMap<String,Mark> marksTogether;
+    private HashMap<String,View> marksViews;
     private ZoomLayout zoomLayout;
+    private ZoomEngine engine;
     private Button copy;
 
     // Create a string for the View label
@@ -69,6 +72,8 @@ public class NewTemplateActivity extends AppCompatActivity {
     //Copy Mode
         private String idHelper;
         private  boolean copyModeFlag = false;
+        private View viewHelper;
+
 
 
     public class Mark {
@@ -96,7 +101,10 @@ public class NewTemplateActivity extends AppCompatActivity {
                     Mark mark_to_highlight = marks.get(idHelper);
                     RelativeLayout mark_to_highlight_layout = mark_to_highlight._mark;
                     mark_to_highlight_layout.setBackgroundColor(Color.parseColor("#515DA7F1"));
-                    marksTogether.add(mark_to_highlight);
+                    if(!marksTogether.containsKey(idHelper)) {
+                        marksTogether.put(idHelper, mark_to_highlight);
+                        marksViews.put(idHelper,viewHelper);
+                    }
                     copy.setVisibility(View.VISIBLE);
                 }
             }
@@ -111,7 +119,8 @@ public class NewTemplateActivity extends AppCompatActivity {
         marksLocation       = new HashMap<>();
         marksSize           = new HashMap<>();
         marks               = new HashMap<>();
-        marksTogether       = new ArrayList<>();
+        marksTogether       = new HashMap<>();
+        marksViews          = new HashMap<>();
         relativeLayout      = (RelativeLayout) findViewById(R.id.Layout);
         wrongMark           = (ImageView) findViewById(R.id.wrongAns);
         rightMark           = (ImageView) findViewById(R.id.rightAns);
@@ -121,7 +130,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         zoomLayout          = findViewById(R.id.zoom_layout);
         screenLayout        = findViewById(R.id.Layout1);
         copy                = findViewById(R.id.copy);
-
+        engine              = zoomLayout.getEngine();
 
 
         ViewGroup.LayoutParams params1 =  relativeLayout.getLayoutParams();
@@ -152,7 +161,8 @@ public class NewTemplateActivity extends AppCompatActivity {
         image.setOnDragListener(new View.OnDragListener() {
             private String draggedImageTag;
             private int X;
-            private  int x_cord ,y_cord;
+            private  float x_cord ,y_cord;
+            private float zoomScale, pan_y,pan_x;
 
             @Override
             public boolean onDrag(View v, DragEvent event) {
@@ -160,60 +170,69 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                 switch(event.getAction()) {
                     case DragEvent.ACTION_DRAG_STARTED:
-                        View view = (View) event.getLocalState();
-                        if(view != null)
-                            draggedImageTag = (String) view.getTag();
-                        else
-                            return false;
-
+                        View view =(View) event.getLocalState();
+                        draggedImageTag = (String) view.getTag();
+                        pan_x = zoomLayout.getPanX();
+                        pan_y = zoomLayout.getPanY();
+                        zoomScale = zoomLayout.getRealZoom();
+                        engine.zoomTo(1,false);
+                        v.invalidate();
                         Log.i("Mark", "Action is DragEvent.ACTION_DRAG_STARTED ");
                         break;
 
                     case DragEvent.ACTION_DRAG_ENTERED:
+                        v.invalidate();
                         Log.i("Mark", "Action is DragEvent.ACTION_DRAG_ENTERED");
                         break;
 
                     case DragEvent.ACTION_DRAG_EXITED:
+                        v.invalidate();
                         Log.i("Mark", "Action is DragEvent.ACTION_DRAG_EXITED");
                         break;
 
                     case DragEvent.ACTION_DRAG_LOCATION:
-                        Log.i("Mark", "Action is DragEvent.ACTION_DRAG_LOCATION");
-                        x_cord = (int) event.getX();
-                        y_cord = (int) event.getY();
+                        Log.i("Mark", "TAG: "+ draggedImageTag+" Action is DragEvent.ACTION_DRAG_LOCATION");
+
+                        x_cord =  event.getX();
+                        y_cord =  event.getY();
+                        Size size_mark_prev = marksSize.get(draggedImageTag);
+                        Point mark_prev_location = marksLocation.get(draggedImageTag);
+                        if(copyModeFlag){
+                            double delta_x = (x_cord - (size_mark_prev.width/2))  - mark_prev_location.x ;
+                            double delta_y = (y_cord - (size_mark_prev.height/2)) - mark_prev_location.y ;
+                            View s = (View) event.getLocalState();
+                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)), s);
+                            for (View mark_selected: marksViews.values() ) {
+                                String MarkTag = (String) mark_selected.getTag(); //(String)mark_selected._mark.getTag();
+                                if(!MarkTag.equals(draggedImageTag)){
+                                    Point curr_mark_prev_location = marksLocation.get(MarkTag);
+                                    int new_x_cord = (int)(curr_mark_prev_location.x + delta_x);
+                                    int new_y_cord = (int)(curr_mark_prev_location.y + delta_y);
+                                    updateDropAction(MarkTag, new_y_cord, new_x_cord, mark_selected);
+                                }
+                            }
+                            engine.realZoomTo(zoomScale,false);
+                            engine.panTo(pan_x,pan_y,false);
+
+
+                        }
+                        else{
+                            View s = (View) event.getLocalState();
+                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),s);
+                            engine.realZoomTo(zoomScale,false);
+                            engine.panTo(pan_x,pan_y,false);
+
+                        }
                         break;
 
                     case DragEvent.ACTION_DRAG_ENDED:
+                        v.invalidate();
                         handler.removeCallbacks(mLongPressed);
-
                         break;
 
                     case DragEvent.ACTION_DROP:
+                        v.invalidate();
                         Log.i("Answer_Mark", "ACTION_DROP event");
-
-                        // Find drag square
-                        Mark mark = marks.get(draggedImageTag);
-                        Size size = marksSize.get(draggedImageTag);
-                        RelativeLayout mark_select = mark._mark;
-                        double prevHeight = size.height;
-                        double prevWidth = size.width;
-
-                        Log.i("Answer_Mark", "x "+ x_cord + " y " + y_cord );
-                        // Get his layout params
-                        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mark_select.getLayoutParams();
-                        // Set the square location in the drop location
-                        params.removeRule(RelativeLayout.CENTER_HORIZONTAL);
-                        params.removeRule(RelativeLayout.CENTER_VERTICAL);
-
-                        params.topMargin = y_cord - (int)prevHeight/2 ;
-                        params.rightMargin = X - x_cord - (int)prevWidth/2;
-
-                        mark_select.setVisibility(View.VISIBLE);
-                        relativeLayout.updateViewLayout(mark_select,params);
-                        marks.remove(draggedImageTag);
-                        marks.put(draggedImageTag,new Mark (mark_select,mark._plusButton,mark._minusButton,mark._closeButton));
-                        markToUpdate = mark_select;
-                        updateLocation();
                         break;
 
                     default: break;
@@ -225,6 +244,18 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     }
 
+    public void  updateDropAction(String ImageTag, float y_cord, float x_cord, View v ){
+        Mark mark = marks.get(ImageTag);
+        RelativeLayout mark_select = mark._mark;
+        View view = v;
+        view.setVisibility(View.VISIBLE);
+        view.setX(x_cord);
+        view.setY(y_cord);
+        markToUpdate = mark_select;
+        v.invalidate();
+        updateLocation();
+
+    }
 
     public void createWrongMark ( View v ) {
         String newTag = VIEW_WRONG_TAG + "_" + counterWrong;
@@ -263,7 +294,7 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void copy (View v ){
-        for ( Mark mark: marksTogether ) {
+        for ( Mark mark: marksTogether.values() ) {
             String tag = (String) mark._mark.getTag();
             String[] parts =  tag.split("_");
             Point loction = marksLocation.get(tag);
@@ -295,12 +326,10 @@ public class NewTemplateActivity extends AppCompatActivity {
             RelativeLayout mark_to_UnHighlight_layout =  mark._mark ;
             mark_to_UnHighlight_layout.setBackgroundColor(Color.parseColor("#00FFFFFF"));
         }
-
+        copyModeFlag = false;
         copy.setVisibility(View.INVISIBLE);
         marksTogether.clear();
     }
-
-
 
 
 
@@ -330,25 +359,37 @@ public class NewTemplateActivity extends AppCompatActivity {
 
         markLayout.setOnTouchListener(new View.OnTouchListener() {
 
-
             //onTouch code
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 idHelper = (String) v.getTag();
+                viewHelper = v;
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         Mark mark = marks.get(idHelper);
-                        RelativeLayout layout = mark._mark;
-                        if(copyModeFlag){
+                        // copy mode
+                        if(copyModeFlag) {
                             Mark mark_to_highlight = mark;
                             RelativeLayout mark_to_highlight_layout = mark_to_highlight._mark;
+                            // Set highlight to the drag mark
                             mark_to_highlight_layout.setBackgroundColor(Color.parseColor("#515DA7F1"));
-                            marksTogether.add(mark_to_highlight);
-                            copy.setVisibility(View.VISIBLE);
-                        }
-                        else
-                            handler.postDelayed(mLongPressed, 1000);
+                            if (!marksTogether.containsKey(idHelper)){
+                                marksTogether.put(idHelper, mark_to_highlight);
+                                marksViews.put(idHelper,v);
+                            }
 
+                            copy.setVisibility(View.VISIBLE);
+                            RelativeLayout mark_to_build_shadow_layout = mark._mark;
+
+                            ClipData data = ClipData.newPlainText("", "");
+                            View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(mark_to_build_shadow_layout);
+                            mark_to_build_shadow_layout.startDrag(data, shadowBuilder, mark_to_build_shadow_layout, View.DRAG_FLAG_OPAQUE);
+                            mark_to_build_shadow_layout.setVisibility(View.INVISIBLE);
+                            return true;
+                        }
+                        else {
+                            RelativeLayout layout = mark._mark;
+                            handler.postDelayed(mLongPressed, 1000);
                             if (layout != null) {
                                 ClipData data = ClipData.newPlainText("", "");
                                 View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(layout);
@@ -356,6 +397,7 @@ public class NewTemplateActivity extends AppCompatActivity {
                                 layout.setVisibility(View.INVISIBLE);
                                 return true;
                             }
+                        }
 
                         return false;
                     case MotionEvent.ACTION_UP:
@@ -596,18 +638,24 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     public void updateLocation () {
         // Set listener on the view tree to update locations
-        ViewTreeObserver vto = relativeLayout.getViewTreeObserver();
-        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener(){
-            @Override public void onGlobalLayout(){
+//        ViewTreeObserver vto = relativeLayout.getViewTreeObserver();
+//        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener(){
+//            @Override public void onGlobalLayout(){
                 String tag = (String) markToUpdate.getTag();
                 int [] location = new int[2];
                 Size size =  new Size();
+                float zoomScale = zoomLayout.getRealZoom();
+                float pan_x = zoomLayout.getPanX();
+                float pan_y = zoomLayout.getPanY();
+
+
+                engine.zoomTo(1,false);
 //                markToUpdate.getLocationOnScreen(location);
-                location[0]=markToUpdate.getLeft();
-                location[1]=markToUpdate.getTop();
+                location[0]=(int)markToUpdate.getX();
+                location[1]=(int)markToUpdate.getY();
                 size.height = markToUpdate.getMeasuredHeight();
                 size.width = markToUpdate.getMeasuredWidth();
-
+                Log.i("Answer_Mark", "in update location tag: " + tag +" new_x_cord: "+location[0] + " new_Y_cord: "+ location[1]);
 
                 if(marksLocation.containsKey(tag)) {
                     marksLocation.remove(tag);
@@ -615,11 +663,13 @@ public class NewTemplateActivity extends AppCompatActivity {
                 }
                 marksLocation.put( tag ,new Point(location[0],location[1]));
                 marksSize.put( tag , size);
-                relativeLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                engine.panTo(pan_x,pan_y,false);
+                engine.realZoomTo(zoomScale,false);
+//                relativeLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
 
             }
-        });
-    }
+//        });
+//    }
 
 
 }
