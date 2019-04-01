@@ -87,6 +87,7 @@
             android:layout_marginEnd="5dp"
             android:layout_marginBottom="5dp"
             android:text="Create"
+            android:onClick="createDataBase"
             app:layout_constraintEnd_toEndOf="@+id/NewPicture"
             app:layout_constraintHorizontal_bias="0.494"
             app:layout_constraintStart_toEndOf="@+id/wrongAns"
@@ -105,11 +106,157 @@
         android:text="Copy"
         android:visibility="invisible" />
 
+    <Button
+        android:id="@+id/exitCopyMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/marks_row"
+        android:layout_marginTop="60dp"
+        android:layout_marginLeft="15dp"
+        android:onClick="exitCopyMode"
+        android:text="Exit Copy Mode"
+        android:visibility="invisible" />
+
+    <TableLayout
+        android:id="@+id/numberOfQuestionsAndAnswers"
+        android:layout_width="310dp"
+        android:layout_height="225dp"
+        android:background="#A59F9F"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:gravity="center">
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent">
+            <EditText
+                android:id="@+id/questionNumber"
+                android:layout_width="70dp"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="55dp"
+                android:textStyle="bold"
+                />
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="How much questions \n in the test?"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            >
+
+            <EditText
+                android:id="@+id/answerNumber"
+                android:layout_width="70dp"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="55dp"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="How much answers for \n each question in the test?"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/setNumbers"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:onClick="setNumbersQuestionAndAnswer"
+                android:text="OK" />
+
+        </TableRow>
+
+    </TableLayout>
+
+    <TableLayout
+        android:id="@+id/LayoutSetID"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/marks_row"
+        android:layout_marginTop="60dp"
+        android:layout_marginRight="15dp"
+        android:background="#A59F9F"
+        android:orientation="horizontal"
+        android:visibility="invisible">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <EditText
+            android:id="@+id/questionID"
+            android:layout_width="70dp"
+            android:layout_height="fill_parent"
+            android:layout_marginLeft="55dp"
+            android:text="1"
+            android:textAlignment="viewStart"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/questionText"
+            android:layout_width="70dp"
+            android:layout_height="fill_parent"
+            android:text="Question No."
+            android:textAlignment="viewStart"
+            android:textStyle="bold"
+             />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <EditText
+                android:id="@+id/answerID"
+                android:layout_width="70dp"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="55dp"
+                android:text="a"
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                />
+
+            <TextView
+                android:id="@+id/answerText"
+                android:layout_width="70dp"
+                android:layout_height="fill_parent"
+                android:text="Answer No."
+                android:textAlignment="viewStart"
+                android:textStyle="bold"
+                 />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <Button
+                android:id="@+id/setID"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:onClick="setIdQuestionOrAnswer"
+                android:text="OK" />
+
+        </TableRow>
+
+
+    </TableLayout>
+
     <LinearLayout
         android:id="@+id/Layout2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
         android:layout_marginTop="60dp">
 
         <com.otaliastudios.zoom.ZoomLayout

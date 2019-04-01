@@ -1,6 +1,7 @@
 package com.example.tmankita.check4u;
 
 import android.content.ClipData;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -10,6 +11,7 @@ import android.graphics.Rect;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Layout;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -17,35 +19,55 @@ import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 
+import com.example.tmankita.check4u.Database.Template;
 import com.otaliastudios.zoom.ZoomEngine;
 import com.otaliastudios.zoom.ZoomLayout;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
 import org.opencv.core.Size;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 
 
 
 public class NewTemplateActivity extends AppCompatActivity {
+    //Data Structures
+        private HashMap<String,Mark> marks;
+        private HashMap<String,Point> marksLocation;
+        private HashMap<String,Size> marksSize;
+        private HashMap<String,Mark> marksTogether;
+        private HashMap<String,View> marksViews;
+        private String[][] questionTable;
 
-    private ImageView image;
-    private RelativeLayout relativeLayout;
-    private RelativeLayout screenLayout;
-    private HashMap<String,Mark> marks;
-    private HashMap<String,Point> marksLocation;
-    private HashMap<String,Size> marksSize;
-    private HashMap<String,Mark> marksTogether;
-    private HashMap<String,View> marksViews;
-    private ZoomLayout zoomLayout;
-    private ZoomEngine engine;
-    private Button copy;
+    //Views
+        private ImageView image;
+        private RelativeLayout relativeLayout;
+        private RelativeLayout screenLayout;
+        private ZoomLayout zoomLayout;
+        private ZoomEngine engine;
+        private Button copy;
+        private Button exitCopyMode;
+        private TableLayout layoutSetQuestionID;
+        private TableLayout layoutGetInfo;
+        private EditText questionIDEdit;
+        private EditText answerIDEdit;
+        private EditText questionNumberEdit;
+        private EditText answerNumberEdit;
+
+    //Template Matrix
+        private Mat paper;
 
     // Create a string for the View label
         private static final String VIEW_WRONG_TAG = "WrongAnswerMarker";
@@ -53,34 +75,32 @@ public class NewTemplateActivity extends AppCompatActivity {
         private static final String VIEW_QUESTION_TAG = "QuestionMarker";
         private static final String VIEW_BARCODE_TAG = "BarcodeMarker";
 
-    //Counters for each Mark
-        private int counterWrong = 0;
-        private int counterRight = 0;
-        private int counterQuestion = 0;
+    //Counters
+        private int counterWrong = 1;
+        private int numberOfOptions = 4;
+        private int numberOfQuestion = 10;
+        private int counterQuestion = 1;
 
     //Markers
         private ImageView wrongMark;
-        private ImageView rightMark;
-        private ImageView questionMark;
-        private ImageView barcodeMark;
-
 
     //Helpers
         private RelativeLayout markToUpdate;
         public int threshold;
+        private String questionToInsertToTheTable;
+        private int lastUserUpdateQuestion = 1 ;
+        private int lastUserUpdateAnswer = 0 ;
 
     //Copy Mode
         private String idHelper;
         private  boolean copyModeFlag = false;
         private View viewHelper;
 
-
-
     public class Mark {
-       public RelativeLayout _mark;
-       public Button _plusButton;
+        public RelativeLayout _mark;
+        public Button _plusButton;
         public Button _minusButton;
-       public Button _closeButton;
+        public Button _closeButton;
 
         public Mark (RelativeLayout mark, Button plusButton, Button minusButton, Button closeButton){
             _mark = mark;
@@ -90,6 +110,23 @@ public class NewTemplateActivity extends AppCompatActivity {
         }
 
     }
+
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    paper = new Mat();
+
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
 
     final Handler handler = new Handler();
     Runnable mLongPressed = new Runnable() {
@@ -106,6 +143,7 @@ public class NewTemplateActivity extends AppCompatActivity {
                         marksViews.put(idHelper,viewHelper);
                     }
                     copy.setVisibility(View.VISIBLE);
+                    exitCopyMode.setVisibility(View.VISIBLE);
                 }
             }
         }
@@ -116,29 +154,43 @@ public class NewTemplateActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_template);
 
+        if (!OpenCVLoader.initDebug()) {
+            Log.d("LOAD OPENCV", "Internal OpenCV library not found. Using OpenCV Manager for initialization");
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+        } else {
+            Log.d("LOAD OPENCV", "OpenCV library found inside package. Using it!");
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
+
         marksLocation       = new HashMap<>();
         marksSize           = new HashMap<>();
         marks               = new HashMap<>();
         marksTogether       = new HashMap<>();
         marksViews          = new HashMap<>();
-        relativeLayout      = (RelativeLayout) findViewById(R.id.Layout);
-        wrongMark           = (ImageView) findViewById(R.id.wrongAns);
-        rightMark           = (ImageView) findViewById(R.id.rightAns);
-        questionMark        = (ImageView) findViewById(R.id.question);
-        barcodeMark         = (ImageView) findViewById(R.id.ID_digit);
+        relativeLayout      = findViewById(R.id.Layout);
+        wrongMark           = findViewById(R.id.wrongAns);
         threshold           = 140;
         zoomLayout          = findViewById(R.id.zoom_layout);
         screenLayout        = findViewById(R.id.Layout1);
         copy                = findViewById(R.id.copy);
+        exitCopyMode        = findViewById(R.id.exitCopyMode);
+        layoutSetQuestionID = findViewById(R.id.LayoutSetID);
+        layoutGetInfo       = findViewById(R.id.numberOfQuestionsAndAnswers);
+        questionIDEdit      = findViewById(R.id.questionID);
+        answerIDEdit        = findViewById(R.id.answerID);
+        questionNumberEdit  = findViewById(R.id.questionNumber);
+        answerNumberEdit    = findViewById(R.id.answerNumber);
         engine              = zoomLayout.getEngine();
 
-
+        layoutGetInfo.setVisibility(View.VISIBLE);
+        layoutGetInfo.bringToFront();
         ViewGroup.LayoutParams params1 =  relativeLayout.getLayoutParams();
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         params1.height = displayMetrics.heightPixels;
         params1.width = displayMetrics.widthPixels;
         zoomLayout.setVisibility(View.VISIBLE);
+
 
 //        Bundle extras = getIntent().getExtras();
 //        String imagePath = extras.getString("sheet");
@@ -150,23 +202,25 @@ public class NewTemplateActivity extends AppCompatActivity {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
+        // to sum the black level in matrix
+        Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Utils.bitmapToMat(bmp, paper);
+        // set paper on display
         Display display = getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
-        int width = size.x;
+        final int width = size.x;
         final int height = size.y;
         image.setImageBitmap(getResizedBitmap(bitmap,width,height));
 
         // Set the drag surface
         image.setOnDragListener(new View.OnDragListener() {
             private String draggedImageTag;
-            private int X;
             private  float x_cord ,y_cord;
             private float zoomScale, pan_y,pan_x;
 
             @Override
             public boolean onDrag(View v, DragEvent event) {
-                X = (int) relativeLayout.getWidth();
 
                 switch(event.getAction()) {
                     case DragEvent.ACTION_DRAG_STARTED:
@@ -232,6 +286,7 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                     case DragEvent.ACTION_DROP:
                         v.invalidate();
+                        handler.removeCallbacks(mLongPressed);
                         Log.i("Answer_Mark", "ACTION_DROP event");
                         break;
 
@@ -240,7 +295,6 @@ public class NewTemplateActivity extends AppCompatActivity {
                 return true;
             }
         });
-
 
     }
 
@@ -258,7 +312,7 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void createWrongMark ( View v ) {
-        String newTag = VIEW_WRONG_TAG + "_" + counterWrong;
+        String newTag = VIEW_WRONG_TAG +"_" + counterQuestion + counterWrong;
         counterWrong++;
         RelativeLayout markLayout = createMark("WrongAnswerMarker", newTag);
         markToUpdate = markLayout;
@@ -266,15 +320,17 @@ public class NewTemplateActivity extends AppCompatActivity {
         updateLocation();
 
     }
+
     public void createRightMark ( View v ) {
-        String newTag = VIEW_RIGHT_TAG + "_" + counterRight;
-        counterRight++;
+        String newTag = VIEW_RIGHT_TAG + "_" + counterQuestion + counterWrong;
+        counterWrong++;
         RelativeLayout markLayout = createMark("RightAnswerMarker", newTag);
         markToUpdate = markLayout;
         relativeLayout.addView(markLayout,1);
         updateLocation();
 
     }
+
     public void createQuestionMark ( View v ) {
         String newTag = VIEW_QUESTION_TAG + "_" + counterQuestion;
         counterQuestion++;
@@ -299,45 +355,132 @@ public class NewTemplateActivity extends AppCompatActivity {
             String[] parts =  tag.split("_");
             Point loction = marksLocation.get(tag);
             int X = (int) relativeLayout.getWidth();
+            RelativeLayout newMark = null;
+            String newTag;
             switch(parts[0]){
                 case "WrongAnswerMarker":
+                    newTag = parts[0]+"_"+counterQuestion+counterWrong;
                     counterWrong++;
-                    String newTag = parts[0]+"_"+counterWrong;
-                    RelativeLayout newMark = createMark("WrongAnswerMarker",newTag);
-                    RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) newMark.getLayoutParams();
-//                     Set the circle location in the a beside the source mark
-                    params.removeRule(RelativeLayout.CENTER_HORIZONTAL);
-                    params.removeRule(RelativeLayout.CENTER_VERTICAL);
-                    params.topMargin = loction.y + 25 ;
-                    params.rightMargin = X - loction.x + 20;
-                    newMark.setVisibility(View.VISIBLE);
-                    markToUpdate = newMark;
-                    relativeLayout.addView(newMark,2);
-                    updateLocation();
+                    if(counterWrong > numberOfOptions)
+                        counterWrong = 1;
+                    newMark = createMark("WrongAnswerMarker",newTag);
                     break;
                 case "RightAnswerMarker":
-                    counterRight++;
+                    newTag = parts[0]+"_"+counterQuestion+counterWrong;
+                    if(counterWrong > numberOfOptions)
+                        counterWrong = 1;
+                    newMark = createMark("RightAnswerMarker",newTag);
                     break;
                 case "QuestionMarker":
+                    newTag = parts[0]+"_"+counterQuestion;
                     counterQuestion++;
+                    newMark = createMark("QuestionMarker",newTag);
                     break;
             }
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) newMark.getLayoutParams();
+//              Set the circle location in the a beside the source mark
+            params.removeRule(RelativeLayout.CENTER_HORIZONTAL);
+            params.removeRule(RelativeLayout.CENTER_VERTICAL);
+            params.topMargin = loction.y + 100 ;
+            params.rightMargin = X - loction.x - 100;
+            newMark.setVisibility(View.VISIBLE);
+            markToUpdate = newMark;
+            relativeLayout.addView(newMark,2);
+            updateLocation();
+            RelativeLayout mark_to_UnHighlight_layout =  mark._mark ;
+            mark_to_UnHighlight_layout.setBackgroundColor(Color.parseColor("#00FFFFFF"));
+        }
+        copyModeFlag = false;
+        copy.setVisibility(View.INVISIBLE);
+        exitCopyMode.setVisibility(View.INVISIBLE);
+        marksTogether.clear();
+        marksViews.clear();
+    }
 
+    public void exitCopyMode (View v) {
+        for ( Mark mark: marksTogether.values() ) {
             RelativeLayout mark_to_UnHighlight_layout =  mark._mark ;
             mark_to_UnHighlight_layout.setBackgroundColor(Color.parseColor("#00FFFFFF"));
         }
         copyModeFlag = false;
         copy.setVisibility(View.INVISIBLE);
         marksTogether.clear();
+        marksViews.clear();
+        exitCopyMode.setVisibility(View.INVISIBLE);
+
     }
 
+    public void createDataBase( View v ){
+        Template db = new Template(this);
+        for (int i = 0 ; i < numberOfQuestion ; ++i){
+            for(int j = 0 ; j < numberOfOptions ; ++j){
+                String tag = questionTable[i][j];
+                Point location;
+                Size size;
+                int sumOfBlack;
+                int id;
+                String[] parts = (tag).split("_");
+                switch(parts[0]) {
+                    case VIEW_WRONG_TAG:
+                        location = marksLocation.get(tag);
+                        size = marksSize.get(tag);
+                        sumOfBlack = calculateBlackLevel(paper,location,size);
+                        id = (i+1)*10+(j+1);
+                        db.insertData(id,(int)location.x,(int)location.y,(int)size.height,(int)size.width,sumOfBlack,0);
+                        break;
+                    case VIEW_RIGHT_TAG:
+                        location = marksLocation.get(tag);
+                        size = marksSize.get(tag);
+                        sumOfBlack = calculateBlackLevel(paper,location,size);
+                        id = (i+1)*10+(j+1);
+                        db.insertData(id,(int)location.x,(int)location.y,(int)size.height,(int)size.width,sumOfBlack,1);
+                        break;
+                }
 
+            }
+        }
+//        for (Mark mark : marks.values()) {
+//            String tag = (String)mark._mark.getTag();
+//            Point location;
+//            Size size;
+//            int sumOfBlack;
+//            String[] parts = (tag).split("_");
+//            switch(parts[0]) {
+//                case VIEW_WRONG_TAG:
+//                   location = marksLocation.get(tag);
+//                   size = marksSize.get(tag);
+//                   sumOfBlack = calculateBlackLevel(paper,location,size);
+//                   db.insertData(Integer.parseInt(parts[1]),(int)location.x,(int)location.y,(int)size.height,(int)size.width,sumOfBlack,0);
+//                   break;
+//                case VIEW_RIGHT_TAG:
+//                    location = marksLocation.get(tag);
+//                    size = marksSize.get(tag);
+//                    sumOfBlack = calculateBlackLevel(paper,location,size);
+//                    db.insertData(Integer.parseInt(parts[1]),(int)location.x,(int)location.y,(int)size.height,(int)size.width,sumOfBlack,1);
+//                    break;
+//            }
+//        }
+    }
 
+    public void setIdQuestionOrAnswer ( View view ){
+        lastUserUpdateQuestion = Integer.parseInt(questionIDEdit.getText().toString());
+        lastUserUpdateAnswer = Integer.parseInt(answerIDEdit.getText().toString());
+        questionTable[lastUserUpdateQuestion-1][lastUserUpdateAnswer-1] = questionToInsertToTheTable;
+        RelativeLayout mark_to_UnHighlight_layout =  marks.get(questionToInsertToTheTable)._mark ;
+        mark_to_UnHighlight_layout.setBackgroundColor(Color.parseColor("#00FFFFFF"));
+        layoutSetQuestionID.setVisibility(View.INVISIBLE);
+
+    }
+
+    public void setNumbersQuestionAndAnswer ( View view ){
+        numberOfQuestion = (Integer.parseInt(questionNumberEdit.getText().toString()));
+        numberOfOptions = (Integer.parseInt(answerNumberEdit.getText().toString()));
+        questionTable       = new String[numberOfQuestion][numberOfOptions];
+        layoutGetInfo.setVisibility(View.INVISIBLE);
+    }
 
     //TODO detect barcode of Student ID
-    //TODO create Markers of the right answers and the wrong ones
-    //TODO create sqlite file that store all the data about that template (use room tech)
-
+    //TODO create sqlite file that store all the data about that template
 
 
     private RelativeLayout createMark( String tag, String id ) {
@@ -348,7 +491,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         final RelativeLayout.LayoutParams markParam = new RelativeLayout.LayoutParams(  // set the layout params for mark
                 wrongMark.getHeight(),
                 wrongMark.getWidth());
-        marksSize.put(tag,new Size(wrongMark.getHeight(),wrongMark.getWidth()));
+        marksSize.put(id,new Size(wrongMark.getHeight(),wrongMark.getWidth()));
         Rect visibleView = new Rect();
         screenLayout.getChildVisibleRect(relativeLayout,visibleView,null);
 
@@ -358,17 +501,38 @@ public class NewTemplateActivity extends AppCompatActivity {
 
 
         markLayout.setOnTouchListener(new View.OnTouchListener() {
-
+            private long lastClickTime = 0;
+            private static final long DOUBLE_CLICK_TIME_DELTA = 300;//milliseconds
+            private long clickTime;
             //onTouch code
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+
+
                 idHelper = (String) v.getTag();
                 viewHelper = v;
+
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         Mark mark = marks.get(idHelper);
+                        clickTime = System.currentTimeMillis();
+                        //double tapping mode
+                        if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA){
+                            Log.i("Mark", "Double tap!! ");
+                            layoutSetQuestionID.setVisibility(View.VISIBLE);
+                            layoutSetQuestionID.bringToFront();
+                            questionToInsertToTheTable = idHelper;
+                             calculateNextQuestionId();
+                             calculateNextAnswerId();
+                            questionIDEdit.setText(Integer.toString(lastUserUpdateQuestion));
+                            answerIDEdit.setText(Integer.toString(lastUserUpdateAnswer));
+                            Mark mark_to_highlight = mark;
+                            RelativeLayout mark_to_highlight_layout = mark_to_highlight._mark;
+                            // Set highlight to the drag mark
+                            mark_to_highlight_layout.setBackgroundColor(Color.parseColor("#515DA7F1"));
+                        }
                         // copy mode
-                        if(copyModeFlag) {
+                        else if(copyModeFlag) {
                             Mark mark_to_highlight = mark;
                             RelativeLayout mark_to_highlight_layout = mark_to_highlight._mark;
                             // Set highlight to the drag mark
@@ -387,9 +551,11 @@ public class NewTemplateActivity extends AppCompatActivity {
                             mark_to_build_shadow_layout.setVisibility(View.INVISIBLE);
                             return true;
                         }
+                        // basic mode
                         else {
+                            lastClickTime = clickTime;
                             RelativeLayout layout = mark._mark;
-                            handler.postDelayed(mLongPressed, 1000);
+                            handler.postDelayed(mLongPressed, 2000);
                             if (layout != null) {
                                 ClipData data = ClipData.newPlainText("", "");
                                 View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(layout);
@@ -400,12 +566,6 @@ public class NewTemplateActivity extends AppCompatActivity {
                         }
 
                         return false;
-                    case MotionEvent.ACTION_UP:
-                        handler.removeCallbacks(mLongPressed);
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        handler.removeCallbacks(mLongPressed);
-                        break;
                 }
                 return true;
             }
@@ -439,7 +599,12 @@ public class NewTemplateActivity extends AppCompatActivity {
                 String id = (String) view.getTag();
                 RelativeLayout layout = marks.get(id)._mark;
                 if(layout != null){
+                    if(copyModeFlag){
+                        marksTogether.remove(id);
+                        marksViews.remove(id);
+                    }
                         marks.remove(id);
+                        marksLocation.remove(id);
                         relativeLayout.removeView(layout);
                         return;
                     }
@@ -472,6 +637,11 @@ public class NewTemplateActivity extends AppCompatActivity {
         plusButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                float pan_x = zoomLayout.getPanX();
+                float pan_y = zoomLayout.getPanY();
+                float zoomScale = zoomLayout.getRealZoom();
+                engine.zoomTo(1,false);
+
                 double supremum = 140*2;
                 String buttonTag = (String) view.getTag();
                 Mark markSelected= marks.get(buttonTag);
@@ -505,16 +675,27 @@ public class NewTemplateActivity extends AppCompatActivity {
                     markSelectedLayout.setLayoutParams(lParams);
                     markSelectedLayout.setVisibility(View.VISIBLE);
                     marks.remove(buttonTag);
+                    marksSize.remove(buttonTag);
                     marks.put(buttonTag,new Mark(markSelectedLayout,plusButton,minusButton,closeButton));
+                    marksSize.put(buttonTag,new Size (new_height, new_width));
                     markToUpdate =  markSelectedLayout;
+
                     updateLocation();
+
                 }
+                engine.realZoomTo(zoomScale,false);
+                engine.panTo(pan_x,pan_y,false);
             }
         });
         minusButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                float pan_x = zoomLayout.getPanX();
+                float pan_y = zoomLayout.getPanY();
+                float zoomScale = zoomLayout.getRealZoom();
+                engine.zoomTo(1,false);
                 double infimum = 140/5;
+
                 String buttonTag = (String) view.getTag();
                 Mark markSelected= marks.get(buttonTag);
                 RelativeLayout markSelectedLayout = markSelected._mark;
@@ -547,10 +728,16 @@ public class NewTemplateActivity extends AppCompatActivity {
                     markSelectedLayout.setLayoutParams(lParams);
                     markSelectedLayout.setVisibility(View.VISIBLE);
                     marks.remove(buttonTag);
+                    marksSize.remove(buttonTag);
                     marks.put(buttonTag,new Mark(markSelectedLayout,plusButton,minusButton,closeButton));
+                    marksSize.put(buttonTag,new Size (new_height, new_width));
+
                     markToUpdate =  markSelectedLayout;
                     updateLocation();
+
                 }
+                engine.realZoomTo(zoomScale,false);
+                engine.panTo(pan_x,pan_y,false);
             }
         });
 
@@ -620,7 +807,7 @@ public class NewTemplateActivity extends AppCompatActivity {
     return markLayout;
     }
 
-    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+    private Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
         int width = bm.getWidth();
         int height = bm.getHeight();
         float scaleWidth = ((float) newWidth) / width;
@@ -636,40 +823,39 @@ public class NewTemplateActivity extends AppCompatActivity {
         return resizedBitmap;
     }
 
-    public void updateLocation () {
-        // Set listener on the view tree to update locations
-//        ViewTreeObserver vto = relativeLayout.getViewTreeObserver();
-//        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener(){
-//            @Override public void onGlobalLayout(){
+    private void updateLocation () {
                 String tag = (String) markToUpdate.getTag();
                 int [] location = new int[2];
-                Size size =  new Size();
-                float zoomScale = zoomLayout.getRealZoom();
-                float pan_x = zoomLayout.getPanX();
-                float pan_y = zoomLayout.getPanY();
-
-
-                engine.zoomTo(1,false);
-//                markToUpdate.getLocationOnScreen(location);
                 location[0]=(int)markToUpdate.getX();
                 location[1]=(int)markToUpdate.getY();
-                size.height = markToUpdate.getMeasuredHeight();
-                size.width = markToUpdate.getMeasuredWidth();
-                Log.i("Answer_Mark", "in update location tag: " + tag +" new_x_cord: "+location[0] + " new_Y_cord: "+ location[1]);
-
                 if(marksLocation.containsKey(tag)) {
                     marksLocation.remove(tag);
-                    marksSize.remove(tag);
                 }
                 marksLocation.put( tag ,new Point(location[0],location[1]));
-                marksSize.put( tag , size);
-                engine.panTo(pan_x,pan_y,false);
-                engine.realZoomTo(zoomScale,false);
-//                relativeLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+    }
 
+    private int calculateBlackLevel( Mat img, Point location, Size size ){
+        double blackLevel=0.0;
+//        double[] currentPixel;
+        for (int col = (int)location.x ; col < (location.x + size.width) ; ++col){
+            for (int raw = (int)location.y ; raw < (location.y + size.height) ; ++raw){
+                blackLevel = blackLevel+ img.get(raw,col)[0];
             }
-//        });
-//    }
+        }
+        return (int)blackLevel;
+    }
 
+    private void calculateNextQuestionId () {
+        if(lastUserUpdateAnswer >= numberOfOptions){
+             lastUserUpdateQuestion++;
+        }
+    }
+
+    private int calculateNextAnswerId () {
+        if(lastUserUpdateAnswer >= numberOfOptions)
+            return lastUserUpdateAnswer = 1;
+        else
+            return lastUserUpdateAnswer++;
+    }
 
 }
