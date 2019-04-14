@@ -8,6 +8,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         >
+    <com.github.ybq.android.spinkit.SpinKitView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/spin_kit"
+        style="@style/SpinKitView.Large.FadingCircle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:SpinKit_Color="@color/colorAccent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"/>
+
+    <ImageView
+        android:id="@+id/Loading"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="#131E55"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"/>
     <TableRow
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -41,29 +58,14 @@
             android:onClick="createRightMark"
             app:layout_constraintBottom_toTopOf="@+id/NewPicture"
             app:layout_constraintEnd_toStartOf="@+id/wrongAns"
-            app:layout_constraintStart_toEndOf="@+id/question"
+            app:layout_constraintStart_toEndOf="@+id/barcode_mark"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0" />
 
-        <ImageView
-            android:id="@+id/question"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="5dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="5dp"
-            android:layout_marginBottom="5dp"
-            android:background="@drawable/square_question"
-            android:onClick="createQuestionMark"
-            app:layout_constraintBottom_toTopOf="@+id/NewPicture"
-            app:layout_constraintEnd_toStartOf="@+id/rightAns"
-            app:layout_constraintStart_toEndOf="@+id/ID_digit"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
 
         <ImageView
-            android:id="@+id/ID_digit"
-            android:layout_width="40dp"
+            android:id="@+id/barcode_mark"
+            android:layout_width="61dp"
             android:layout_height="40dp"
             android:layout_marginStart="5dp"
             android:layout_marginTop="10dp"
@@ -72,7 +74,7 @@
             android:background="@drawable/square_id_digits"
             android:onClick="createBarcodeMark"
             app:layout_constraintBottom_toTopOf="@+id/NewPicture"
-            app:layout_constraintEnd_toStartOf="@+id/question"
+            app:layout_constraintEnd_toStartOf="@+id/rightAns"
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"

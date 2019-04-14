@@ -4,35 +4,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".oneByOneOrSeries">
 
     <Button
-        android:id="@+id/ImportTemplate"
+        android:id="@+id/oneByOne"
         android:layout_width="236dp"
         android:layout_height="55dp"
         android:layout_marginStart="86dp"
         android:layout_marginTop="152dp"
         android:layout_marginEnd="62dp"
-        android:onClick="ImportTemplate"
-        android:text="Import Template"
+        android:onClick="oneByOne"
+        android:text="One by One"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/NewTemplate"
+        android:id="@+id/Series"
         android:layout_width="236dp"
         android:layout_height="55dp"
         android:layout_marginStart="86dp"
         android:layout_marginTop="103dp"
         android:layout_marginEnd="62dp"
         android:layout_marginBottom="146dp"
-        android:onClick="NewTemplate"
-        android:text="Create New Template"
+        android:onClick="series"
+        android:text="Series"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.518"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ImportTemplate"
+        app:layout_constraintTop_toBottomOf="@+id/oneByOne"
         app:layout_constraintVertical_bias="0.49" />
 </androidx.constraintlayout.widget.ConstraintLayout>

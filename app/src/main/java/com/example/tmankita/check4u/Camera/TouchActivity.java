@@ -4,19 +4,23 @@ package com.example.tmankita.check4u.Camera;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.os.Environment;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import com.example.tmankita.check4u.NewTemplateActivity;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.detectDocument;
+import com.github.ybq.android.spinkit.sprite.Sprite;
+import com.github.ybq.android.spinkit.style.FadingCircle;
 
 
 import org.opencv.android.BaseLoaderCallback;
@@ -41,6 +45,8 @@ public class TouchActivity extends AppCompatActivity {
     private PreviewSurfaceView camView;
     private CameraPreviewFocus cameraPreview;
     private DrawingView drawingView;
+    private Sprite fadingCircle;
+    private ImageView imageView;
 
     private int previewWidth = 1280;
     private int previewHeight = 720;
@@ -61,6 +67,12 @@ public class TouchActivity extends AppCompatActivity {
             Log.d(TAG, "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
+
+        imageView = findViewById(R.id.imageView);
+        fadingCircle = new FadingCircle();
+        fadingCircle.setColor(Color.WHITE);
+        imageView.setImageDrawable(fadingCircle);
+        imageView.setVisibility(View.INVISIBLE);
 
 
         camView = (PreviewSurfaceView) findViewById(R.id.preview_surface);
@@ -109,6 +121,9 @@ public class TouchActivity extends AppCompatActivity {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
+            imageView.setVisibility(View.VISIBLE);
+            imageView.bringToFront();
+            fadingCircle.start();
 
             //get the camera parameters
             Camera.Parameters parameters = camera.getParameters();
@@ -183,7 +198,8 @@ public class TouchActivity extends AppCompatActivity {
                 Intent CreateTemplate = new Intent(getApplicationContext(), NewTemplateActivity.class);
 
                 CreateTemplate.putExtra("sheet", path);
-
+                imageView.setVisibility(View.INVISIBLE);
+                fadingCircle.stop();
                 startActivity(CreateTemplate);
 
             } catch (FileNotFoundException e) {

@@ -1,28 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".Camera.TouchActivity"
-    tools:ignore="MergeRootFrame"
-    android:id="@+id/container">
+    tools:ignore="MergeRootFrame">
 
+    <com.github.ybq.android.spinkit.SpinKitView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/spin_kit"
+        style="@style/SpinKitView.Large.FadingCircle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:SpinKit_Color="@color/colorAccent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="#131E55"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.example.tmankita.check4u.Camera.PreviewSurfaceView
         android:id="@+id/preview_surface"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </com.example.tmankita.check4u.Camera.PreviewSurfaceView>
+        android:layout_height="match_parent"></com.example.tmankita.check4u.Camera.PreviewSurfaceView>
 
     <com.example.tmankita.check4u.Camera.DrawingView
         android:id="@+id/drawing_surface"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </com.example.tmankita.check4u.Camera.DrawingView>
+        android:layout_height="match_parent"></com.example.tmankita.check4u.Camera.DrawingView>
 
     <ImageButton
-        app:srcCompat="@drawable/aperture_camera"
         android:id="@+id/capture_touch_activity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -30,6 +51,7 @@
         android:text="Capture"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/aperture_camera" />
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

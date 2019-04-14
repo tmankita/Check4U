@@ -4,9 +4,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.support.annotation.Nullable;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class Template extends SQLiteOpenHelper {
+    public static String DB_FILEPATH = "/data/data/com.example.tmankita.check4u/databases/template.db";
     public static final String DATABASE_NAME = "template.db";
     public static final String TABLE_NAME = "template_table";
     public static final String COL_1 = "ID";
@@ -19,7 +24,7 @@ public class Template extends SQLiteOpenHelper {
 
 
 
-    public Template(@Nullable Context context){ // @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
+    public Template( Context context){ // @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
         super(context, DATABASE_NAME, null, 1);
     }
 
@@ -51,4 +56,30 @@ public class Template extends SQLiteOpenHelper {
         else
             return true;
     }
+    //https://stackoverflow.com/questions/6540906/simple-export-and-import-of-a-sqlite-database-on-android
+    /**
+     * Copies the database file at the specified location over the current
+     * internal application database.
+     * */
+    public boolean importDatabase(String dbPath) throws IOException {
+
+        // Close the SQLiteOpenHelper so it will commit the created empty
+        // database to internal storage.
+        close();
+        File newDb = new File(dbPath);
+        File oldDb = new File(DB_FILEPATH);
+        if (newDb.exists()) {
+            FileUtils.copyFile(new FileInputStream(newDb), new FileOutputStream(oldDb));
+            // Access the copied database so SQLiteHelper will cache it and mark
+            // it as created.
+            getWritableDatabase().close();
+            return true;
+        }
+        return false;
+    }
+
+    public String getFilePath (){
+        return DB_FILEPATH;
+    }
+
 }

@@ -15,7 +15,6 @@ public class PreviewSurfaceView extends SurfaceView {
 
     private CameraPreviewFocus camPreview;
     private boolean listenerSet = false;
-    public Paint paint;
     private DrawingView drawingView;
     private boolean drawingViewSet = false;
 
