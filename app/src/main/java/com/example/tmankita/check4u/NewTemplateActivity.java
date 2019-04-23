@@ -2,7 +2,6 @@ package com.example.tmankita.check4u;
 
 import android.app.Activity;
 import android.content.ClipData;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -206,11 +205,11 @@ public class NewTemplateActivity extends AppCompatActivity {
         zoomLayout.setVisibility(View.VISIBLE);
 
 
-//        Bundle extras = getIntent().getExtras();
-//        String imagePath = extras.getString("sheet");
+        Bundle extras = getIntent().getExtras();
+        String imagePath = extras.getString("sheet");
 
 //      /storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg
-        String imagePath = "/storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg";
+//        String imagePath = "/storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg";
 
         image = (ImageView) findViewById(R.id.NewPicture);
         BitmapFactory.Options options = new BitmapFactory.Options();

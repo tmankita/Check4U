@@ -1,6 +1,8 @@
 package com.example.tmankita.check4u;
 
 
+import android.util.Log;
+
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -29,6 +31,17 @@ public class detectDocument {
     private static double colorBias = 0;         // bright
     private static int colorThresh = 110;        // threshold
 
+    public static class  document{
+        public Mat doc_resized;
+        public Mat doc_origin;
+        public ArrayList<Point[]> allpoints_original;
+
+        public document(Mat doc_origin,Mat doc_resized, ArrayList<Point[]> allpoints_original){
+            this.doc_origin = doc_origin;
+            this.doc_resized = doc_resized;
+            this.allpoints_original = allpoints_original;
+        }
+    }
 
     public static class Quadrilateral {
         public MatOfPoint contour;
@@ -41,27 +54,22 @@ public class detectDocument {
     }
 
 
-    public static Mat findDocument( Mat inputRgba ) {
+    public static document findDocument( Mat inputRgba ) {
         Mat doc;
         ArrayList<MatOfPoint> contours = findContours(inputRgba);
         Quadrilateral quad = getQuadrilateral(contours);
-//        ArrayList<Quadrilateral> allpoints=getQuadrilateral(contours);
-//        double[] offset = {-5.0,-5.0};
-//        ArrayList<Point[]> allpoints_original = new ArrayList<>();
-//        for (Quadrilateral q : allpoints) {
-//            ArrayList<Point> points_original = new ArrayList<>();
-//            contourOffset(q,offset);
-//            for (Point p : q.points)
-//                points_original.add(new Point(p.x * (inputRgba.size().height / 800), p.y * inputRgba.size().height / 800));
-//            MatOfPoint sPoints_temp =  new  MatOfPoint();
-//            sPoints_temp.fromList( points_original);
-//            allpoints_original.add(sPoints_temp.toArray());
-//        }
         double[] offset = {-5.0,-5.0};
         contourOffset(quad,offset);
+        ArrayList<Point[]> allpoints_original = new ArrayList<>();
+            ArrayList<Point> points_original = new ArrayList<>();
+            for (Point p : quad.points)
+                points_original.add(new Point(p.x * (inputRgba.size().height / 800), p.y * inputRgba.size().height / 800));
+            MatOfPoint sPoints_temp =  new  MatOfPoint();
+            sPoints_temp.fromList( points_original);
+            allpoints_original.add(sPoints_temp.toArray());
         doc = fourPointTransform (inputRgba , quad.points);
         enhanceDocument(doc);
-        return doc;
+        return new document(inputRgba,doc,allpoints_original);
 
 
         //Recalculate to original scale - start Points
@@ -122,14 +130,7 @@ public class detectDocument {
         Imgproc.resize(src,resizedImage,size);
         Imgproc.cvtColor(resizedImage, grayImage, Imgproc.COLOR_RGB2GRAY, 4);
 
-//        Imgproc.cvtColor(resizedImage, LabImage, Imgproc.COLOR_RGB2Lab, 3);
-//        List<Mat> lab_list = new ArrayList(3);
-//        Core.split(grayImage,lab_list);
-//        lab_list.get(0).copyTo(LImage);
 
-
-
-    // maybe    Imgproc.GaussianBlur(grayImage, grayImage, new Size(5, 5), 0);
         // Bilateral filter preserve edges
         Imgproc.bilateralFilter(grayImage ,bilateralFilterImage, 9, 75, 75);
         // Create black and white image based on adaptive threshold
@@ -207,7 +208,7 @@ public class detectDocument {
     }
 
 
-    private static Point[] sortPoints( Point[] src ) {
+    public static Point[] sortPoints( Point[] src ) {
 
         ArrayList<Point> srcPoints = new ArrayList<>(Arrays.asList(src));
 
@@ -243,7 +244,7 @@ public class detectDocument {
         return result;
     }
 
-    private static Mat fourPointTransform( Mat src , Point[] pts ) {
+    public static Mat fourPointTransform( Mat src , Point[] pts ) {
 
         double ratio = src.size().height / 800;
 
@@ -251,6 +252,8 @@ public class detectDocument {
         Point tr = pts[1];
         Point br = pts[2];
         Point bl = pts[3];
+        Log.i("fourPointTransform", "tl.x = "+tl.x*ratio+" tl.y = "+ tl.y*ratio+" tr.x = "+ tr.x*ratio+" tr.y = "+tr.y*ratio+" br.x = "+br.x*ratio+" br.y = "+br.y*ratio+" bl.x = "+bl.x*ratio+" bl.y = "+bl.y*ratio);
+
 
         double widthA = Math.sqrt(Math.pow(br.x - bl.x, 2) + Math.pow(br.y - bl.y, 2));
         double widthB = Math.sqrt(Math.pow(tr.x - tl.x, 2) + Math.pow(tr.y - tl.y, 2));
@@ -279,7 +282,7 @@ public class detectDocument {
 
         return doc;
     }
-    private static void enhanceDocument( Mat src ) {
+    public static void enhanceDocument( Mat src ) {
         if (colorMode && filterMode) {
             src.convertTo(src,-1, colorGain , colorBias);
             Mat mask = new Mat(src.size(), CvType.CV_8UC1);
@@ -318,7 +321,7 @@ public class detectDocument {
      * @param src
      * @param threshold
      */
-    private static void colorThresh(Mat src, int threshold) {
+    public static void colorThresh(Mat src, int threshold) {
         Size srcSize = src.size();
         int size = (int) (srcSize.height * srcSize.width)*3;
         byte[] d = new byte[size];
