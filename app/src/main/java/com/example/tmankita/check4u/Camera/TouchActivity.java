@@ -63,6 +63,7 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 import static android.widget.ImageView.ScaleType.CENTER;
 import static android.widget.ImageView.ScaleType.FIT_START;
+import static android.widget.ImageView.ScaleType.FIT_XY;
 
 public class TouchActivity extends AppCompatActivity {
     private  static final String TAG= "TouchActivity";
@@ -86,16 +87,12 @@ public class TouchActivity extends AppCompatActivity {
     private int counter_coroner = 1;
     private HashMap<String,RelativeLayout> marksCoroners;
     private HashMap<String,Point> coronersLoaction;
-    private ConstraintLayout touchLayout;
     private RelativeLayout testLayout;
     private Bitmap origin_bitmap;
     private String idHelper;
-    private static double ratio;
-    private static  float height;
-    private static  float width;
-    private Bitmap bnp_to_crop;
-    private Mat mat_to_crop;
-    private boolean edited;
+//    private static double ratio;
+//    private static  float height;
+//    private static  float width;
     private Mat origcopy1;
     private Point[] right;
 
@@ -116,7 +113,6 @@ public class TouchActivity extends AppCompatActivity {
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
         testLayout = (RelativeLayout) findViewById(R.id.testlayout);
-        touchLayout = (ConstraintLayout) findViewById(R.id.touchLayout);
         imageView = (ImageView) findViewById(R.id.imageView);
         fadingCircle = new FadingCircle();
         fadingCircle.setColor(Color.WHITE);
@@ -130,12 +126,11 @@ public class TouchActivity extends AppCompatActivity {
         test = (ImageView) findViewById(R.id.test);
         marksCoroners = new HashMap<>();
         coronersLoaction = new HashMap<>();
-        edited = false;
 
-        DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-        height= (float)metrics.heightPixels;
-        width = (float)metrics.widthPixels;
-        ratio = (height/ width);
+//        DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+//        height= (float)metrics.heightPixels;
+//        width = (float)metrics.widthPixels;
+//        ratio = (height/ width);
 
 
         camView = (PreviewSurfaceView) findViewById(R.id.preview_surface);
@@ -218,15 +213,8 @@ public class TouchActivity extends AppCompatActivity {
         set_button.setVisibility(View.VISIBLE);
         edit_button.setVisibility(View.INVISIBLE);
         ok_button.setVisibility(View.INVISIBLE);
-
-//        test.setImageBitmap(origin_bitmap);
-
-        edited = true;
-//        mat_to_crop= new Mat();
-//        bnp_to_crop = origin_bitmap.copy(Bitmap.Config.ARGB_8888,true);
-//
-//        Utils.bitmapToMat(bnp_to_crop, mat_to_crop);
-
+        test.setImageBitmap(origin_bitmap);
+        test.setScaleType(FIT_START);
         // make programmatically 4 green marks with padding for touch.
         for (Point p: paper_obj.allpoints_original.get(0)) {
             build_coroner((int)p.x,(int)p.y);
@@ -234,165 +222,80 @@ public class TouchActivity extends AppCompatActivity {
         // make drag surface on test image-view
         // make drag builder and touch- event on 4 marks
         // save 4 new marks location
-
-
-
         // do sortPoints -> fourPointTransform ->  enhanceDocument
         // save new image to paper_obj.doc
         // use send image function
 
     }
-    public static int[][] sortPoints_touch ( int[][] src ) {
-
-        ArrayList<int[]> srcPoints = new ArrayList<>(Arrays.asList(src));
-
-        int[][] result = { null , null , null , null };
-
-        Comparator<int[]> sumComparator = new Comparator<int[]>() {
-            @Override
-            public int compare(int[] lhs, int[] rhs) {
-                return Integer.valueOf(lhs[1] + lhs[0]).compareTo(rhs[1] + rhs[0]);
-            }
-        };
-
-        Comparator<int[]> diffComparator = new Comparator<int[]>() {
-
-            @Override
-            public int compare(int[] lhs, int[] rhs) {
-                return Integer.valueOf(lhs[1] - lhs[0]).compareTo(rhs[1] - rhs[0]);
-            }
-        };
-
-        // top-left corner = minimal sum
-        result[0] = Collections.min(srcPoints, sumComparator);
-
-        // bottom-right corner = maximal sum
-        result[2] = Collections.max(srcPoints, sumComparator);
-
-        // top-right corner = minimal difference
-        result[1] = Collections.min(srcPoints, diffComparator);
-
-        // bottom-left corner = maximal difference
-        result[3] = Collections.max(srcPoints, diffComparator);
-
-        return result;
-    }
     public void set_test (View view) {
 
-        int[][] points = new int[4][2];
+        Point[] points_2 = new Point[4];
         int i=0;
-        for (RelativeLayout m: marksCoroners.values()) {
-            m.getLocationInWindow(points[i]);
+        for (Point p: coronersLoaction.values()) {
+            points_2[i]=p;
             i++;
         }
 
-        int[][] sorted = sortPoints_touch(points);
+        Point[] sorted_2 = detectDocument.sortPoints(points_2);
+
         for (RelativeLayout mark: marksCoroners.values()) {
             mark.setVisibility(View.INVISIBLE);
         }
         set_button.setVisibility(View.INVISIBLE);
 
-//        Imgproc.circle(mat_to_crop, sorted[0], 20, new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.circle(mat_to_crop, sorted[1], 20, new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.circle(mat_to_crop, sorted[2], 20, new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.circle(mat_to_crop, sorted[3], 20, new Scalar(0, 255, 0, 150), 4);
+        // calculate inverse matrix
+        Matrix inverse = new Matrix();
+        test.getImageMatrix().invert(inverse);
 
-//        Bitmap bmpPaper = Bitmap.createBitmap((int)width, (int)height, Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(mat_to_crop, bmpPaper);
-//        Matrix matrix2 = new Matrix();
-//        Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
-//        test.setImageBitmap(bOutput);
-        // Rotate for match the sorted points
-//        Mat rotated = new Mat();
-//        Core.rotate(paper_obj.doc_origin, rotated, Core.ROTATE_90_CLOCKWISE); //ROTATE_180 or ROTATE_90_COUNTERCLOCKWISE
-        // rotate points around center of the image
-        // transform four points In consideration ratio of the resized image
-//        Mat newImage = fourPointTransform_touch(origcopy1,rotate_points);
+        float[][] image_point_2 = new float[][]{
+                {(float)sorted_2[0].x,(float)sorted_2[0].y},
+                {(float)sorted_2[1].x,(float)sorted_2[1].y},
+                {(float)sorted_2[2].x,(float)sorted_2[2].y},
+                {(float)sorted_2[3].x,(float)sorted_2[3].y}
+        };
+        Point[] final2= new Point[4];
+        i=0;
+        for (float[] p: image_point_2) {
+            inverse.mapPoints(p);
+            final2[i]= new Point(p[0]+250/2-100,p[1]-250/2);
+            i++;
+        }
 
-//        Imgproc.cvtColor(origcopy1,origcopy1,Imgproc.COLOR_RGBA2GRAY);
-//        Imgproc.adaptiveThreshold(origcopy1, origcopy1, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
-//        double ratioY = (origcopy1.rows()+400)/test.getHeight();
-//        double ratioX = (origcopy1.cols()+1200)/test.getWidth();
-        double ratioY = (origcopy1.rows())/mat_to_crop.rows();
-        double ratioX = (origcopy1.cols())/mat_to_crop.cols();
-        Imgproc.circle(origcopy1, new Point(sorted[2][0],sorted[2][1]), 20, new Scalar(120, 255, 0, 150), 4);
+        Mat croped = fourPointTransform_touch(origcopy1,final2);
+        detectDocument.enhanceDocument(croped);
 
-//        for (Point p: sorted) {
-//            p.x=p.x*(ratioX);
-//            p.y=p.y*(ratioY);
+//        Imgproc.circle(origcopy1, right[2], 20, new Scalar(255, 0, 0, 150), 4);
+
+//        Imgproc.circle(origcopy1, final2[0], 20, new Scalar(0, 0, 255, 150), 4);
+//        Imgproc.circle(origcopy1, final2[1], 20, new Scalar(0, 0, 255, 150), 4);
+//        Imgproc.circle(origcopy1, final2[2], 20, new Scalar(0, 0, 255, 150), 4);
+//        Imgproc.circle(origcopy1, final2[3], 20, new Scalar(0, 0, 255, 150), 4);
+//        Bitmap bmpPaper1 = Bitmap.createBitmap(origcopy1.cols(), origcopy1.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(origcopy1, bmpPaper1);
+//        Matrix matrix21 = new Matrix();
+//        float degrees = 90;//rotation degree
+//        matrix21.setRotate(degrees);
+//        Bitmap bOutput1 = Bitmap.createBitmap(bmpPaper1, 0, 0, bmpPaper1.getWidth(), bmpPaper1.getHeight(), matrix21, true);
+//        test.setImageBitmap(bOutput1);
+
+        send_image(croped);
+    }
+//    public static Point[] rotateTransform(Point[] points, Point center, int angle_degree){
+//        double angle = Math.toRadians(angle_degree);
+//        Point[] result = new Point[points.length];
+//        for (int i=0; i<points.length; i++) {
+//            double x1 = points[i].x - center.x;
+//            double y1 = points[i].y - center.y;
+//
+//            double x2 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
+//            double y2 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
+//
+//            result[i] =new Point( x2 + center.x, y2 + center.y);
 //        }
 //
-//        Point tl = sorted[0];
-//        Point tr = sorted[1];
-//        Point br = sorted[2];
-//        Point bl = sorted[3];
-        for (int[] p: sorted) {
-            p[0]= (int)((p[0]+250/2)*(ratioX));
-            p[1]=(int)(((p[1])+250/2)*(ratioY));
-        }
-
-        Point tl = new Point (sorted[0][0],sorted[0][1]);
-        Point tr = new Point (sorted[1][0],sorted[1][1]);
-        Point br = new Point (sorted[2][0],sorted[2][1]);
-        Point bl = new Point (sorted[3][0],sorted[3][1]);
-
-        Point[] ps = new Point[4];
-        Point center = new Point(origcopy1.cols()/2,origcopy1.rows()/2);
-        for (int j=0; j<4; j++) {
-            ps[j]=new Point(sorted[j][0],sorted[j][1]);
-        }
-        Point[] rotate_points = rotateTransform(ps,center,90);
-
-//        for (Point p1:rotate_points) {
-//            Log.i("rotate", "x: "+ p1.x +" y: "+p1.y);
-//        }
-
-        Imgproc.circle(origcopy1, right[2], 20, new Scalar(255, 0, 0, 150), 4);
-
-
-//        Imgproc.circle(origcopy1, rotate_points[0], 20, new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.circle(origcopy1, rotate_points[1], 20, new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.circle(origcopy1, rotate_points[2], 20, new Scalar(0, 255, 0, 150), 4);
-        Imgproc.circle(origcopy1, rotate_points[2], 20, new Scalar(0, 255, 0, 150), 4);
-        Imgproc.circle(origcopy1, br, 20, new Scalar(0, 0, 255, 150), 4);
-//        Imgproc.circle(origcopy1, sorted[1], 20, new Scalar(0, 0, 255, 150), 4);
-//        Imgproc.circle(origcopy1, sorted[2], 20, new Scalar(0, 0, 255, 150), 4);
-//        Imgproc.circle(origcopy1, sorted[3], 20, new Scalar(0, 0, 255, 150), 4);
-
-        Bitmap bmpPaper1 = Bitmap.createBitmap(origcopy1.cols(), origcopy1.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(origcopy1, bmpPaper1);
-        Matrix matrix21 = new Matrix();
-        float degrees = 90;//rotation degree
-        matrix21.setRotate(degrees);
-        Bitmap bOutput1 = Bitmap.createBitmap(bmpPaper1, 0, 0, bmpPaper1.getWidth(), bmpPaper1.getHeight(), matrix21, true);
-        test.setImageBitmap(bOutput1);
-//        detectDocument.enhanceDocument(newImage);
-//        rotated.release();
-
-        // rotate 270 degree for return the image to the original shift
-//        Mat cropped = new Mat();
-//        Core.rotate(newImage, cropped, Core.ROTATE_90_COUNTERCLOCKWISE); //ROTATE_180 or ROTATE_90_COUNTERCLOCKWISE
-
-        //
-//        send_image(newImage);
-    }
-    public static Point[] rotateTransform(Point[] points, Point center, int angle_degree){
-        double angle = Math.toRadians(angle_degree);
-        Point[] result = new Point[points.length];
-        for (int i=0; i<points.length; i++) {
-            double x1 = points[i].x - center.x;
-            double y1 = points[i].y - center.y;
-
-            double x2 = x1 * Math.cos(angle) - y1 * Math.sin(angle);
-            double y2 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
-
-            result[i] =new Point( x2 + center.x, y2 + center.y);
-        }
-
-        return result;
-    }
+//        return result;
+//    }
     public static Mat fourPointTransform_touch( Mat src , Point[] pts ) {
-
 
         Point tl = pts[0];
         Point tr = pts[1];
@@ -402,14 +305,14 @@ public class TouchActivity extends AppCompatActivity {
         double widthA = Math.sqrt(Math.pow(br.x - bl.x, 2) + Math.pow(br.y - bl.y, 2));
         double widthB = Math.sqrt(Math.pow(tr.x - tl.x, 2) + Math.pow(tr.y - tl.y, 2));
 
-        double dw = Math.max(widthA, widthB)*ratio;
+        double dw = Math.max(widthA, widthB);
         int maxWidth = Double.valueOf(dw).intValue();
 
 
         double heightA = Math.sqrt(Math.pow(tr.x - br.x, 2) + Math.pow(tr.y - br.y, 2));
         double heightB = Math.sqrt(Math.pow(tl.x - bl.x, 2) + Math.pow(tl.y - bl.y, 2));
 
-        double dh = Math.max(heightA, heightB)*ratio;
+        double dh = Math.max(heightA, heightB);
         int maxHeight = Double.valueOf(dh).intValue();
 
         Mat doc = new Mat(maxHeight, maxWidth, CvType.CV_8UC4);
@@ -417,9 +320,9 @@ public class TouchActivity extends AppCompatActivity {
         Mat src_mat = new Mat(4, 1, CvType.CV_32FC2);
         Mat dst_mat = new Mat(4, 1, CvType.CV_32FC2);
 
-        src_mat.put(0, 0, tl.x*ratio, tl.y*ratio, tr.x*ratio, tr.y*ratio, br.x*ratio, br.y*ratio, bl.x*ratio, bl.y*ratio);
+//        src_mat.put(0, 0, tl.x*ratio, tl.y*ratio, tr.x*ratio, tr.y*ratio, br.x*ratio, br.y*ratio, bl.x*ratio, bl.y*ratio);
 
-//        src_mat.put(0, 0, tl.x, tl.y, tr.x, tr.y, br.x, br.y, bl.x, bl.y);
+        src_mat.put(0, 0, tl.x, tl.y, tr.x, tr.y, br.x, br.y, bl.x, bl.y);
         dst_mat.put(0, 0, 0.0, 0.0, dw, 0.0, dw, dh, 0.0, dh);
 
         Mat m = Imgproc.getPerspectiveTransform(src_mat, dst_mat);
@@ -518,9 +421,9 @@ public class TouchActivity extends AppCompatActivity {
 
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-            imageView.setVisibility(View.VISIBLE);
-            imageView.bringToFront();
-            fadingCircle.start();
+            imageView.setVisibility(View.INVISIBLE); //loading animation
+//            imageView.bringToFront();
+//            fadingCircle.start();
 
             //get the camera parameters
             Camera.Parameters parameters = camera.getParameters();
@@ -533,25 +436,29 @@ public class TouchActivity extends AppCompatActivity {
             bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
             Utils.bitmapToMat(bmp, orig);
 
+            Mat rotated = new Mat();
+            Core.rotate(orig, rotated, Core.ROTATE_90_CLOCKWISE);
+
             Mat origCopy = new Mat();
             origcopy1 = new Mat();
-            orig.copyTo(origCopy);
-            orig.copyTo(origcopy1);
+            rotated.copyTo(origCopy);
+            rotated.copyTo(origcopy1);
+
 
 
 
             paper_obj = detectDocument.findDocument(orig);
 //            paper_obj.doc_origin = resizedImage;
 
-            Size size= new Size(height,width);
-            Mat resizedImage = new Mat(size, CvType.CV_8UC4);
-            Imgproc.resize(orig,resizedImage,size);
+//            Size size= new Size(height,width);
+//            Mat resizedImage = new Mat(size, CvType.CV_8UC4);
+//            Imgproc.resize(rotated,resizedImage,size);
 
-            Bitmap bmpPaper_UNTOUCH = Bitmap.createBitmap(resizedImage.cols(), resizedImage.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(resizedImage, bmpPaper_UNTOUCH);
-            float degrees1 = 90;//rotation degree
+            Bitmap bmpPaper_UNTOUCH = Bitmap.createBitmap(origCopy.cols(), origCopy.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(origCopy, bmpPaper_UNTOUCH);
+//            float degrees1 = 90;//rotation degree
             Matrix matrix1 = new Matrix();
-            matrix1.setRotate(degrees1);
+//            matrix1.setRotate(degrees1);
             origin_bitmap = Bitmap.createBitmap(bmpPaper_UNTOUCH, 0, 0, bmpPaper_UNTOUCH.getWidth(), bmpPaper_UNTOUCH.getHeight(), matrix1, true);
 
 
@@ -585,14 +492,15 @@ public class TouchActivity extends AppCompatActivity {
 
 
             Utils.matToBitmap(origCopy, bmpPaper);
-            float degrees2 = 90;//rotation degree
+//            float degrees2 = 90;//rotation degree
             Matrix matrix2 = new Matrix();
-            matrix2.setRotate(degrees2);
+//            matrix2.setRotate(degrees2);
             Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
 
 
             PreviewSurfaceView cameraPr = (PreviewSurfaceView) findViewById(R.id.preview_surface);
             cameraPr.setVisibility(View.INVISIBLE);
+
             testLayout.setVisibility(View.VISIBLE);
             test.setVisibility(View.VISIBLE);
             edit_button.setVisibility(View.VISIBLE);
@@ -612,8 +520,8 @@ public class TouchActivity extends AppCompatActivity {
         Matrix matrix = new Matrix();
 
 //        if(!edited){
-            float degrees = 90;//rotation degree
-            matrix.setRotate(degrees);
+//            float degrees = 90;//rotation degree
+//            matrix.setRotate(degrees);
 //        }
 
 

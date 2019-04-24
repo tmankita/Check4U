@@ -128,24 +128,64 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
      * @param - Rect - new area for auto focus
      */
     public void doTouchFocus(final Rect tfocusRect) {
-        Log.i(TAG, "TouchFocus");
-        try {
-            final List<Camera.Area> focusList = new ArrayList<Camera.Area>();
-            Camera.Area focusArea = new Camera.Area(tfocusRect, 1000);
-            focusList.add(focusArea);
+//        Camera camera = mCamera.getCamera();
+        mCamera.cancelAutoFocus();
+//        Rect focusRect = calculateTapArea(event.getX(), event.getY(), 1f);
 
-            Camera.Parameters para = mCamera.getParameters();
-            para.setFocusAreas(focusList);
-            para.setMeteringAreas(focusList);
-            mCamera.setParameters(para);
-
-            mCamera.autoFocus(myAutoFocusCallback);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.i(TAG, "Unable to autofocus");
+        Camera.Parameters parameters = mCamera.getParameters();
+        if (!parameters.getFocusMode().equals(
+                Camera.Parameters.FOCUS_MODE_AUTO)){
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
         }
 
+        if (parameters.getMaxNumFocusAreas() > 0) {
+            List<Camera.Area> mylist = new ArrayList<Camera.Area>();
+            mylist.add(new Camera.Area(tfocusRect, 1000));
+            parameters.setFocusAreas(mylist);
+        }
+
+        try {
+            mCamera.cancelAutoFocus();
+            mCamera.setParameters(parameters);
+            mCamera.startPreview();
+            mCamera.autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success, Camera camera) {
+                    if (!camera.getParameters().getFocusMode().equals(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                        Camera.Parameters parameters = camera.getParameters();
+                        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                        if (parameters.getMaxNumFocusAreas() > 0) {
+                            parameters.setFocusAreas(null);
+                        }
+                        camera.setParameters(parameters);
+                        camera.startPreview();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+//        return true;
+//}
+//        Log.i(TAG, "TouchFocus");
+//        try {
+//            final List<Camera.Area> focusList = new ArrayList<Camera.Area>();
+//            Camera.Area focusArea = new Camera.Area(tfocusRect, 1000);
+//            focusList.add(focusArea);
+//
+//            Camera.Parameters para = mCamera.getParameters();
+//            para.setFocusAreas(focusList);
+//            para.setMeteringAreas(focusList);
+//            mCamera.setParameters(para);
+//
+//            mCamera.autoFocus(myAutoFocusCallback);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            Log.i(TAG, "Unable to autofocus");
+//        }
+//
+//    }
 
     /**
      * AutoFocus callback
@@ -156,6 +196,7 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
         public void onAutoFocus(boolean arg0, Camera arg1) {
             if (arg0){
                 mCamera.cancelAutoFocus();
+
             }
         }
     };

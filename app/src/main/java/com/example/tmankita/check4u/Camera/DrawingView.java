@@ -2,6 +2,7 @@ package com.example.tmankita.check4u.Camera;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -38,7 +39,7 @@ public class DrawingView extends View {
         @Override
         public void onDraw(Canvas canvas) {
             if (haveTouch) {
-                //drawingPaint.setColor(Color.BLUE);
+//                drawingPaint.setColor(Color.BLUE);
                 canvas.drawRect(
                         touchArea.left, touchArea.top, touchArea.right, touchArea.bottom,
                         paint);
