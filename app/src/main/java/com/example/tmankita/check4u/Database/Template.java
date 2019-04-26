@@ -2,6 +2,7 @@ package com.example.tmankita.check4u.Database;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -9,6 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class Template extends SQLiteOpenHelper {
     public static String DB_FILEPATH = "/data/data/com.example.tmankita.check4u/databases/template.db";
@@ -81,5 +84,6 @@ public class Template extends SQLiteOpenHelper {
     public String getFilePath (){
         return DB_FILEPATH;
     }
+
 
 }

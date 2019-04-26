@@ -1,6 +1,7 @@
 package com.example.tmankita.check4u.Camera;
 
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,6 +9,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 
+import android.graphics.RectF;
 import android.hardware.Camera;
 import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.example.tmankita.check4u.NewTemplateActivity;
+import com.example.tmankita.check4u.OneByOneActivity;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.detectDocument;
 import com.github.ybq.android.spinkit.sprite.Sprite;
@@ -90,11 +93,11 @@ public class TouchActivity extends AppCompatActivity {
     private RelativeLayout testLayout;
     private Bitmap origin_bitmap;
     private String idHelper;
-//    private static double ratio;
-//    private static  float height;
-//    private static  float width;
+    private static  float height;
+    private static  float width;
     private Mat origcopy1;
     private Point[] right;
+
 
 
     @SuppressWarnings("deprecation")
@@ -127,9 +130,9 @@ public class TouchActivity extends AppCompatActivity {
         marksCoroners = new HashMap<>();
         coronersLoaction = new HashMap<>();
 
-//        DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-//        height= (float)metrics.heightPixels;
-//        width = (float)metrics.widthPixels;
+        DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+        height= (float)metrics.heightPixels;
+        width = (float)metrics.widthPixels;
 //        ratio = (height/ width);
 
 
@@ -263,7 +266,7 @@ public class TouchActivity extends AppCompatActivity {
 
         Mat croped = fourPointTransform_touch(origcopy1,final2);
         detectDocument.enhanceDocument(croped);
-
+//
 //        Imgproc.circle(origcopy1, right[2], 20, new Scalar(255, 0, 0, 150), 4);
 
 //        Imgproc.circle(origcopy1, final2[0], 20, new Scalar(0, 0, 255, 150), 4);
@@ -448,11 +451,6 @@ public class TouchActivity extends AppCompatActivity {
 
 
             paper_obj = detectDocument.findDocument(orig);
-//            paper_obj.doc_origin = resizedImage;
-
-//            Size size= new Size(height,width);
-//            Mat resizedImage = new Mat(size, CvType.CV_8UC4);
-//            Imgproc.resize(rotated,resizedImage,size);
 
             Bitmap bmpPaper_UNTOUCH = Bitmap.createBitmap(origCopy.cols(), origCopy.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(origCopy, bmpPaper_UNTOUCH);
@@ -486,7 +484,6 @@ public class TouchActivity extends AppCompatActivity {
 
                 }
 
-
             //srcMat.release();
             Bitmap bmpPaper = Bitmap.createBitmap(origCopy.cols(), origCopy.rows(), Bitmap.Config.ARGB_8888);
 
@@ -507,38 +504,33 @@ public class TouchActivity extends AppCompatActivity {
             ok_button.setVisibility(View.VISIBLE);
             imageView.setVisibility(View.INVISIBLE);
             capture_button.setVisibility(View.INVISIBLE);
+
             test.setImageBitmap(bOutput);
-            test.setScaleType(FIT_START);
+            Matrix m = test.getImageMatrix();
+            RectF drawableRect = new RectF(0, 0, width, height);
+            RectF viewRect = new RectF(0, 0, test.getWidth(), test.getHeight());
+            m.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+            test.setImageMatrix(m);
             test.invalidate();
-
-
 
         }
     };
 
     private void send_image (Mat paper){
-        Matrix matrix = new Matrix();
-
-//        if(!edited){
-//            float degrees = 90;//rotation degree
-//            matrix.setRotate(degrees);
-//        }
-
-
         //srcMat.release();
-        Bitmap bmpPaper = Bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
 
+        Matrix matrix = new Matrix();
+        Bitmap bmpPaper = Bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
 
         Utils.matToBitmap(paper, bmpPaper);
         Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix, true);
-
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bOutput.compress(Bitmap.CompressFormat.JPEG, 70, stream);
         byte[] paperData = stream.toByteArray();
 
         File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
-        if (pictureFile == null){
+        if (pictureFile == null) {
             Log.d(TAG, "Error creating media file, check storage permissions");
             return;
         }
@@ -549,19 +541,36 @@ public class TouchActivity extends AppCompatActivity {
             fos.close();
 
             String path = pictureFile.getAbsolutePath();
-
-            Intent CreateTemplate = new Intent(getApplicationContext(), NewTemplateActivity.class);
-
-            CreateTemplate.putExtra("sheet", path);
             imageView.setVisibility(View.INVISIBLE);
             fadingCircle.stop();
-            startActivity(CreateTemplate);
+            Intent returnIntent = new Intent();
+            returnIntent.putExtra("sheet",path);
+            setResult(Activity.RESULT_OK,returnIntent);
+            finish();
+
+//            if(mode.equals("newTemplate")){
+//                returnIntent.putExtra("sheet",path);
+//                setResult(Activity.RESULT_OK,returnIntent);
+//                finish();
+//                nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
+//                nextIntent.putExtra("sheet", path);
+//            }else if (mode.equals("oneByOne")){
+//                returnIntent.putExtra("sheet",path);
+//                setResult(Activity.RESULT_OK,returnIntent);
+//                finish();
+//                nextIntent = new Intent(getApplicationContext(), OneByOneActivity.class);
+//                nextIntent.putExtra("sheet", path);
+//            }
+
+
+//            startActivity(nextIntent);
 
         } catch (FileNotFoundException e) {
             Log.d(TAG, "File not found: " + e.getMessage());
         } catch (IOException e) {
             Log.d(TAG, "Error accessing file: " + e.getMessage());
         }
+
     }
     private static File getOutputMediaFile(int type){
         // To be safe, you should check that the SDCard is mounted
@@ -595,6 +604,5 @@ public class TouchActivity extends AppCompatActivity {
 
         return mediaFile;
     }
-
 
 }

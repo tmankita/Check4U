@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -72,8 +73,10 @@ public class NewTemplateActivity extends AppCompatActivity {
         private ImageView loading;
         private Sprite fadingCircle;
 
+
     //Template Matrix
         private Mat paper;
+        private Matrix M;
 
     // Create a string for the View label
         private static final String VIEW_WRONG_TAG = "WrongAnswerMarker";
@@ -93,7 +96,7 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     //Helpers
         private RelativeLayout markToUpdate;
-        public int threshold;
+        private int threshold;
         private String questionToInsertToTheTable;
         private int lastUserUpdateQuestion = 1 ;
         private int lastUserUpdateAnswer = 0 ;
@@ -102,6 +105,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         private String idHelper;
         private  boolean copyModeFlag = false;
         private View viewHelper;
+        private Template db;
 
     public class Mark {
         public RelativeLayout _mark;
@@ -224,7 +228,13 @@ public class NewTemplateActivity extends AppCompatActivity {
         display.getSize(size);
         final int width = size.x;
         final int height = size.y;
-        image.setImageBitmap(getResizedBitmap(bitmap,width,height));
+        image.setImageBitmap(bitmap);
+        M = image.getImageMatrix();
+        RectF drawableRect = new RectF(0, 0, width, height);
+        RectF viewRect = new RectF(0, 0, image.getWidth(), image.getHeight());
+        M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+        image.setImageMatrix(M);
+        image.invalidate();
 
         // Set the drag surface
         image.setOnDragListener(new View.OnDragListener() {
@@ -422,6 +432,7 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void createDataBase( View v ){
+        double score = 100/numberOfQuestion;
         loading.setVisibility(View.VISIBLE);
         loading.bringToFront();
         fadingCircle.start();
@@ -429,7 +440,10 @@ public class NewTemplateActivity extends AppCompatActivity {
         File file = new File(filePath);
         if(file.exists())
             file.delete();
-        Template db = new Template(this);
+        db = new Template(this);
+        // calculate inverse matrix
+        Matrix inverse = new Matrix();
+        image.getImageMatrix().invert(inverse);
 
         for (int i = 0 ; i < numberOfQuestion ; ++i){
             for(int j = 0 ; j < numberOfOptions ; ++j){
@@ -439,20 +453,19 @@ public class NewTemplateActivity extends AppCompatActivity {
                 int sumOfBlack;
                 int id;
                 String[] parts = (tag).split("_");
+                location = marksLocation.get(tag);
+                size = marksSize.get(tag);
+                float[] p = new float[]{(float)location.x,(float)location.y};
+                inverse.mapPoints(p);
+                Point transfer_point = new Point(Math.round(p[0]),Math.round(p[1]));
+                sumOfBlack = calculateBlackLevel(paper,transfer_point,size);
+                id = (i+1)*10+(j+1);
                 switch(parts[0]) {
                     case VIEW_WRONG_TAG:
-                        location = marksLocation.get(tag);
-                        size = marksSize.get(tag);
-                        sumOfBlack = calculateBlackLevel(paper,location,size);
-                        id = (i+1)*10+(j+1);
-                        db.insertData(id,(int)location.x,(int)location.y,(int)size.height,(int)size.width,sumOfBlack,0);
+                        db.insertData(id,(int)transfer_point.x,(int)transfer_point.y,(int)size.height,(int)size.width,sumOfBlack,0);
                         break;
                     case VIEW_RIGHT_TAG:
-                        location = marksLocation.get(tag);
-                        size = marksSize.get(tag);
-                        sumOfBlack = calculateBlackLevel(paper,location,size);
-                        id = (i+1)*10+(j+1);
-                        db.insertData(id,(int)location.x,(int)location.y,(int)size.height,(int)size.width,sumOfBlack,1);
+                        db.insertData(id,(int)transfer_point.x,(int)transfer_point.y,(int)size.height,(int)size.width,sumOfBlack,1);
                         break;
                 }
             }
@@ -462,17 +475,19 @@ public class NewTemplateActivity extends AppCompatActivity {
             Size size;
             location = marksLocation.get(VIEW_BARCODE_TAG);
             size = marksSize.get(VIEW_BARCODE_TAG);
-            db.insertData(0,(int)location.x,(int)location.y,(int)size.height,(int)size.width,0,0);
+            float[] p = new float[]{(float)location.x,(float)location.y};
+            inverse.mapPoints(p);
+            Point transfer_barcode = new Point(Math.round(p[0]),Math.round(p[1]));
+            db.insertData(0,(int)transfer_barcode.x,(int)transfer_barcode.y,(int)size.height,(int)size.width,0,0);
         }
         loading.setVisibility(View.INVISIBLE);
         fadingCircle.stop();
         Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
         Bundle bundle = new Bundle();
         bundle.putString("TemplateDataBase",db.getFilePath());
+        bundle.putDouble("score",score);
         uploadTemplate.putExtras(bundle);
         startActivity(uploadTemplate);
-
-
 //        for (Mark mark : marks.values()) {
 //            String tag = (String)mark._mark.getTag();
 //            Point location;
@@ -518,9 +533,6 @@ public class NewTemplateActivity extends AppCompatActivity {
         imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
 
     }
-
-    //TODO detect barcode of Student ID
-
 
     private RelativeLayout createMark( String tag, String id ) {
         // Create mark layout

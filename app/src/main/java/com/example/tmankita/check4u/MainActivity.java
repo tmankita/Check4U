@@ -1,5 +1,6 @@
 package com.example.tmankita.check4u;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,14 +17,15 @@ public class MainActivity extends AppCompatActivity {
 
 
     public   void  ImportTemplate(View view) {
-        Intent Import = new Intent(getApplicationContext(), TouchActivity.class);
-        startActivity(Import);
+//        Intent Import = new Intent(getApplicationContext(), TouchActivity.class);
+//        startActivity(Import);
     }
     public   void  NewTemplate(View view) {
         //TouchActivity.class
         //NewTemplateActivity.class
+
         Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
-        startActivity(NewTemplate);
+        startActivityForResult(NewTemplate,1);
     }
 
 
@@ -43,17 +45,23 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
 
-//        if (checkSelfPermission(Manifest.permission.CAMERA)
-//                != PackageManager.PERMISSION_GRANTED) {
-//            requestPermissions(new String[]{Manifest.permission.CAMERA},
-//                    MY_CAMERA_REQUEST_CODE);
-//        }
-//
-//        if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//                != PackageManager.PERMISSION_GRANTED) {
-//            requestPermissions( new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},100);
-//        }
+
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == 1) {
+            if(resultCode == Activity.RESULT_OK){
+                String path=data.getStringExtra("sheet");
+                Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
+                nextIntent.putExtra("sheet", path);
+                startActivity(nextIntent);
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {
+                //Write your code if there's no result
+            }
+        }
+    }//onActivityResult
 
     public static boolean hasPermissions(Context context, String... permissions) {
         if (context != null && permissions != null) {
