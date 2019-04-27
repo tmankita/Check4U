@@ -13,7 +13,6 @@ import android.graphics.RectF;
 import android.hardware.Camera;
 import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -27,8 +26,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import com.example.tmankita.check4u.NewTemplateActivity;
-import com.example.tmankita.check4u.OneByOneActivity;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.detectDocument;
 import com.github.ybq.android.spinkit.sprite.Sprite;
@@ -42,11 +39,8 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
-import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
@@ -56,17 +50,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
-import static android.widget.ImageView.ScaleType.CENTER;
 import static android.widget.ImageView.ScaleType.FIT_START;
-import static android.widget.ImageView.ScaleType.FIT_XY;
 
 public class TouchActivity extends AppCompatActivity {
     private  static final String TAG= "TouchActivity";
@@ -558,7 +547,7 @@ public class TouchActivity extends AppCompatActivity {
 //                returnIntent.putExtra("sheet",path);
 //                setResult(Activity.RESULT_OK,returnIntent);
 //                finish();
-//                nextIntent = new Intent(getApplicationContext(), OneByOneActivity.class);
+//                nextIntent = new Intent(getApplicationContext(), ProblematicQuestionsActivity.class);
 //                nextIntent.putExtra("sheet", path);
 //            }
 

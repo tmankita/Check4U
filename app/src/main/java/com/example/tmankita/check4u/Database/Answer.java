@@ -3,8 +3,8 @@ package com.example.tmankita.check4u.Database;
 import java.io.Serializable;
 
 public class Answer implements Serializable {
-//    private int questionNumber;
-//    private int answerNumber;
+    private int questionNumber;
+    private int answerNumber;
     private int locationX;
     private int locationY;
     private int height;
@@ -14,21 +14,21 @@ public class Answer implements Serializable {
 
     public Answer() {
     }
-//    public int getAnswerNumber() {
-//        return answerNumber;
-//    }
-//
-//    public void setAnswerNumber(int answerNumber) {
-//        this.answerNumber = answerNumber;
-//    }
-//
-//    public int getQuestionNumber() {
-//        return questionNumber;
-//    }
-//
-//    public void setQuestionNumber(int questionNumber) {
-//        this.questionNumber = questionNumber;
-//    }
+    public int getAnswerNumber() {
+        return answerNumber;
+    }
+
+    public void setAnswerNumber(int answerNumber) {
+        this.answerNumber = answerNumber;
+    }
+
+    public int getQuestionNumber() {
+        return questionNumber;
+    }
+
+    public void setQuestionNumber(int questionNumber) {
+        this.questionNumber = questionNumber;
+    }
 
     public int getLocationX() {
         return locationX;

@@ -25,6 +25,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 
@@ -68,8 +69,8 @@ public class NewTemplateActivity extends AppCompatActivity {
         private TableLayout layoutGetInfo;
         private EditText questionIDEdit;
         private EditText answerIDEdit;
-        private EditText questionNumberEdit;
-        private EditText answerNumberEdit;
+        private EditText questionsNumberEdit;
+        private EditText answersNumberEdit;
         private ImageView loading;
         private Sprite fadingCircle;
 
@@ -87,7 +88,7 @@ public class NewTemplateActivity extends AppCompatActivity {
     //Counters
         private int counterWrong = 1;
         private int numberOfOptions = 4;
-        private int numberOfQuestion = 10;
+        private int numberOfQuestions = 10;
         private int counterQuestion = 1;
 
     //Markers
@@ -178,20 +179,20 @@ public class NewTemplateActivity extends AppCompatActivity {
         marks               = new HashMap<>();
         marksTogether       = new HashMap<>();
         marksViews          = new HashMap<>();
-        relativeLayout      = findViewById(R.id.Layout);
-        wrongMark           = findViewById(R.id.wrongAns);
-        barcodeMark         = findViewById(R.id.barcode_mark);
+        relativeLayout      = (RelativeLayout) findViewById(R.id.Layout);
+        wrongMark           = (ImageView) findViewById(R.id.wrongAns);
+        barcodeMark         = (ImageView) findViewById(R.id.barcode_mark);
         threshold           = 140;
         zoomLayout          = findViewById(R.id.zoom_layout);
-        screenLayout        = findViewById(R.id.Layout1);
+        screenLayout        =  findViewById(R.id.Layout1);
         copy                = findViewById(R.id.copy);
         exitCopyMode        = findViewById(R.id.exitCopyMode);
         layoutSetQuestionID = findViewById(R.id.LayoutSetID);
         layoutGetInfo       = findViewById(R.id.numberOfQuestionsAndAnswers);
         questionIDEdit      = findViewById(R.id.questionID);
         answerIDEdit        = findViewById(R.id.answerID);
-        questionNumberEdit  = findViewById(R.id.questionNumber);
-        answerNumberEdit    = findViewById(R.id.answerNumber);
+        questionsNumberEdit  = findViewById(R.id.questionsNumber);
+        answersNumberEdit    = findViewById(R.id.answersNumber);
         engine              = zoomLayout.getEngine();
         loading = findViewById(R.id.Loading);
         fadingCircle = new FadingCircle();
@@ -201,11 +202,13 @@ public class NewTemplateActivity extends AppCompatActivity {
 
         layoutGetInfo.setVisibility(View.VISIBLE);
         layoutGetInfo.bringToFront();
+
         ViewGroup.LayoutParams params1 =  relativeLayout.getLayoutParams();
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
         params1.height = displayMetrics.heightPixels;
         params1.width = displayMetrics.widthPixels;
+
         zoomLayout.setVisibility(View.VISIBLE);
 
 
@@ -432,7 +435,7 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void createDataBase( View v ){
-        double score = 100/numberOfQuestion;
+        double score = 100/numberOfQuestions;
         loading.setVisibility(View.VISIBLE);
         loading.bringToFront();
         fadingCircle.start();
@@ -445,7 +448,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         Matrix inverse = new Matrix();
         image.getImageMatrix().invert(inverse);
 
-        for (int i = 0 ; i < numberOfQuestion ; ++i){
+        for (int i = 0 ; i < numberOfQuestions ; ++i){
             for(int j = 0 ; j < numberOfOptions ; ++j){
                 String tag = questionTable[i][j];
                 Point location;
@@ -486,6 +489,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         Bundle bundle = new Bundle();
         bundle.putString("TemplateDataBase",db.getFilePath());
         bundle.putDouble("score",score);
+        bundle.putInt("numberOfQuestions",numberOfQuestions);
         uploadTemplate.putExtras(bundle);
         startActivity(uploadTemplate);
 //        for (Mark mark : marks.values()) {
@@ -524,9 +528,9 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void setNumbersQuestionAndAnswer ( View view ){
-        numberOfQuestion = (Integer.parseInt(questionNumberEdit.getText().toString()));
-        numberOfOptions = (Integer.parseInt(answerNumberEdit.getText().toString()));
-        questionTable       = new String[numberOfQuestion][numberOfOptions];
+        numberOfQuestions = (Integer.parseInt(questionsNumberEdit.getText().toString()));
+        numberOfOptions = (Integer.parseInt(answersNumberEdit.getText().toString()));
+        questionTable       = new String[numberOfQuestions][numberOfOptions];
         layoutGetInfo.setVisibility(View.INVISIBLE);
 
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);

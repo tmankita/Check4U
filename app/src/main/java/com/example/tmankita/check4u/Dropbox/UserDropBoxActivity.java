@@ -24,6 +24,8 @@ import com.example.tmankita.check4u.oneByOneOrSeries;
 public class UserDropBoxActivity extends DropBoxActivity{
     private String path;
     private double score;
+    private int numberOfQuestions;
+    private int numberOfAnswers;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +35,7 @@ public class UserDropBoxActivity extends DropBoxActivity{
         Bundle bundle = getIntent().getExtras();
         path = bundle.getString("TemplateDataBase");
         score = bundle.getDouble("score");
+        numberOfQuestions = bundle.getInt("numberOfQuestions");
         Button loginButton = (Button)findViewById(R.id.login_button);
 
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -53,6 +56,9 @@ public class UserDropBoxActivity extends DropBoxActivity{
                         Toast.makeText(getApplicationContext(),"Template file uploaded succesfully",Toast.LENGTH_SHORT).show();
                         Intent oneByOneOrSeries = new Intent(getApplicationContext(), oneByOneOrSeries.class);
                         oneByOneOrSeries.putExtra("score",score);
+                        oneByOneOrSeries.putExtra("numberOfQuestions",numberOfQuestions);
+                        oneByOneOrSeries.putExtra("numberOfAnswers",numberOfAnswers);
+
                         startActivity(oneByOneOrSeries);
                     }
 

@@ -87,7 +87,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     public void oneByOne (View view){
 
-
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
         startActivityForResult(takePicture,1);
     }
@@ -251,8 +250,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 int id = (cursor.getInt(0));
                 int answerNumber = id%10; //LSB of the number represent the number of answer
                 int questionNumber = id/10; //all digits number part the last digit represent the question number
-//                answer.setAnswerNumber(answerNumber);
-//                answer.setQuestionNumber(questionNumber);
+                answer.setAnswerNumber(answerNumber);
+                answer.setQuestionNumber(questionNumber);
                 answer.setLocationX(cursor.getInt(1));
                 answer.setLocationY(cursor.getInt(2));
                 answer.setHeight(cursor.getInt(3));
