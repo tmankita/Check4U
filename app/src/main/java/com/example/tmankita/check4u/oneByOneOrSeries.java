@@ -12,6 +12,8 @@ import android.graphics.Point;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TableLayout;
 
 import com.example.tmankita.check4u.Camera.TouchActivity;
 import com.example.tmankita.check4u.Database.Answer;
@@ -40,6 +42,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private int[] studentAnswers;
     private int[] correctAnswers;
     int id;
+    private TableLayout need_to_continue;
+    private Button series;
+    private Button oneByOne;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -75,6 +80,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
         score = extras.getDouble("score");
         numberOfQuestions = extras.getInt("numberOfQuestions");
         numberOfAnswers   = extras.getInt("numberOfAnswers");
+        need_to_continue  = findViewById(R.id.Layout_if_need_to_continue);
+        series            = findViewById(R.id.series_button);
+        oneByOne          = findViewById(R.id.oneByOne_button);
 
 
         SQLiteDatabase db_template = SQLiteDatabase.openDatabase(Template.DB_FILEPATH, null, OPEN_READONLY);
@@ -86,15 +94,27 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
     public void oneByOne (View view){
-
+        series.setVisibility(View.INVISIBLE);
+        oneByOne.setVisibility(View.INVISIBLE);
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
         startActivityForResult(takePicture,1);
     }
-    public void series (View view){}
+    public void series (View view){
+        series.setVisibility(View.INVISIBLE);
+        oneByOne.setVisibility(View.INVISIBLE);
+    }
+
+    public void continue_check(View view){
+        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+        startActivityForResult(takePicture,1);
+    }
+
+    public void finish_check(View view){
+    //send via mail
+    }
 
     public void insertStudent (String Path) {
-        //calculate the image in path
-
+        //import the image from path
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = BitmapFactory.decodeFile(Path, options);
@@ -152,13 +172,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
         if(flagNeedToCorrectSomeAnswers){
-            // this end:
-            //Intent intent = new Intent(RegisterActivity1.this, RegisterActivity2.class);
-            //intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
-            //startActivity(intent);
-            //another end:
-//            ArrayList<Answer> problematicAnswers = (ArrayList<Answer>) intent.getSerializable("problematicAnswers");
-
+            Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
+            intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
+            startActivityForResult(intent,2);
         }
         else{
             // make binary array for questions -> 1 - right  , 0 - wrong
@@ -171,14 +187,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
             }
             students_db.insertRaw(id,studentAnswers,binaryCorrectFlag,score);
         }
+        //need to ask if the last one
+        checkIfFinalSheetOrContinue();
 
 
-
-        //need to ask if the last one!!!!!!!!!!!!!!!!!!
-        //checkIfFinalSheetOrContinue();
-
-        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
-        startActivityForResult(takePicture,1);
+    }
+    private void checkIfFinalSheetOrContinue(){
+        need_to_continue.setVisibility(View.VISIBLE);
     }
 
 
@@ -194,7 +209,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 //Write your code if there's no result
             }
         } else if(requestCode == 2){
-            int i=0;
+            int i;
             if(resultCode == Activity.RESULT_OK){
                 int[] toFix = data.getIntArrayExtra("toFix");
                 for (i=0; i<toFix.length ;i++){
@@ -212,8 +227,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 }
                 students_db.insertRaw(id,studentAnswers,binaryCorrectFlag,score);
 
-                //checkIfFinalSheetOrContinue();
-
+                checkIfFinalSheetOrContinue();
 
             }
             if (resultCode == Activity.RESULT_CANCELED) {

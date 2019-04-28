@@ -21,11 +21,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 
 import com.example.tmankita.check4u.Database.Answer;
@@ -37,7 +34,6 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
-import org.opencv.core.Size;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,8 +55,6 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     private int[] toFix;
     private int numberOfQuestions;
     private String questionToInsertToFix;
-
-
 
 
 
