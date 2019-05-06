@@ -56,7 +56,7 @@ class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
         File localFile = UriHelpers.getFileForUri(mContext, Uri.fromFile(new File(localUri)));
 
         if (localFile != null) {
-            String remoteFolderPath = "databases";
+            String remoteFolderPath = "/databases";
 
             // Note - this is not ensuring the name is a valid dropbox file name
             String remoteFileName = localFile.getName();

@@ -36,6 +36,7 @@ public class UserDropBoxActivity extends DropBoxActivity{
         path = bundle.getString("TemplateDataBase");
         score = bundle.getDouble("score");
         numberOfQuestions = bundle.getInt("numberOfQuestions");
+        numberOfAnswers = bundle.getInt("numberOfAnswers");
         Button loginButton = (Button)findViewById(R.id.login_button);
 
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -58,7 +59,6 @@ public class UserDropBoxActivity extends DropBoxActivity{
                         oneByOneOrSeries.putExtra("score",score);
                         oneByOneOrSeries.putExtra("numberOfQuestions",numberOfQuestions);
                         oneByOneOrSeries.putExtra("numberOfAnswers",numberOfAnswers);
-
                         startActivity(oneByOneOrSeries);
                     }
 

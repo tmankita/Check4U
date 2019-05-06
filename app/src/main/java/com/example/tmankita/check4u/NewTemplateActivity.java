@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
+import android.widget.Toast;
 
 import com.example.tmankita.check4u.Database.Template;
 import com.example.tmankita.check4u.Dropbox.UserDropBoxActivity;
@@ -435,63 +436,69 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void createDataBase( View v ){
-        double score = 100/numberOfQuestions;
-        loading.setVisibility(View.VISIBLE);
-        loading.bringToFront();
-        fadingCircle.start();
-        String filePath = Template.DB_FILEPATH;
-        File file = new File(filePath);
-        if(file.exists())
-            file.delete();
-        db = new Template(this);
-        // calculate inverse matrix
-        Matrix inverse = new Matrix();
-        image.getImageMatrix().invert(inverse);
+        if(!marksLocation.containsKey("barcode") || !marksSize.containsKey("barcode")){
+            Toast.makeText(getApplicationContext(),"Most mark barcode!!!",Toast.LENGTH_LONG);
+        }
+        else {
+            double score = 100 / numberOfQuestions;
+            loading.setVisibility(View.VISIBLE);
+            loading.bringToFront();
+            fadingCircle.start();
+            String filePath = Template.DB_FILEPATH;
+            File file = new File(filePath);
+            if (file.exists())
+                file.delete();
+            db = new Template(this);
+            // calculate inverse matrix
+            Matrix inverse = new Matrix();
+            image.getImageMatrix().invert(inverse);
 
-        for (int i = 0 ; i < numberOfQuestions ; ++i){
-            for(int j = 0 ; j < numberOfOptions ; ++j){
-                String tag = questionTable[i][j];
-                Point location;
-                Size size;
-                int sumOfBlack;
-                int id;
-                String[] parts = (tag).split("_");
-                location = marksLocation.get(tag);
-                size = marksSize.get(tag);
-                float[] p = new float[]{(float)location.x,(float)location.y};
-                inverse.mapPoints(p);
-                Point transfer_point = new Point(Math.round(p[0]),Math.round(p[1]));
-                sumOfBlack = calculateBlackLevel(paper,transfer_point,size);
-                id = (i+1)*10+(j+1);
-                switch(parts[0]) {
-                    case VIEW_WRONG_TAG:
-                        db.insertData(id,(int)transfer_point.x,(int)transfer_point.y,(int)size.height,(int)size.width,sumOfBlack,0);
-                        break;
-                    case VIEW_RIGHT_TAG:
-                        db.insertData(id,(int)transfer_point.x,(int)transfer_point.y,(int)size.height,(int)size.width,sumOfBlack,1);
-                        break;
+            for (int i = 0; i < numberOfQuestions; ++i) {
+                for (int j = 0; j < numberOfOptions; ++j) {
+                    String tag = questionTable[i][j];
+                    Point location;
+                    Size size;
+                    int sumOfBlack;
+                    int id;
+                    String[] parts = (tag).split("_");
+                    location = marksLocation.get(tag);
+                    size = marksSize.get(tag);
+                    float[] p = new float[]{(float) location.x, (float) location.y};
+                    inverse.mapPoints(p);
+                    Point transfer_point = new Point(Math.round(p[0]), Math.round(p[1]));
+                    sumOfBlack = calculateBlackLevel(paper, transfer_point, size);
+                    id = (i + 1) * 10 + (j + 1);
+                    switch (parts[0]) {
+                        case VIEW_WRONG_TAG:
+                            db.insertData(id, (int) transfer_point.x, (int) transfer_point.y, (int) size.height, (int) size.width, sumOfBlack, 0);
+                            break;
+                        case VIEW_RIGHT_TAG:
+                            db.insertData(id, (int) transfer_point.x, (int) transfer_point.y, (int) size.height, (int) size.width, sumOfBlack, 1);
+                            break;
+                    }
                 }
             }
+            if (marks.containsKey(VIEW_BARCODE_TAG)) {
+                Point location;
+                Size size;
+                location = marksLocation.get(VIEW_BARCODE_TAG);
+                size = marksSize.get(VIEW_BARCODE_TAG);
+                float[] p = new float[]{(float) location.x, (float) location.y};
+                inverse.mapPoints(p);
+                Point transfer_barcode = new Point(Math.round(p[0]), Math.round(p[1]));
+                db.insertData(0, (int) transfer_barcode.x, (int) transfer_barcode.y, (int) size.height, (int) size.width, 0, 0);
+            }
+            loading.setVisibility(View.INVISIBLE);
+            fadingCircle.stop();
+            Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putString("TemplateDataBase", db.getFilePath());
+            bundle.putDouble("score", score);
+            bundle.putInt("numberOfQuestions", numberOfQuestions);
+            bundle.putInt("numberOfAnswers", numberOfOptions);
+            uploadTemplate.putExtras(bundle);
+            startActivity(uploadTemplate);
         }
-        if(marks.containsKey(VIEW_BARCODE_TAG)){
-            Point location;
-            Size size;
-            location = marksLocation.get(VIEW_BARCODE_TAG);
-            size = marksSize.get(VIEW_BARCODE_TAG);
-            float[] p = new float[]{(float)location.x,(float)location.y};
-            inverse.mapPoints(p);
-            Point transfer_barcode = new Point(Math.round(p[0]),Math.round(p[1]));
-            db.insertData(0,(int)transfer_barcode.x,(int)transfer_barcode.y,(int)size.height,(int)size.width,0,0);
-        }
-        loading.setVisibility(View.INVISIBLE);
-        fadingCircle.stop();
-        Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putString("TemplateDataBase",db.getFilePath());
-        bundle.putDouble("score",score);
-        bundle.putInt("numberOfQuestions",numberOfQuestions);
-        uploadTemplate.putExtras(bundle);
-        startActivity(uploadTemplate);
 //        for (Mark mark : marks.values()) {
 //            String tag = (String)mark._mark.getTag();
 //            Point location;
