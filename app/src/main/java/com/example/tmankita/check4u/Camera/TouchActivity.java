@@ -26,6 +26,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.example.tmankita.check4u.detectDocumentHough;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.detectDocument;
 import com.github.ybq.android.spinkit.sprite.Sprite;
@@ -254,6 +255,7 @@ public class TouchActivity extends AppCompatActivity {
         }
 
         Mat croped = fourPointTransform_touch(origcopy1,final2);
+//        Imgproc.cvtColor(croped,croped,Imgproc.COLOR_RGBA2GRAY);
         detectDocument.enhanceDocument(croped);
 //
 //        Imgproc.circle(origcopy1, right[2], 20, new Scalar(255, 0, 0, 150), 4);
@@ -416,6 +418,7 @@ public class TouchActivity extends AppCompatActivity {
             imageView.setVisibility(View.INVISIBLE); //loading animation
 //            imageView.bringToFront();
 //            fadingCircle.start();
+            Log.d(TAG, "in On Picture Taken, data length: "+ data.length);
 
             //get the camera parameters
             Camera.Parameters parameters = camera.getParameters();
@@ -427,19 +430,51 @@ public class TouchActivity extends AppCompatActivity {
             //allows you to use other image processing methods and still save at the end
             bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
             Utils.bitmapToMat(bmp, orig);
+            Mat origCopy_before_rotate = new Mat();
+            orig.copyTo(origCopy_before_rotate);
 
+            detectDocumentHough detect = new detectDocumentHough();
+
+            paper_obj = detect.detect(orig,bmp);
+
+//            paper_obj = detectDocument.findDocument(orig);
+
+
+            ArrayList<Point[]> Rps1;
+            Rps1 = paper_obj.allpoints_original;
+            right = new Point[4];
+            for (Point[] ps : Rps1)
+            {
+
+                Imgproc.line(origCopy_before_rotate,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
+                Imgproc.line(origCopy_before_rotate,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
+                Imgproc.line(origCopy_before_rotate,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
+                Imgproc.line(origCopy_before_rotate,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+
+                right[0]=ps[0];
+                right[1]=ps[1];
+                right[2]=ps[2];
+                right[3]=ps[3];
+                Log.i("the right!", "x: "+ ps[0].x +" y: "+ps[0].y);
+                Log.i("the right!", "x: "+ ps[1].x +" y: "+ps[1].y);
+                Log.i("the right!", "x: "+ ps[2].x +" y: "+ps[2].y);
+                Log.i("the right!", "x: "+ ps[3].x +" y: "+ps[3].y);
+
+
+
+            }
+            Mat origCopy = new Mat();
             Mat rotated = new Mat();
             Core.rotate(orig, rotated, Core.ROTATE_90_CLOCKWISE);
+            Core.rotate(origCopy_before_rotate, origCopy, Core.ROTATE_90_CLOCKWISE);
 
-            Mat origCopy = new Mat();
             origcopy1 = new Mat();
-            rotated.copyTo(origCopy);
+
             rotated.copyTo(origcopy1);
 
 
 
 
-            paper_obj = detectDocument.findDocument(orig);
 
             Bitmap bmpPaper_UNTOUCH = Bitmap.createBitmap(origCopy.cols(), origCopy.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(origCopy, bmpPaper_UNTOUCH);
@@ -449,29 +484,7 @@ public class TouchActivity extends AppCompatActivity {
             origin_bitmap = Bitmap.createBitmap(bmpPaper_UNTOUCH, 0, 0, bmpPaper_UNTOUCH.getWidth(), bmpPaper_UNTOUCH.getHeight(), matrix1, true);
 
 
-            ArrayList<Point[]> Rps1;
-            Rps1 = paper_obj.allpoints_original;
-            right = new Point[4];
-            for (Point[] ps : Rps1)
-                {
 
-                    Imgproc.line(origCopy,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
-                    Imgproc.line(origCopy,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
-                    Imgproc.line(origCopy,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
-                    Imgproc.line(origCopy,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
-
-                    right[0]=ps[0];
-                    right[1]=ps[1];
-                    right[2]=ps[2];
-                    right[3]=ps[3];
-                    Log.i("the right!", "x: "+ ps[0].x +" y: "+ps[0].y);
-                    Log.i("the right!", "x: "+ ps[1].x +" y: "+ps[1].y);
-                    Log.i("the right!", "x: "+ ps[2].x +" y: "+ps[2].y);
-                    Log.i("the right!", "x: "+ ps[3].x +" y: "+ps[3].y);
-
-
-
-                }
 
             //srcMat.release();
             Bitmap bmpPaper = Bitmap.createBitmap(origCopy.cols(), origCopy.rows(), Bitmap.Config.ARGB_8888);
@@ -509,6 +522,7 @@ public class TouchActivity extends AppCompatActivity {
         //srcMat.release();
 
         Matrix matrix = new Matrix();
+        matrix.setRotate(90);
         Bitmap bmpPaper = Bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
 
         Utils.matToBitmap(paper, bmpPaper);

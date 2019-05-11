@@ -116,7 +116,7 @@
         android:layout_marginTop="60dp"
         android:layout_marginLeft="15dp"
         android:onClick="exitCopyMode"
-        android:text="Exit Copy Mode"
+        android:text="Exit"
         android:visibility="invisible" />
 
     <TableLayout
@@ -266,23 +266,24 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbars="vertical|horizontal"
-            app:alignment="center"
+            app:alignment="top|left"
             app:animationDuration="280"
             app:flingEnabled="true"
             app:hasClickableChildren="true"
             app:horizontalPanEnabled="true"
-            app:maxZoom="7"
+            app:maxZoom="10"
             app:maxZoomType="zoom"
             app:minZoom="1"
             app:minZoomType="zoom"
             app:overPinchable="true"
             app:overScrollHorizontal="true"
             app:overScrollVertical="true"
-            app:transformation="centerInside"
-            app:transformationGravity="auto"
+            app:transformation="none"
+            app:transformationGravity="top|left"
             app:verticalPanEnabled="true"
             app:zoomEnabled="true">
-
+            <!--app:transformation="centerInside" -->
+            <!--app:transformationGravity="auto"-->
             <RelativeLayout
                 android:id="@+id/Layout"
                 android:layout_width="match_parent"

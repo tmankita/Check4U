@@ -8,8 +8,8 @@
 
     <TableLayout
         android:id="@+id/Layout_if_need_to_continue"
-        android:layout_width="300dp"
-        android:layout_height="100dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:background="#A59F9F"
         android:orientation="horizontal"
         android:visibility="invisible"
@@ -24,9 +24,68 @@
             android:layout_height="match_parent">
 
             <TextView
+                android:id="@+id/info_count_tests"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Count of checked tests:"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/info_count_tests_num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+        </TableRow>
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/info_last_grade"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last exam garde:"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/info_last_grade_num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="90"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+        </TableRow>
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/info_average"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Average:"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/info_average_num"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="73.55"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
                 android:id="@+id/questionText"
-                android:layout_width="200dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="Do you want to check another answer sheet?"
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />

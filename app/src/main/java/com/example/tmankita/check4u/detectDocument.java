@@ -68,6 +68,7 @@ public class detectDocument {
             sPoints_temp.fromList( points_original);
             allpoints_original.add(sPoints_temp.toArray());
         doc = fourPointTransform (inputRgba , quad.points);
+//        Imgproc.cvtColor(doc,doc,Imgproc.COLOR_RGBA2GRAY);
         enhanceDocument(doc);
         return new document(inputRgba,doc,allpoints_original);
 

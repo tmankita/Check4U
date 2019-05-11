@@ -32,7 +32,7 @@ public class StudentDataBase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS "+TABLE_NAME);
         onCreate(db);
     }
-    public boolean insertRaw(int id, int[] answers ,int[] correctnesFlags , double score){
+    public double insertRaw(int id, int[] answers ,int[] correctnesFlags , double score){
         double grade=0;
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -45,9 +45,9 @@ public class StudentDataBase extends SQLiteOpenHelper {
 
         long result = db.insert(TABLE_NAME,null,contentValues);
         if(result == -1)
-            return false;
+            return -1;
         else
-            return true;
+            return grade;
     }
 
     private String generateCreateQuery(){

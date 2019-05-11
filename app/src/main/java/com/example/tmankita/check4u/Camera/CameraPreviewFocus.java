@@ -54,6 +54,7 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
         try {
             mCamera.setPreviewDisplay(sHolder);
         } catch (IOException e) {
+            Log.d(TAG, "Error setting camera preview1: " + e.getMessage());
             mCamera.release();
             mCamera = null;
             return -1;
@@ -111,7 +112,7 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
             mCamera.startPreview();
 
         } catch (Exception e){
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+            Log.d(TAG, "Error starting camera preview2: " + e.getMessage());
         }
 
 
@@ -163,6 +164,8 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
                 }
             });
         } catch (Exception e) {
+            Log.d(TAG, "Error setting camera preview3: " + e.getMessage());
+
             e.printStackTrace();
         }
     }

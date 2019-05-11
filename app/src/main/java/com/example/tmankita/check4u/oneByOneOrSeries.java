@@ -8,7 +8,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Point;
+import android.graphics.Matrix;
+//import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,6 +19,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TableLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tmankita.check4u.Camera.TouchActivity;
@@ -33,7 +35,11 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -59,6 +65,17 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private Button send;
     private EditText email;
     private File file;
+
+    //To print
+    private int totalExamsThatProcessedUntilNow;
+    private double lastGrade;
+    private double averageUntilNow;
+    private TextView info_examsCounter;
+    private TextView info_lastGrade;
+    private TextView info_average;
+
+    //helpers
+    Bitmap bmpMarks;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -96,10 +113,17 @@ public class oneByOneOrSeries extends AppCompatActivity {
         numberOfAnswers   = extras.getInt("numberOfAnswers");
         need_to_continue  = findViewById(R.id.Layout_if_need_to_continue);
         send_via_email    = findViewById(R.id.Layout_send_via_email);
+        info_examsCounter = (TextView) findViewById(R.id.info_count_tests_num);
+        info_lastGrade    = (TextView) findViewById(R.id.info_last_grade_num);
+        info_average      = (TextView) findViewById(R.id.info_average_num);
         email             = (EditText) findViewById(R.id.edit_email);
         series            = (Button) findViewById(R.id.series_button);
         oneByOne          = (Button) findViewById(R.id.oneByOne_button);
         send              = (Button) findViewById(R.id.send_button);
+
+        totalExamsThatProcessedUntilNow = 0;
+        lastGrade = 0;
+        averageUntilNow = 0;
 
 
 
@@ -114,7 +138,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
             file.delete();
         students_db = new StudentDataBase(getApplicationContext(),numberOfQuestions);
     }
-
 
     public void oneByOne (View view){
         series.setVisibility(View.INVISIBLE);
@@ -196,15 +219,49 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     }
 
-    private int detectBarcode (Bitmap barcode){
+    private int detectBarcode (Mat sheet,Bitmap bitmapSheet){
         Answer barcodeInfo = allanswers[0][0];
+//        Mat uncropped = sheet;
+//        int offsetX= 250;
+//        int offsetWidth = 100;
+//        Rect roi = new Rect(barcodeInfo.getLocationX()+offsetX, barcodeInfo.getLocationY(), barcodeInfo.getWidth()+offsetWidth,  barcodeInfo.getHeight()+20);
+//        Log.i("ROI","sheet: height: "+sheet.rows()+" width: "+sheet.cols()+
+//                " barcode: width: barcodeInfo.getLocationX()+offsetX("+(barcodeInfo.getLocationX()+offsetX)+")+ barcodeInfo.getWidth()+20("+(barcodeInfo.getHeight()+20)+") = "+ (barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight()+20+"\n"+
+//                "height: barcodeInfo.getLocationY()("+(barcodeInfo.getLocationY())+")+ barcodeInfo.getHeight()+20("+(barcodeInfo.getWidth()+offsetWidth))+") = "+ (barcodeInfo.getLocationY()+barcodeInfo.getWidth()+offsetWidth));
+//        Mat cropped = new Mat(uncropped, roi);
 
-        Bitmap barcodeBitmap = Bitmap.createBitmap(barcode, barcodeInfo.getLocationX() ,barcodeInfo.getLocationY(),barcode.getWidth(), barcode.getHeight());
+        double offsetX = barcodeInfo.getLocationX()*0.355;
+        double offsetY = barcodeInfo.getLocationY()*0.44;
+        double offsetWidth = (barcodeInfo.getLocationX()+offsetX - barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight())/3;
+        double offsetHeigh = 0;//(barcodeInfo.getLocationY()+offsetY - barcodeInfo.getLocationY()+offsetY+barcodeInfo.getWidth())/4;
+
+        Point[] ps = new Point[]{
+                new Point(barcodeInfo.getLocationX()+offsetX,barcodeInfo.getLocationY()+offsetY),
+                new Point(barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight() +offsetWidth,barcodeInfo.getLocationY()+offsetY),
+                new Point(barcodeInfo.getLocationX()+offsetX,barcodeInfo.getLocationY()+barcodeInfo.getWidth()+offsetY+offsetHeigh),
+                new Point(barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight()+offsetWidth,barcodeInfo.getLocationY()+barcodeInfo.getWidth()+offsetY+offsetHeigh)
+        };
+
+        Point[] sorted_2 = detectDocument.sortPoints(ps);
+        Mat barcodeCropped = TouchActivity.fourPointTransform_touch(sheet,sorted_2);
+
+//        Imgproc.line(sheet,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(sheet,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(sheet,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(sheet,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
+
+
+
+
+        Bitmap bmpBarcode = bitmapSheet.createBitmap(barcodeCropped.cols(), barcodeCropped.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(barcodeCropped, bmpBarcode);
+
         int id = 0;
         String  LOG_TAG = "BARCODE";
-        Frame frame = new Frame.Builder().setBitmap(barcodeBitmap).build();
+        Frame frame = new Frame.Builder().setBitmap(bmpBarcode).build();
         BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(getApplicationContext())
                 .build();
+
         if(barcodeDetector.isOperational()){
             SparseArray<Barcode> sparseArray = barcodeDetector.detect(frame);
             if(sparseArray != null && sparseArray.size() > 0){
@@ -229,31 +286,34 @@ public class oneByOneOrSeries extends AppCompatActivity {
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = BitmapFactory.decodeFile(Path, options);
         // to sum the black level in matrix
-        Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-        Utils.bitmapToMat(bmp, paper);
+        Bitmap bmpBarcode = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        bmpMarks = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Utils.bitmapToMat(bmpBarcode, paper);
 
         // calculate barcode -> student id
-        int id = detectBarcode(bitmap);
+        int id = detectBarcode(paper,bmpBarcode);
         if(id == 0){
-            Toast.makeText(getApplicationContext(),"Faild: not success to check this test, becauase there is no barcode in this test",Toast.LENGTH_SHORT);
+            Toast.makeText(getApplicationContext(),"Faild: not success to check this test, because there is no barcode in this test",Toast.LENGTH_SHORT);
             checkIfFinalSheetOrContinue();
 
         }
         //-------------------------------
         //
         else {
-            int i = 0;
-            int j = 0;
+            int i;
+            int j;
             int correct = 0;
             correctAnswers = new int[numberOfQuestions];
-            int[][] sumOfBlacks = new int[numberOfQuestions][numberOfAnswers];
+            int[][] sumOfBlacks = new int[numberOfQuestions+1][numberOfAnswers];
             ArrayList<Answer> AnotherAnswersThatChoosed = new ArrayList<>();
             boolean flagNeedToCorrectSomeAnswers = false;
-            for (i = 0; i < allanswers.length; i++) {
+            for (i = 1; i < allanswers.length; i++) {
                 Answer[] question = allanswers[i];
-                for (j = 0; j < question.length; j++)
+//                sumOfBlacks[i] = new int[numberOfAnswers];
+                for (j = 0; j < question.length; j++){
                     correct = question[j].getFlagCorrect();
-                sumOfBlacks[i][j] = calculateBlackLevel(paper, new Point(question[j].getLocationX(), question[j].getLocationY()), new Size(question[j].getWidth(), question[j].getHeight()));
+                    sumOfBlacks[i][j] = calculateBlackLevel(paper, question[j]);
+                }
                 if (correct == 1)
                     correctAnswers[i] = j + 1;
             }
@@ -262,7 +322,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             //get all of them -> show the user all the marks that marked let him to choose the right one
             studentAnswers = new int[numberOfQuestions];
             int numberOfAnswerThatChoosed = 0;
-            for (i = 0; i < sumOfBlacks.length; i++) {
+            for (i = 1; i < sumOfBlacks.length; i++) {
                 int maxBlack = 0;
                 for (j = 0; j < sumOfBlacks[i].length; j++) {
                     if (maxBlack < sumOfBlacks[i][j]) {
@@ -301,7 +361,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     else
                         binaryCorrectFlag[i] = 0;
                 }
-                students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, score);
+                lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, score);
+
             }
             //need to ask if the last one
             checkIfFinalSheetOrContinue();
@@ -310,14 +371,28 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     private void checkIfFinalSheetOrContinue(){
+
+        if(totalExamsThatProcessedUntilNow == 1)
+            averageUntilNow = lastGrade;
+        else
+            averageUntilNow = ((averageUntilNow * (totalExamsThatProcessedUntilNow-1)) +lastGrade)/totalExamsThatProcessedUntilNow;
+
+        // print number of exams that processed already
+        info_examsCounter.setText(String.valueOf(totalExamsThatProcessedUntilNow));
+        // print the last grade that processed
+        info_examsCounter.setText(String.valueOf(lastGrade));
+        // print the average so far
+        info_examsCounter.setText(String.valueOf(averageUntilNow));
+
         need_to_continue.setVisibility(View.VISIBLE);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        Log.i("onActivityResult","welcome back!");
         if (requestCode == 1) {
             if(resultCode == Activity.RESULT_OK){
+                totalExamsThatProcessedUntilNow++;
                 String path=data.getStringExtra("sheet");
                 insertStudent(path);
             }
@@ -326,42 +401,84 @@ public class oneByOneOrSeries extends AppCompatActivity {
             }
         } else if(requestCode == 2){
             int i;
-            if(resultCode == Activity.RESULT_OK){
+            if(resultCode == Activity.RESULT_OK) {
                 int[] toFix = data.getIntArrayExtra("toFix");
-                for (i=0; i<toFix.length ;i++){
-                    if(toFix[i]!=0){
-                        studentAnswers[i]=toFix[i];
+                for (i = 0; i < toFix.length; i++) {
+                    if (toFix[i] != 0) {
+                        studentAnswers[i] = toFix[i];
                     }
                 }
                 // make binary array for questions -> 1 - right  , 0 - wrong
                 int[] binaryCorrectFlag = new int[numberOfQuestions];
-                for (i =0 ; i<numberOfQuestions ; i++){
-                    if(correctAnswers[i] == studentAnswers[i])
-                        binaryCorrectFlag[i]=1;
+                for (i = 0; i < numberOfQuestions; i++) {
+                    if (correctAnswers[i] == studentAnswers[i])
+                        binaryCorrectFlag[i] = 1;
                     else
-                        binaryCorrectFlag[i]=0;
+                        binaryCorrectFlag[i] = 0;
                 }
-                students_db.insertRaw(id,studentAnswers,binaryCorrectFlag,score);
+                lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, score);
 
                 checkIfFinalSheetOrContinue();
+            }if (resultCode == Activity.RESULT_CANCELED) {
+                    //Write your code if there's no result
+                }
 
             }else if(requestCode == 3){
                 startActivity(new Intent(getApplicationContext(),MainActivity.class));
             }
-            if (resultCode == Activity.RESULT_CANCELED) {
-                //Write your code if there's no result
-            }
-        }
+
     }//onActivityResult
 
-    private int calculateBlackLevel(Mat img, Point location, Size size ){
+    private int calculateBlackLevel(Mat img, Answer answer ){
         double blackLevel=0.0;
 //        double[] currentPixel;
-        for (int col = (int)location.x ; col < (location.x + size.width) ; ++col){
-            for (int raw = (int)location.y ; raw < (location.y + size.height) ; ++raw){
-                blackLevel = blackLevel+ img.get(raw,col)[0];
+//        double offsetX = answer.getLocationX()*0.415297;
+//        double offsetY = answer.getLocationY()*0.1453;
+        double offsetX = answer.getLocationX()*0.355;
+        double offsetY = answer.getLocationY()*0.435;
+        double offsetWidth = (answer.getLocationX()+offsetX - answer.getLocationX()+offsetX+answer.getHeight())/3;
+        double offsetHeigh = 0;//(barcodeInfo.getLocationY()+offsetY - barcodeInfo.getLocationY()+offsetY+barcodeInfo.getWidth())/4;
+        //double offsetWidth = (answer.getLocationX()+offsetX - answer.getLocationX()+offsetX+answer.getHeight())/3;
+//        double offsetWidth = (answer.getLocationX()+offsetX - answer.getLocationX()+offsetX+answer.getHeight())/3;
+//
+//        Point[] ps = new Point[]{
+//                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+offsetY),
+//                new Point(answer.getLocationX()+offsetX+answer.getHeight() +offsetWidth,answer.getLocationY()+offsetY),
+//                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+answer.getWidth()+offsetY),
+//                new Point(answer.getLocationX()+offsetX+answer.getHeight()+offsetWidth,answer.getLocationY()+answer.getWidth()+offsetY)
+//        };
+        Point[] ps = new Point[]{
+                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+offsetY),
+                new Point(answer.getLocationX()+offsetX+answer.getHeight() +offsetWidth,answer.getLocationY()+offsetY),
+                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+answer.getWidth()+offsetY+offsetHeigh),
+                new Point(answer.getLocationX()+offsetX+answer.getHeight()+offsetWidth,answer.getLocationY()+answer.getWidth()+offsetY+offsetHeigh)
+        };
+
+        Imgproc.line(img,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(img,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(img,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(img,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+
+        Bitmap bmpBarcode = bmpMarks.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(img, bmpBarcode);
+
+        for(int col = (int)ps[0].x ; col<ps[1].x ; col++ ){
+            for(int row = (int)ps[0].y; row<ps[2].y ; row++){
+                blackLevel = blackLevel+ img.get(row,col)[0];
+
             }
         }
+
+
+
+
+
+
+//        for (int col = (int)location.x ; col < (location.x + size.width) ; ++col){
+//            for (int raw = (int)location.y ; raw < (location.y + size.height) ; ++raw){
+//                blackLevel = blackLevel+ img.get(raw,col)[0];
+//            }
+//        }
         return (int)blackLevel;
     }
 
@@ -391,7 +508,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     allAnswers[0][0] = answer;
                 // add answer to list
                 else
-                    allAnswers[questionNumber-1][answerNumber-1] = answer;
+                    allAnswers[questionNumber][answerNumber-1] = answer;
 
             } while (cursor.moveToNext());
         }
