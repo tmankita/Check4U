@@ -23,6 +23,7 @@ import com.example.tmankita.check4u.oneByOneOrSeries;
 
 public class UserDropBoxActivity extends DropBoxActivity{
     private String path;
+    private String templatePath;
     private double score;
     private int numberOfQuestions;
     private int numberOfAnswers;
@@ -34,6 +35,7 @@ public class UserDropBoxActivity extends DropBoxActivity{
 //        final String[] params = new String[2];
         Bundle bundle = getIntent().getExtras();
         path = bundle.getString("TemplateDataBase");
+        templatePath = bundle.getString("templatePath");
         score = bundle.getDouble("score");
         numberOfQuestions = bundle.getInt("numberOfQuestions");
         numberOfAnswers = bundle.getInt("numberOfAnswers");
@@ -56,6 +58,7 @@ public class UserDropBoxActivity extends DropBoxActivity{
                     public void onUploadComplete(FileMetadata result) {
                         Toast.makeText(getApplicationContext(),"Template file uploaded succesfully",Toast.LENGTH_SHORT).show();
                         Intent oneByOneOrSeries = new Intent(getApplicationContext(), oneByOneOrSeries.class);
+                        oneByOneOrSeries.putExtra("templatePath",templatePath);
                         oneByOneOrSeries.putExtra("score",score);
                         oneByOneOrSeries.putExtra("numberOfQuestions",numberOfQuestions);
                         oneByOneOrSeries.putExtra("numberOfAnswers",numberOfAnswers);

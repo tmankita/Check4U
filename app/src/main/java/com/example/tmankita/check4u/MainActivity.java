@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
         //NewTemplateActivity.class
 
         Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
+        NewTemplate.putExtra("caller","MainActivity");
         startActivityForResult(NewTemplate,1);
     }
 

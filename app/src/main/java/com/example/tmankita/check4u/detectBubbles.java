@@ -17,10 +17,16 @@ import java.util.Comparator;
 
 public class detectBubbles {
     int numberOfAnswers;
-    public detectBubbles(int numberOfAnswers){
+    int numberOfQuestion;
+
+    public detectBubbles(int numberOfQuestion,int numberOfAnswers){
         this.numberOfAnswers = numberOfAnswers;
+        this.numberOfQuestion = numberOfQuestion;
     }
+
     public void detect(Mat paper, Bitmap bitmap) {
+//        # define the answer key which maps the question number
+        int[] answerKey = new int[numberOfQuestion];
 //# apply a four point perspective transform to both the
 //# original image and grayscale image to obtain a top-down
 //# birds eye view of the paper
@@ -105,10 +111,13 @@ public class detectBubbles {
 //	# bubbled answer
 //        cnts = contours.sort_contours(questionCnts[i:i + 5])[0]
 //        bubbled = None
+        int[] bubbled = new int[2];
         ArrayList<MatOfPoint> sortedquestionCnts = new ArrayList<>();
         ArrayList<MatOfPoint> temp = new ArrayList<>();
         for (int i = 0; i < questionCnts.size() ; i=i+numberOfAnswers) {
-            for(int j=i ; j<i+numberOfAnswers; i++){
+            bubbled[0]=0;
+            bubbled[1]=0;
+            for(int j=i ; j<i+numberOfAnswers; j++){
                 temp.add(questionCnts.get(j));
             }
             Collections.sort(temp, new Comparator<MatOfPoint>() {
@@ -119,6 +128,7 @@ public class detectBubbles {
             });
             Collections.reverse(temp);
             sortedquestionCnts.addAll(temp);
+
 //	# loop over the sorted contours
 //        for (j, c) in enumerate(cnts):
 //		# construct a mask that reveals only the current
@@ -126,10 +136,11 @@ public class detectBubbles {
 //        mask = np.zeros(thresh.shape, dtype="uint8")
 //        cv2.drawContours(mask, [c], -1, 255, -1)
             ArrayList<MatOfPoint> answer = new ArrayList<>();
-            Mat bitwise = new Mat(size,CvType.CV_8UC1);
-            Mat mask = Mat.zeros(size,CvType.CV_8UC1);
+
             int total=0;
             for(int j=0; j<temp.size();j++){
+                Mat bitwise = new Mat(size,CvType.CV_8UC1);
+                Mat mask = Mat.zeros(size,CvType.CV_8UC1);
                 answer.add(temp.get(j));
                 Imgproc.drawContours(mask,answer,-1,new Scalar(255,255,255),4);
                 answer.remove(temp.get(j));
@@ -140,6 +151,8 @@ public class detectBubbles {
 //        total = cv2.countNonZero(mask)
                 Core.bitwise_and(copyTresh,copyTresh,bitwise,mask);
                 total = Core.countNonZero(bitwise);
+                mask.release();
+                bitwise.release();
 
 //		# if the current total has a larger number of total
 //		# non-zero pixels, then we are examining the currently
@@ -147,24 +160,23 @@ public class detectBubbles {
 //        if bubbled is None or total > bubbled[0]:
 //        bubbled = (total, j)
 
+                if(bubbled[1]==0 || total > bubbled[0]){
+                    bubbled[0] = total;
+                    bubbled[1] = j;
+                }
             }
+//	# initialize the contour color and the index of the
+//	# *correct* answer
+//        color = (0, 0, 255)
+//        k = ANSWER_KEY[q]
+            answerKey[i] = bubbled[1];
 
         }
         questionCnts.clear();
 
 
-//
-//		# if the current total has a larger number of total
-//		# non-zero pixels, then we are examining the currently
-//		# bubbled-in answer
-//        if bubbled is None or total > bubbled[0]:
-//        bubbled = (total, j)
-//
-//	# initialize the contour color and the index of the
-//	# *correct* answer
-//        color = (0, 0, 255)
-//        k = ANSWER_KEY[q]
-//
+
+
 //	# check to see if the bubbled answer is correct
 //        if k == bubbled[1]:
 //        color = (0, 255, 0)

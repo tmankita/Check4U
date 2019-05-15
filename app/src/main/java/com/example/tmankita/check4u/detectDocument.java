@@ -305,7 +305,9 @@ public class detectDocument {
         } else if (!colorMode) {
             Imgproc.cvtColor(src,src,Imgproc.COLOR_RGBA2GRAY);
             if (filterMode) {
-                Imgproc.adaptiveThreshold(src, src, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
+//                Imgproc.adaptiveThreshold(src, src, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
+//                Imgproc.threshold(src,src,150,255,Imgproc.THRESH_BINARY);
+
             }
         }
     }

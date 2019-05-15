@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Handler;
@@ -28,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.Toast;
 
 import com.example.tmankita.check4u.Database.Template;
@@ -42,18 +42,22 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static android.widget.ImageView.ScaleType.FIT_START;
 
 
 public class NewTemplateActivity extends AppCompatActivity {
     //Data Structures
         private HashMap<String,Mark> marks;
-        private HashMap<String,Point> marksLocation;
+        private HashMap<String, Point> marksLocation;
         private HashMap<String,Size> marksSize;
         private HashMap<String,Mark> marksTogether;
         private HashMap<String,View> marksViews;
@@ -63,8 +67,8 @@ public class NewTemplateActivity extends AppCompatActivity {
         private ImageView image;
         private RelativeLayout relativeLayout;
         private RelativeLayout screenLayout;
-        private ZoomLayout zoomLayout;
-        private ZoomEngine engine;
+        private ZoomLayout zoomLayout; //comment
+        private ZoomEngine engine; //comment
         private Button copy;
         private Button exitCopyMode;
         private TableLayout layoutSetQuestionID;
@@ -103,6 +107,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         private String questionToInsertToTheTable;
         private int lastUserUpdateQuestion = 1 ;
         private int lastUserUpdateAnswer = 0 ;
+        private Point reference_point;
+        private Bitmap bitmap;
+        private String imagePath;
 
     //Copy Mode
         private String idHelper;
@@ -185,7 +192,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         wrongMark           = (ImageView) findViewById(R.id.wrongAns);
         barcodeMark         = (ImageView) findViewById(R.id.barcode_mark);
         threshold           = 140;
-        zoomLayout          = findViewById(R.id.zoom_layout);
+        zoomLayout          = findViewById(R.id.zoom_layout); //comment
         screenLayout        =  findViewById(R.id.Layout1);
         copy                = findViewById(R.id.copy);
         exitCopyMode        = findViewById(R.id.exitCopyMode);
@@ -195,7 +202,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         answerIDEdit        = findViewById(R.id.answerID);
         questionsNumberEdit  = findViewById(R.id.questionsNumber);
         answersNumberEdit    = findViewById(R.id.answersNumber);
-        engine              = zoomLayout.getEngine();
+        engine              = zoomLayout.getEngine(); //comment
         loading = findViewById(R.id.Loading);
         fadingCircle = new FadingCircle();
         fadingCircle.setColor(Color.WHITE);
@@ -226,11 +233,11 @@ public class NewTemplateActivity extends AppCompatActivity {
             }
         });
 
-        zoomLayout.setVisibility(View.VISIBLE);
+        zoomLayout.setVisibility(View.VISIBLE); //comment
         //computeTransformationZoom
         //engine.computeTransformationZoom();
         Bundle extras = getIntent().getExtras();
-        String imagePath = extras.getString("sheet");
+        imagePath = extras.getString("sheet");
 
 //      /storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg
 //        String imagePath = "/storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg";
@@ -238,34 +245,38 @@ public class NewTemplateActivity extends AppCompatActivity {
         image = (ImageView) findViewById(R.id.NewPicture);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
+        bitmap = BitmapFactory.decodeFile(imagePath, options);
         // to sum the black level in matrix
         Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Utils.bitmapToMat(bmp, paper);
+//        detectBlackSquare blackSquare = new detectBlackSquare();
+//        reference_point = blackSquare.detect(paper);
+
+
         // set paper on display
         Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
+
+        android.graphics.Point size = new android.graphics.Point();
         display.getSize(size);
         final int width = size.x;
         final int height = size.y;
         image.setImageBitmap(bitmap);
 
-        //M =image.getImageMatrix();
-        //M.postConcat(zoomLayout.getMatrix());
-        M=zoomLayout.getMatrix();
-        M.postConcat(image.getImageMatrix());
-        //zoomLayout.getMatrix(); //
-        RectF drawableRect = new RectF(0, 0, width, height);
-        RectF viewRect = new RectF(0, 0, image.getWidth(), image.getHeight());
+        M = image.getImageMatrix();
+
+        int rowHeight = 500;
+        RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
+        RectF viewRect = new RectF(0, 0, width, height - rowHeight);
         M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
         image.setImageMatrix(M);
+
         image.invalidate();
 
         // Set the drag surface
         image.setOnDragListener(new View.OnDragListener() {
             private String draggedImageTag;
             private  float x_cord ,y_cord;
-            private float zoomScale, pan_y,pan_x;
+            private float zoomScale, pan_y,pan_x; //comment
 
             @Override
             public boolean onDrag(View v, DragEvent event) {
@@ -274,10 +285,10 @@ public class NewTemplateActivity extends AppCompatActivity {
                     case DragEvent.ACTION_DRAG_STARTED:
                         View view =(View) event.getLocalState();
                         draggedImageTag = (String) view.getTag();
-                        pan_x = zoomLayout.getPanX();
-                        pan_y = zoomLayout.getPanY();
-                        zoomScale = zoomLayout.getRealZoom();
-                        engine.zoomTo(1,false);
+                        pan_x = zoomLayout.getPanX(); //comment
+                        pan_y = zoomLayout.getPanY(); //comment
+                        zoomScale = zoomLayout.getRealZoom(); //comment
+                        engine.zoomTo(1,false); //comment
                         v.invalidate();
                         Log.i("Mark", "Action is DragEvent.ACTION_DRAG_STARTED ");
                         break;
@@ -303,26 +314,26 @@ public class NewTemplateActivity extends AppCompatActivity {
                             double delta_x = (x_cord - (size_mark_prev.width/2))  - mark_prev_location.x ;
                             double delta_y = (y_cord - (size_mark_prev.height/2)) - mark_prev_location.y ;
                             View s = (View) event.getLocalState();
-                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)), s);
+                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),size_mark_prev.height,size_mark_prev.width, s);
                             for (View mark_selected: marksViews.values() ) {
                                 String MarkTag = (String) mark_selected.getTag(); //(String)mark_selected._mark.getTag();
                                 if(!MarkTag.equals(draggedImageTag)){
                                     Point curr_mark_prev_location = marksLocation.get(MarkTag);
                                     int new_x_cord = (int)(curr_mark_prev_location.x + delta_x);
                                     int new_y_cord = (int)(curr_mark_prev_location.y + delta_y);
-                                    updateDropAction(MarkTag, new_y_cord, new_x_cord, mark_selected);
+                                    updateDropAction(MarkTag, new_y_cord, new_x_cord, size_mark_prev.height ,size_mark_prev.width,mark_selected);
                                 }
                             }
-                            engine.realZoomTo(zoomScale,false);
-                            engine.panTo(pan_x,pan_y,false);
+                            engine.realZoomTo(zoomScale,false); //comment
+                            engine.panTo(pan_x,pan_y,false); //comment
 
 
                         }
                         else{
                             View s = (View) event.getLocalState();
-                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),s);
-                            engine.realZoomTo(zoomScale,false);
-                            engine.panTo(pan_x,pan_y,false);
+                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),size_mark_prev.height,size_mark_prev.width,s);
+                            engine.realZoomTo(zoomScale,false); //comment
+                            engine.panTo(pan_x,pan_y,false); //comment
 
                         }
                         break;
@@ -346,7 +357,7 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     }
 
-    public void  updateDropAction(String ImageTag, float y_cord, float x_cord, View v ){
+    public void  updateDropAction(String ImageTag, float y_cord, float x_cord, double height, double width, View v ){
         Mark mark = marks.get(ImageTag);
         RelativeLayout mark_select = mark._mark;
         View view = v;
@@ -355,7 +366,12 @@ public class NewTemplateActivity extends AppCompatActivity {
         view.setY(y_cord);
         markToUpdate = mark_select;
         v.invalidate();
-        updateLocation();
+        String tag = (String) markToUpdate.getTag();
+        Point p = new Point(x_cord,y_cord);
+        if(marksLocation.containsKey(tag)) {
+            marksLocation.remove(tag);
+        }
+        marksLocation.put( tag ,p);
 
     }
 
@@ -379,14 +395,6 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     }
 
-//    public void createQuestionMark ( View v ) {
-//        String newTag = VIEW_QUESTION_TAG + "_" + counterQuestion;
-//        counterQuestion++;
-//        RelativeLayout markLayout = createMark("QuestionMarker",newTag);
-//        markToUpdate = markLayout;
-//        relativeLayout.addView(markLayout,1);
-//        updateLocation();
-//    }
 
     public void createBarcodeMark ( View v ) {
         String newTag = VIEW_BARCODE_TAG;
@@ -399,10 +407,10 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void copy (View v ){
-        float pan_x = zoomLayout.getPanX();
-        float pan_y = zoomLayout.getPanY();
-        float zoomScale = zoomLayout.getRealZoom();
-        engine.zoomTo(1,false);
+        float pan_x = zoomLayout.getPanX(); //comment
+        float pan_y = zoomLayout.getPanY(); //comment
+        float zoomScale = zoomLayout.getRealZoom(); //comment
+        engine.zoomTo(1,false); //comment
         ArrayList<Mark> newMarksTogther = new ArrayList<>();
 
 
@@ -434,8 +442,8 @@ public class NewTemplateActivity extends AppCompatActivity {
 //              Set the circle location in the a beside the source mark
             params.removeRule(RelativeLayout.CENTER_HORIZONTAL);
             params.removeRule(RelativeLayout.CENTER_VERTICAL);
-            params.topMargin = loction.y + 100 ;
-            params.rightMargin = X - loction.x - 100;
+            params.topMargin = (int)(loction.y + 100) ;
+            params.rightMargin = (int)(X - loction.x - 100);
             newMark.setVisibility(View.VISIBLE);
 
             markToUpdate = newMark;
@@ -461,8 +469,8 @@ public class NewTemplateActivity extends AppCompatActivity {
 //        copy.setVisibility(View.INVISIBLE);
 //        exitCopyMode.setVisibility(View.INVISIBLE);
 
-        engine.realZoomTo(zoomScale,false);
-        engine.panTo(pan_x,pan_y,false);
+        engine.realZoomTo(zoomScale,false); //comment
+        engine.panTo(pan_x,pan_y,false); //comment
     }
 
     public void exitCopyMode (View v) {
@@ -495,27 +503,65 @@ public class NewTemplateActivity extends AppCompatActivity {
             db = new Template(this);
             // calculate inverse matrix
             Matrix inverse = new Matrix();
-            image.getImageMatrix().invert(inverse);
+            float[] matrixValuesBefore= new float[9];
+            M.getValues(matrixValuesBefore);
+            M.invert(inverse);
+
+//            float[] rP= new float[]{(float)reference_point.x,(float)reference_point.y};
+//            inverse.mapPoints(rP);
+
+//            Imgproc.circle(paper, new Point(rP[0],rP[1]), 10, new Scalar(0, 0, 255, 150), 4);
+//            Bitmap bmpBarcode23 = bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(paper, bmpBarcode23);
 
             for (int i = 0; i < numberOfQuestions; ++i) {
                 for (int j = 0; j < numberOfOptions; ++j) {
                     String tag = questionTable[i][j];
                     Point location;
                     Size size;
-                    int sumOfBlack;
+                    int sumOfBlack=0;
                     int id;
                     String[] parts = (tag).split("_");
 
                     location = marksLocation.get(tag);
                     size = marksSize.get(tag);
-                    float[] pForSize = new float[]{(float) (location.x+marks.get(tag)._mark.getWidth()), (float)(location.y+marks.get(tag)._mark.getHeight())};
-                    float[] p = new float[]{(float) location.x, (float) location.y};
-                    inverse.mapPoints(p);
-                    inverse.mapPoints(pForSize);
-                    size.height = Math.abs(pForSize[0] - p[0]);
-                    size.width = Math.abs(pForSize[1] - p[1]);
-                    Point transfer_point = new Point(Math.round(p[0]), Math.round(p[1]));
-                    sumOfBlack = calculateBlackLevel(paper, transfer_point, size);
+                    float[] pForSize1 = new float[]{(float) (location.x+size.width), (float)(location.y+size.height)};
+                    float[] p1 = new float[]{(float) location.x, (float) location.y};
+
+                    inverse.mapPoints(p1);
+                    inverse.mapPoints(pForSize1);
+
+                    Point[] ps1 = new Point[]{
+                            new Point(p1[0],p1[1]),
+                            new Point(pForSize1[0] ,p1[1]),
+                            new Point(p1[0],pForSize1[1]),
+                            new Point(pForSize1[0],pForSize1[1])
+                    };
+
+                    Point[] sorted_2 = detectDocument.sortPoints(ps1);
+
+//                Imgproc.line(paper,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
+//            Bitmap bmpBarcode23 = bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(paper, bmpBarcode23);
+                    Matrix scaleToRealSize = new Matrix();
+                    RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
+                    RectF viewRect = new RectF(0, 0, 4960, 7016);
+                    scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
+                    Point[] scalePoint = new Point[4];
+                    for (int k = 0; k < 4; k++) {
+                        float[] point = new float[]{(float)sorted_2[k].x,(float)sorted_2[k].y};
+                        scaleToRealSize.mapPoints(point);
+                        scalePoint[k] = new Point(point[0],point[1]);
+                    }
+
+                    size.height = Math.abs(scalePoint[0].y-scalePoint[3].y);
+                    size.width = Math.abs(scalePoint[0].x-scalePoint[1].x);
+
+                    Point transfer_point = new Point(Math.round(scalePoint[0].x), Math.round(scalePoint[0].y));
+//                    sumOfBlack = calculateBlackLevel(paper, transfer_point, size);
                     id = (i + 1) * 10 + (j + 1);
                     switch (parts[0]) {
                         case VIEW_WRONG_TAG:
@@ -532,19 +578,50 @@ public class NewTemplateActivity extends AppCompatActivity {
                 Size size;
                 location = marksLocation.get(VIEW_BARCODE_TAG);
                 size = marksSize.get(VIEW_BARCODE_TAG);
-                float[] pForSize = new float[]{(float) (location.x+size.width), (float)(location.y+size.height)};
-                float[] p = new float[]{(float) location.x, (float) location.y};
-                inverse.mapPoints(p);
-                inverse.mapPoints(pForSize);
-                size.height = Math.abs(pForSize[0] - p[0]);
-                size.width = Math.abs(pForSize[1] - p[1]);
-                Point transfer_barcode = new Point(Math.round(p[0]), Math.round(p[1]));
+                float[] pForSize1 = new float[]{(float) (location.x+size.width), (float)(location.y+size.height)};
+                float[] p1 = new float[]{(float) location.x, (float) location.y};
+
+                inverse.mapPoints(p1);
+                inverse.mapPoints(pForSize1);
+
+                Point[] ps1 = new Point[]{
+                        new Point(p1[0],p1[1]),
+                        new Point(pForSize1[0] ,p1[1]),
+                        new Point(p1[0],pForSize1[1]),
+                        new Point(pForSize1[0],pForSize1[1])
+                };
+
+                Point[] sorted_2 = detectDocument.sortPoints(ps1);
+
+//                Imgproc.line(paper,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
+//            Bitmap bmpBarcode23 = bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(paper, bmpBarcode23);
+                Matrix scaleToRealSize = new Matrix();
+                RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
+                RectF viewRect = new RectF(0, 0, 4960, 7016);
+                scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
+                Point[] scalePoint = new Point[4];
+                int i=0;
+                for (Point p: sorted_2) {
+                    float[] point = new float[]{(float)p.x,(float)p.y};
+                    scaleToRealSize.mapPoints(point);
+                    scalePoint[i] = new Point(point[0],point[1]);
+                    i++;
+                }
+                size.height = Math.abs(scalePoint[0].y-scalePoint[3].y);
+                size.width = Math.abs(scalePoint[0].x-scalePoint[1].x);
+
+                Point transfer_barcode = new Point(Math.round(scalePoint[0].x), Math.round(scalePoint[0].y));
                 db.insertData(0, (int) transfer_barcode.x, (int) transfer_barcode.y, (int) size.height, (int) size.width, 0, 0);
             }
             loading.setVisibility(View.INVISIBLE);
             fadingCircle.stop();
             Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
             Bundle bundle = new Bundle();
+            bundle.putString("templatePath", imagePath);
             bundle.putString("TemplateDataBase", db.getFilePath());
             bundle.putDouble("score", score);
             bundle.putInt("numberOfQuestions", numberOfQuestions);
@@ -773,10 +850,10 @@ public class NewTemplateActivity extends AppCompatActivity {
         plusButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                float pan_x = zoomLayout.getPanX();
-                float pan_y = zoomLayout.getPanY();
-                float zoomScale = zoomLayout.getRealZoom();
-                engine.zoomTo(1,false);
+                float pan_x = zoomLayout.getPanX(); //comment
+                float pan_y = zoomLayout.getPanY(); //comment
+                float zoomScale = zoomLayout.getRealZoom(); //comment
+                engine.zoomTo(1,false); //comment
 
                 double supremum = 140*4;
                 String buttonTag = (String) view.getTag();
@@ -819,17 +896,17 @@ public class NewTemplateActivity extends AppCompatActivity {
                     updateLocation();
 
                 }
-                engine.realZoomTo(zoomScale,false);
-                engine.panTo(pan_x,pan_y,false);
+                engine.realZoomTo(zoomScale,false); //comment
+                engine.panTo(pan_x,pan_y,false); //comment
             }
         });
         minusButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                float pan_x = zoomLayout.getPanX();
-                float pan_y = zoomLayout.getPanY();
-                float zoomScale = zoomLayout.getRealZoom();
-                engine.zoomTo(1,false);
+                float pan_x = zoomLayout.getPanX(); //comment
+                float pan_y = zoomLayout.getPanY(); //comment
+                float zoomScale = zoomLayout.getRealZoom(); //comment
+                engine.zoomTo(1,false); //comment
                 double infimum = 140/8;
 
                 String buttonTag = (String) view.getTag();
@@ -872,8 +949,8 @@ public class NewTemplateActivity extends AppCompatActivity {
                     updateLocation();
 
                 }
-                engine.realZoomTo(zoomScale,false);
-                engine.panTo(pan_x,pan_y,false);
+                engine.realZoomTo(zoomScale,false); //comment
+                engine.panTo(pan_x,pan_y,false); //comment
             }
         });
 
@@ -949,17 +1026,18 @@ public class NewTemplateActivity extends AppCompatActivity {
                 int [] location = new int[2];
                 location[0]=(int)markToUpdate.getX();
                 location[1]=(int)markToUpdate.getY();
+        Point p = new Point(location[0],location[1]);
                 if(marksLocation.containsKey(tag)) {
                     marksLocation.remove(tag);
                 }
-                marksLocation.put( tag ,new Point(location[0],location[1]));
+                marksLocation.put( tag ,p);
     }
 
     private int calculateBlackLevel( Mat img, Point location, Size size ){
         double blackLevel=0.0;
 //        double[] currentPixel;
-        for (int col = (int)location.x ; col < (location.x + size.width) ; ++col){
-            for (int raw = (int)location.y ; raw < (location.y + size.height) ; ++raw){
+        for (int raw = (int)location.y ; raw < (location.y + size.height) ; ++raw){
+            for (int col = (int)location.x ; col < (location.x + size.width) ; ++col){
                 blackLevel = blackLevel+ img.get(raw,col)[0];
             }
         }

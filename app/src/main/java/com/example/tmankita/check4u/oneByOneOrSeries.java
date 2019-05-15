@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 //import android.graphics.Point;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -65,6 +66,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private Button send;
     private EditText email;
     private File file;
+    private Point reference_point;
 
     //To print
     private int totalExamsThatProcessedUntilNow;
@@ -76,6 +78,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     //helpers
     Bitmap bmpMarks;
+    String templatePath;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -109,6 +112,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         score = extras.getDouble("score");
+        templatePath = extras.getString("templatePath");
         numberOfQuestions = extras.getInt("numberOfQuestions");
         numberOfAnswers   = extras.getInt("numberOfAnswers");
         need_to_continue  = findViewById(R.id.Layout_if_need_to_continue);
@@ -143,6 +147,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
         series.setVisibility(View.INVISIBLE);
         oneByOne.setVisibility(View.INVISIBLE);
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+        takePicture.putExtra("templatePath",templatePath);
+        takePicture.putExtra("caller","oneByOne");
         startActivityForResult(takePicture,1);
     }
 
@@ -221,26 +227,26 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     private int detectBarcode (Mat sheet,Bitmap bitmapSheet){
         Answer barcodeInfo = allanswers[0][0];
-//        Mat uncropped = sheet;
-//        int offsetX= 250;
-//        int offsetWidth = 100;
-//        Rect roi = new Rect(barcodeInfo.getLocationX()+offsetX, barcodeInfo.getLocationY(), barcodeInfo.getWidth()+offsetWidth,  barcodeInfo.getHeight()+20);
-//        Log.i("ROI","sheet: height: "+sheet.rows()+" width: "+sheet.cols()+
-//                " barcode: width: barcodeInfo.getLocationX()+offsetX("+(barcodeInfo.getLocationX()+offsetX)+")+ barcodeInfo.getWidth()+20("+(barcodeInfo.getHeight()+20)+") = "+ (barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight()+20+"\n"+
-//                "height: barcodeInfo.getLocationY()("+(barcodeInfo.getLocationY())+")+ barcodeInfo.getHeight()+20("+(barcodeInfo.getWidth()+offsetWidth))+") = "+ (barcodeInfo.getLocationY()+barcodeInfo.getWidth()+offsetWidth));
-//        Mat cropped = new Mat(uncropped, roi);
 
-        double offsetX = barcodeInfo.getLocationX()*0.355;
-        double offsetY = barcodeInfo.getLocationY()*0.44;
-        double offsetWidth = (barcodeInfo.getLocationX()+offsetX - barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight())/3;
-        double offsetHeigh = 0;//(barcodeInfo.getLocationY()+offsetY - barcodeInfo.getLocationY()+offsetY+barcodeInfo.getWidth())/4;
+        Matrix scaleToImageSize = new Matrix();
+        RectF viewRect = new RectF(0, 0, sheet.cols(), sheet.rows());
+        RectF drawableRect = new RectF(0, 0, 4960, 7016);
+        boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
 
-        Point[] ps = new Point[]{
-                new Point(barcodeInfo.getLocationX()+offsetX,barcodeInfo.getLocationY()+offsetY),
-                new Point(barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight() +offsetWidth,barcodeInfo.getLocationY()+offsetY),
-                new Point(barcodeInfo.getLocationX()+offsetX,barcodeInfo.getLocationY()+barcodeInfo.getWidth()+offsetY+offsetHeigh),
-                new Point(barcodeInfo.getLocationX()+offsetX+barcodeInfo.getHeight()+offsetWidth,barcodeInfo.getLocationY()+barcodeInfo.getWidth()+offsetY+offsetHeigh)
+        if(!success){Log.i("scaling","not success!!!!!");}
+
+        float[][] points = new float[][]{
+                {barcodeInfo.getLocationX(),barcodeInfo.getLocationY()},
+                {barcodeInfo.getLocationX()+barcodeInfo.getWidth(),barcodeInfo.getLocationY()},
+                {barcodeInfo.getLocationX(),barcodeInfo.getLocationY()+barcodeInfo.getHeight()},
+                {barcodeInfo.getLocationX()+barcodeInfo.getWidth(),barcodeInfo.getLocationY()+barcodeInfo.getHeight()}
         };
+        Point[] ps = new Point[4];
+        for (int i = 0; i < 4; i++) {
+            scaleToImageSize.mapPoints(points[i]);
+            ps[i] = new Point(points[i][0],points[i][1]);
+        }
+
 
         Point[] sorted_2 = detectDocument.sortPoints(ps);
         Mat barcodeCropped = TouchActivity.fourPointTransform_touch(sheet,sorted_2);
@@ -249,9 +255,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //        Imgproc.line(sheet,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
 //        Imgproc.line(sheet,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
 //        Imgproc.line(sheet,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
-
-
-
 
         Bitmap bmpBarcode = bitmapSheet.createBitmap(barcodeCropped.cols(), barcodeCropped.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(barcodeCropped, bmpBarcode);
@@ -268,6 +271,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 for (int i = 0; i < sparseArray.size(); i++){
                     Log.d(LOG_TAG, "Value_" + sparseArray.valueAt(i).rawValue + "_" + sparseArray.valueAt(i).displayValue);
                     id = Integer.parseInt(sparseArray.valueAt(i).rawValue);
+                    break;
 
                 }
             }else {
@@ -290,6 +294,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
         bmpMarks = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Utils.bitmapToMat(bmpBarcode, paper);
 
+//        detectBlackSquare blackSquare = new detectBlackSquare();
+//        reference_point = blackSquare.detect(paper);
+
         // calculate barcode -> student id
         int id = detectBarcode(paper,bmpBarcode);
         if(id == 0){
@@ -309,7 +316,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
             boolean flagNeedToCorrectSomeAnswers = false;
             for (i = 1; i < allanswers.length; i++) {
                 Answer[] question = allanswers[i];
-//                sumOfBlacks[i] = new int[numberOfAnswers];
                 for (j = 0; j < question.length; j++){
                     correct = question[j].getFlagCorrect();
                     sumOfBlacks[i][j] = calculateBlackLevel(paper, question[j]);
@@ -431,39 +437,37 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     private int calculateBlackLevel(Mat img, Answer answer ){
         double blackLevel=0.0;
-//        double[] currentPixel;
-//        double offsetX = answer.getLocationX()*0.415297;
-//        double offsetY = answer.getLocationY()*0.1453;
-        double offsetX = answer.getLocationX()*0.355;
-        double offsetY = answer.getLocationY()*0.435;
-        double offsetWidth = (answer.getLocationX()+offsetX - answer.getLocationX()+offsetX+answer.getHeight())/3;
-        double offsetHeigh = 0;//(barcodeInfo.getLocationY()+offsetY - barcodeInfo.getLocationY()+offsetY+barcodeInfo.getWidth())/4;
-        //double offsetWidth = (answer.getLocationX()+offsetX - answer.getLocationX()+offsetX+answer.getHeight())/3;
-//        double offsetWidth = (answer.getLocationX()+offsetX - answer.getLocationX()+offsetX+answer.getHeight())/3;
-//
-//        Point[] ps = new Point[]{
-//                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+offsetY),
-//                new Point(answer.getLocationX()+offsetX+answer.getHeight() +offsetWidth,answer.getLocationY()+offsetY),
-//                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+answer.getWidth()+offsetY),
-//                new Point(answer.getLocationX()+offsetX+answer.getHeight()+offsetWidth,answer.getLocationY()+answer.getWidth()+offsetY)
-//        };
-        Point[] ps = new Point[]{
-                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+offsetY),
-                new Point(answer.getLocationX()+offsetX+answer.getHeight() +offsetWidth,answer.getLocationY()+offsetY),
-                new Point(answer.getLocationX()+offsetX,answer.getLocationY()+answer.getWidth()+offsetY+offsetHeigh),
-                new Point(answer.getLocationX()+offsetX+answer.getHeight()+offsetWidth,answer.getLocationY()+answer.getWidth()+offsetY+offsetHeigh)
+
+        Matrix scaleToImageSize = new Matrix();
+        RectF viewRect = new RectF(0, 0, img.cols(), img.rows());
+        RectF drawableRect = new RectF(0, 0, 4960, 7016);
+        boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
+
+        if(!success){Log.i("scaling","not success!!!!!");}
+
+        float[][] points = new float[][]{
+                {answer.getLocationX(),answer.getLocationY()},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()},
+                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()}
         };
+        Point[] ps = new Point[4];
+        for (int i = 0; i < 4; i++) {
+            scaleToImageSize.mapPoints(points[i]);
+            ps[i] = new Point(points[i][0],points[i][1]);
+        }
 
-        Imgproc.line(img,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(img,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(img,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(img,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+        Point[] sorted_2 = detectDocument.sortPoints(ps);
 
-        Bitmap bmpBarcode = bmpMarks.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(img, bmpBarcode);
+//        Imgproc.line(img,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(img,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(img,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(img,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+//        Bitmap bmpBarcode = bmpMarks.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(img, bmpBarcode);
 
-        for(int col = (int)ps[0].x ; col<ps[1].x ; col++ ){
-            for(int row = (int)ps[0].y; row<ps[2].y ; row++){
+        for(int col = (int)ps[0].x ; col<sorted_2[1].x ; col++ ){
+            for(int row = (int)ps[0].y; row<sorted_2[3].y ; row++){
                 blackLevel = blackLevel+ img.get(row,col)[0];
 
             }
