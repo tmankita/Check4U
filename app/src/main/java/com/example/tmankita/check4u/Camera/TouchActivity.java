@@ -93,6 +93,7 @@ public class TouchActivity extends AppCompatActivity {
     private Matrix M1;
     private String caller;
     private String templatePath;
+    private Mat dcRotate;
 
 
 
@@ -219,6 +220,7 @@ public class TouchActivity extends AppCompatActivity {
     public void ok_test (View view){
         send_image(paper_obj.doc_resized);
     }
+
     public void edit_test(View view){
         set_button.setVisibility(View.VISIBLE);
         edit_button.setVisibility(View.INVISIBLE);
@@ -516,17 +518,19 @@ public class TouchActivity extends AppCompatActivity {
             }
 
             else if(caller.equals("oneByOne")){
+
                 alignToTemplate align_to_template = new alignToTemplate();
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
-                // to sum the black level in matrix
+
                 Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
                 Mat template = new Mat();
                 Utils.bitmapToMat(bmpT, template);
-                Mat dc = align_to_template.align(orig,template,bmp);
-                Mat dcRotate = new Mat(dc.size(),dc.type());
+                Mat dc = align_to_template.align(orig, template, bmp);
+                dcRotate = new Mat(dc.size(), dc.type());
                 Core.rotate(dc, dcRotate, Core.ROTATE_90_CLOCKWISE);
+
                 send_image(dcRotate);
             }
 

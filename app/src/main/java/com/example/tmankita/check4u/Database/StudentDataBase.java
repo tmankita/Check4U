@@ -11,7 +11,7 @@ public class StudentDataBase extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "studentDatabase.db";
     public static final String TABLE_NAME = "students_table";
     public static final String COL_1 = "ID";
-    public static final String COL_2 = "GRADE";
+    public static final String COL_N = "GRADE";
     public int numberOfQuestions;
 
 
@@ -32,16 +32,16 @@ public class StudentDataBase extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS "+TABLE_NAME);
         onCreate(db);
     }
-    public double insertRaw(int id, int[] answers ,int[] correctnesFlags , double score){
-        double grade=0;
+    public double insertRaw(int id, int[] answers ,int[] correctnesFlags , int score){
+        int grade=0;
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_1,id);
-        for (int i = 0; i < numberOfQuestions; i++) {
-            contentValues.put("QUESTION_"+(i+1),answers[i]);
+        for (int i = 1; i < numberOfQuestions+1; i++) {
+            contentValues.put("QUESTION_"+(i),answers[i]);
             grade = grade +score*correctnesFlags[i];
         }
-        contentValues.put(COL_2,grade);
+        contentValues.put(COL_N,grade);
 
         long result = db.insert(TABLE_NAME,null,contentValues);
         if(result == -1)
@@ -49,15 +49,21 @@ public class StudentDataBase extends SQLiteOpenHelper {
         else
             return grade;
     }
-
+//("create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , LOCATION_X INTEGER , LOCATION_Y INTEGER, " +
+//                "HEIGHT INTEGER, WIDTH INTEGER, SUM_OF_BLACK INTEGER, FLAG_CORRECT INTEGER )");
     private String generateCreateQuery(){
         int i;
-        String result = "create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , GRADE INTEGER , ";
-        for (i = 0; i < numberOfQuestions-1 ; i++) {
-            result = result + "QUESTION_"+ i+1 +" INTEGER , ";
+        String result = "create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , ";
 
+        if(numberOfQuestions == 1)
+            result = result + "QUESTION_"+ 1 +" INTEGER , GRADE INTEGER)";
+        else {
+            for (i = 0; i < numberOfQuestions - 1; i++) {
+                result = result + "QUESTION_" + i + 1 + " INTEGER , ";
+
+            }
+            result = result + "QUESTION_" + i + 1 + " INTEGER , GRADE INTEGER)";
         }
-        result = result + "QUESTION_"+ i+1 +"INTEGER )";
 
         return result;
     }

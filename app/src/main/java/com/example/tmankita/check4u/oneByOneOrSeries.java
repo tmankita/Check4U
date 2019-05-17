@@ -14,11 +14,15 @@ import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Display;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,7 +70,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private Button send;
     private EditText email;
     private File file;
-    private Point reference_point;
+    private ImageView test_align;
+    private Button ok_align_button;
+    private Button realign_button;
+    private RelativeLayout test_align_Layout;
+
+
+
 
     //To print
     private int totalExamsThatProcessedUntilNow;
@@ -77,8 +87,12 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private TextView info_average;
 
     //helpers
-    Bitmap bmpMarks;
-    String templatePath;
+    private Bitmap bmpMarks;
+    private String templatePath;
+    private String currentImagePath;
+
+    // for tests
+    Mat imageForTest;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -87,6 +101,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 case LoaderCallbackInterface.SUCCESS:
                 {
                     paper = new Mat();
+                    imageForTest = new Mat();
 
                 } break;
                 default:
@@ -124,6 +139,12 @@ public class oneByOneOrSeries extends AppCompatActivity {
         series            = (Button) findViewById(R.id.series_button);
         oneByOne          = (Button) findViewById(R.id.oneByOne_button);
         send              = (Button) findViewById(R.id.send_button);
+        test_align = (ImageView) findViewById(R.id.test_align);
+        ok_align_button = (Button) findViewById(R.id.ok_align);
+        realign_button = (Button) findViewById(R.id.realign);
+        test_align_Layout = (RelativeLayout) findViewById(R.id.test_align_layout);
+
+
 
         totalExamsThatProcessedUntilNow = 0;
         lastGrade = 0;
@@ -159,6 +180,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     public void continue_check(View view){
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+        takePicture.putExtra("templatePath",templatePath);
+        takePicture.putExtra("caller","oneByOne");
         startActivityForResult(takePicture,1);
     }
 
@@ -196,6 +219,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             curCSV.close();
             oneByOne.setVisibility(View.INVISIBLE);
             series.setVisibility(View.INVISIBLE);
+            need_to_continue.setVisibility(View.INVISIBLE);
             send_via_email.setVisibility(View.VISIBLE);
 
         }
@@ -221,8 +245,38 @@ public class oneByOneOrSeries extends AppCompatActivity {
 // the mail subject
         emailIntent .putExtra(Intent.EXTRA_SUBJECT, "Check4U - Grades DataBase");
 
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
+
         startActivityForResult(Intent.createChooser(emailIntent , "Send email..."),3);
 
+    }
+
+    public void ok_align(View view){
+        test_align_Layout.setVisibility(View.INVISIBLE);
+        test_align.setVisibility(View.INVISIBLE);
+        realign_button.setVisibility(View.INVISIBLE);
+        ok_align_button.setVisibility(View.INVISIBLE);
+        totalExamsThatProcessedUntilNow++;
+        insertStudent(currentImagePath);
+
+
+    }
+
+    public void again_align(View view){
+        File old_pic = new File(currentImagePath);
+        if(old_pic.exists())
+            old_pic.delete();
+        series.setVisibility(View.INVISIBLE);
+        oneByOne.setVisibility(View.INVISIBLE);
+        test_align_Layout.setVisibility(View.INVISIBLE);
+        test_align.setVisibility(View.INVISIBLE);
+        realign_button.setVisibility(View.INVISIBLE);
+        ok_align_button.setVisibility(View.INVISIBLE);
+        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+        takePicture.putExtra("templatePath",templatePath);
+        takePicture.putExtra("caller","oneByOne");
+        startActivityForResult(takePicture,1);
     }
 
     private int detectBarcode (Mat sheet,Bitmap bitmapSheet){
@@ -251,10 +305,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Point[] sorted_2 = detectDocument.sortPoints(ps);
         Mat barcodeCropped = TouchActivity.fourPointTransform_touch(sheet,sorted_2);
 
-//        Imgproc.line(sheet,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(sheet,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(sheet,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(sheet,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
+
+        Bitmap bmpBarcodeForTest = bitmapSheet.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(imageForTest, bmpBarcodeForTest);
 
         Bitmap bmpBarcode = bitmapSheet.createBitmap(barcodeCropped.cols(), barcodeCropped.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(barcodeCropped, bmpBarcode);
@@ -293,6 +350,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Bitmap bmpBarcode = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         bmpMarks = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Utils.bitmapToMat(bmpBarcode, paper);
+        paper.copyTo(imageForTest);
 
 //        detectBlackSquare blackSquare = new detectBlackSquare();
 //        reference_point = blackSquare.detect(paper);
@@ -300,7 +358,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
         // calculate barcode -> student id
         int id = detectBarcode(paper,bmpBarcode);
         if(id == 0){
-            Toast.makeText(getApplicationContext(),"Faild: not success to check this test, because there is no barcode in this test",Toast.LENGTH_SHORT);
+            Toast.makeText(this,"Faild: not success to check this test, because there is no barcode in this test",Toast.LENGTH_SHORT).show();
+            Log.e("BARCODE","Faild: not success to check this test, because there is no barcode in this test");
             checkIfFinalSheetOrContinue();
 
         }
@@ -310,7 +369,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             int i;
             int j;
             int correct = 0;
-            correctAnswers = new int[numberOfQuestions];
+            correctAnswers = new int[numberOfQuestions+1];
             int[][] sumOfBlacks = new int[numberOfQuestions+1][numberOfAnswers];
             ArrayList<Answer> AnotherAnswersThatChoosed = new ArrayList<>();
             boolean flagNeedToCorrectSomeAnswers = false;
@@ -319,20 +378,23 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 for (j = 0; j < question.length; j++){
                     correct = question[j].getFlagCorrect();
                     sumOfBlacks[i][j] = calculateBlackLevel(paper, question[j]);
+                    if (correct == 1)
+                        correctAnswers[i] = j + 1;
                 }
-                if (correct == 1)
-                    correctAnswers[i] = j + 1;
-            }
 
+            }
+        Bitmap bmpForTest = bmpMarks.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(imageForTest, bmpForTest);
+// ;
             //find question with two answers marked or more
             //get all of them -> show the user all the marks that marked let him to choose the right one
-            studentAnswers = new int[numberOfQuestions];
+            studentAnswers = new int[numberOfQuestions+1];
             int numberOfAnswerThatChoosed = 0;
             for (i = 1; i < sumOfBlacks.length; i++) {
-                int maxBlack = 0;
+                int minBlack = Integer.MAX_VALUE;
                 for (j = 0; j < sumOfBlacks[i].length; j++) {
-                    if (maxBlack < sumOfBlacks[i][j]) {
-                        maxBlack = sumOfBlacks[i][j];
+                    if (minBlack > sumOfBlacks[i][j]) {
+                        minBlack = sumOfBlacks[i][j];
                         numberOfAnswerThatChoosed = j + 1;
                     }
                 }
@@ -342,9 +404,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // record all the answers of the i question that marked
                     // the conditions are:
                     // - j+1 < allanswers[i].length
-                    // - at least sum of black pixels like the max sum of black pixels - 30 .
+                    // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (maxBlack - 30) < sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 50) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
 
@@ -360,14 +422,14 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 startActivityForResult(intent, 2);
             } else {
                 // make binary array for questions -> 1 - right  , 0 - wrong
-                int[] binaryCorrectFlag = new int[numberOfQuestions];
-                for (i = 0; i < numberOfQuestions; i++) {
+                int[] binaryCorrectFlag = new int[numberOfQuestions+1];
+                for (i = 1; i < numberOfQuestions+1; i++) {
                     if (correctAnswers[i] == studentAnswers[i])
                         binaryCorrectFlag[i] = 1;
                     else
                         binaryCorrectFlag[i] = 0;
                 }
-                lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, score);
+                lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
 
             }
             //need to ask if the last one
@@ -386,9 +448,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
         // print number of exams that processed already
         info_examsCounter.setText(String.valueOf(totalExamsThatProcessedUntilNow));
         // print the last grade that processed
-        info_examsCounter.setText(String.valueOf(lastGrade));
+        info_lastGrade.setText(String.valueOf(lastGrade));
         // print the average so far
-        info_examsCounter.setText(String.valueOf(averageUntilNow));
+        info_average.setText(String.valueOf(averageUntilNow));
 
         need_to_continue.setVisibility(View.VISIBLE);
     }
@@ -398,9 +460,38 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Log.i("onActivityResult","welcome back!");
         if (requestCode == 1) {
             if(resultCode == Activity.RESULT_OK){
-                totalExamsThatProcessedUntilNow++;
-                String path=data.getStringExtra("sheet");
-                insertStudent(path);
+                currentImagePath=data.getStringExtra("sheet");
+
+                Mat align = new Mat();
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
+                Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                Utils.bitmapToMat(bmpAlign, align);
+
+                Bitmap bmpPaper = Bitmap.createBitmap(align.cols(), align.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(align, bmpPaper);
+                Matrix matrix2 = new Matrix();
+                Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
+
+                Display display = getWindowManager().getDefaultDisplay();
+                android.graphics.Point size = new android.graphics.Point();
+                display.getSize(size);
+                int width = size.x;
+                int height = size.y;
+
+                test_align.setImageBitmap(bOutput);
+                Matrix M = test_align.getImageMatrix();
+                RectF drawableRect = new RectF(0, 0, align.cols(), align.rows());
+                RectF viewRect = new RectF(0, 0, width, height);
+                M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+                test_align.setImageMatrix(M);
+                test_align.invalidate();
+
+                test_align_Layout.setVisibility(View.VISIBLE);
+                test_align.setVisibility(View.VISIBLE);
+                realign_button.setVisibility(View.VISIBLE);
+                ok_align_button.setVisibility(View.VISIBLE);
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
@@ -422,7 +513,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     else
                         binaryCorrectFlag[i] = 0;
                 }
-                lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, score);
+                lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
 
                 checkIfFinalSheetOrContinue();
             }if (resultCode == Activity.RESULT_CANCELED) {
@@ -445,44 +536,62 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
         if(!success){Log.i("scaling","not success!!!!!");}
 
+        float offset = (float)(0.5 * Math.abs(answer.getLocationY()-(answer.getLocationY()+answer.getHeight()))+10);
         float[][] points = new float[][]{
-                {answer.getLocationX(),answer.getLocationY()},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()},
-                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()}
+                {answer.getLocationX(),answer.getLocationY()-offset},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-offset},
+                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()-offset},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()-offset}
+        };
+        float[][] points_1 = new float[][]{
+                {answer.getLocationX(),answer.getLocationY()-offset},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-offset},
+                {answer.getLocationX(),answer.getLocationY()+answer.getHeight()-offset},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()+answer.getHeight()-offset}
+        };
+        float[][] points_2 = new float[][]{
+                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()-offset},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()-offset},
+                {answer.getLocationX(),answer.getLocationY()-2*answer.getHeight()-offset},
+                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-2*answer.getHeight()-offset}
         };
         Point[] ps = new Point[4];
+        Point[] ps1 = new Point[4];
+        Point[] ps2 = new Point[4];
         for (int i = 0; i < 4; i++) {
             scaleToImageSize.mapPoints(points[i]);
             ps[i] = new Point(points[i][0],points[i][1]);
+            scaleToImageSize.mapPoints(points_1[i]);
+            ps1[i] = new Point(points_1[i][0],points_1[i][1]);
+            scaleToImageSize.mapPoints(points_2[i]);
+            ps2[i] = new Point(points_2[i][0],points_2[i][1]);
         }
 
-        Point[] sorted_2 = detectDocument.sortPoints(ps);
 
-//        Imgproc.line(img,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(img,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(img,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(img,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
-//        Bitmap bmpBarcode = bmpMarks.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(img, bmpBarcode);
+        Imgproc.line(imageForTest,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(imageForTest,ps1[0],ps1[1],new Scalar(255, 0, 0, 150), 4);
+        Imgproc.line(imageForTest,ps1[1],ps1[2],new Scalar(255, 0, 0, 150), 4);
+        Imgproc.line(imageForTest,ps1[2],ps1[3],new Scalar(255, 0, 0, 150), 4);
+        Imgproc.line(imageForTest,ps1[3],ps1[0],new Scalar(255, 0, 0, 150), 4);
+        Imgproc.line(imageForTest,ps2[0],ps2[1],new Scalar(0, 0, 255, 150), 4);
+        Imgproc.line(imageForTest,ps2[1],ps2[2],new Scalar(0, 0, 255, 150), 4);
+        Imgproc.line(imageForTest,ps2[2],ps2[3],new Scalar(0, 0, 255, 150), 4);
+        Imgproc.line(imageForTest,ps2[3],ps2[0],new Scalar(0, 0, 255, 150), 4);
 
-        for(int col = (int)ps[0].x ; col<sorted_2[1].x ; col++ ){
-            for(int row = (int)ps[0].y; row<sorted_2[3].y ; row++){
+
+//        for(int col = (int)ps[0].x ; col<ps[1].x ; col++ ){
+//            for(int row = (int)ps[3].y; row<ps[1].y ; row++){
+                for(int col = (int)ps[0].x ; col<ps[1].x ; col++ ){
+                    for(int row = (int)ps2[3].y; row<ps[1].y ; row++){
                 blackLevel = blackLevel+ img.get(row,col)[0];
 
             }
         }
 
 
-
-
-
-
-//        for (int col = (int)location.x ; col < (location.x + size.width) ; ++col){
-//            for (int raw = (int)location.y ; raw < (location.y + size.height) ; ++raw){
-//                blackLevel = blackLevel+ img.get(raw,col)[0];
-//            }
-//        }
         return (int)blackLevel;
     }
 

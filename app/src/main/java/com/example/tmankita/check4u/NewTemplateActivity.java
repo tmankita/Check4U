@@ -99,17 +99,18 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     //Markers
         private ImageView wrongMark;
+        private ImageView rightMark;
         private ImageView barcodeMark;
 
     //Helpers
         private RelativeLayout markToUpdate;
-        private int threshold;
         private String questionToInsertToTheTable;
         private int lastUserUpdateQuestion = 1 ;
         private int lastUserUpdateAnswer = 0 ;
-        private Point reference_point;
         private Bitmap bitmap;
         private String imagePath;
+        private String idForCreate;
+
 
     //Copy Mode
         private String idHelper;
@@ -190,8 +191,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         marksViews          = new HashMap<>();
         relativeLayout      = (RelativeLayout) findViewById(R.id.Layout);
         wrongMark           = (ImageView) findViewById(R.id.wrongAns);
+        rightMark           = (ImageView) findViewById(R.id.rightAns);
         barcodeMark         = (ImageView) findViewById(R.id.barcode_mark);
-        threshold           = 140;
+
         zoomLayout          = findViewById(R.id.zoom_layout); //comment
         screenLayout        =  findViewById(R.id.Layout1);
         copy                = findViewById(R.id.copy);
@@ -234,13 +236,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         });
 
         zoomLayout.setVisibility(View.VISIBLE); //comment
-        //computeTransformationZoom
-        //engine.computeTransformationZoom();
+
         Bundle extras = getIntent().getExtras();
         imagePath = extras.getString("sheet");
-
-//      /storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg
-//        String imagePath = "/storage/emulated/0/Pictures/Check4U/IMG_20190226_220922.jpg";
 
         image = (ImageView) findViewById(R.id.NewPicture);
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -249,9 +247,6 @@ public class NewTemplateActivity extends AppCompatActivity {
         // to sum the black level in matrix
         Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Utils.bitmapToMat(bmp, paper);
-//        detectBlackSquare blackSquare = new detectBlackSquare();
-//        reference_point = blackSquare.detect(paper);
-
 
         // set paper on display
         Display display = getWindowManager().getDefaultDisplay();
@@ -271,6 +266,118 @@ public class NewTemplateActivity extends AppCompatActivity {
         image.setImageMatrix(M);
 
         image.invalidate();
+
+
+        wrongMark.setOnTouchListener(new View.OnTouchListener() {
+
+            //onTouch code
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                viewHelper = v;
+                final RelativeLayout markLayout;
+                String newTag = VIEW_WRONG_TAG +"_" + counterQuestion + counterWrong;
+                counterWrong++;
+                markLayout = createMark("WrongAnswerMarker", newTag,wrongMark.getHeight(),wrongMark.getWidth());
+                markLayout.setVisibility(View.VISIBLE);
+                markToUpdate = markLayout;
+                relativeLayout.addView(markLayout,1);
+                relativeLayout.invalidate();
+                updateLocation();
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                    // basic mode
+                        markLayout.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (markLayout != null) {
+                                    ClipData data = ClipData.newPlainText("", "");
+                                    View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(markLayout);
+                                    markLayout.startDrag(data, shadowBuilder, markLayout, View.DRAG_FLAG_OPAQUE);
+                                    markLayout.setVisibility(View.INVISIBLE);
+
+                                }
+                            }
+                        });
+
+
+                }
+
+                return false;
+            }
+        });
+
+        rightMark.setOnTouchListener(new View.OnTouchListener() {
+
+            //onTouch code
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                viewHelper = v;
+                final RelativeLayout markLayout;
+                String newTag = VIEW_RIGHT_TAG + "_" + counterQuestion + counterWrong;
+                counterWrong++;
+                markLayout = createMark("RightAnswerMarker", newTag,wrongMark.getHeight(),wrongMark.getWidth());
+                markToUpdate = markLayout;
+                relativeLayout.addView(markLayout,1);
+                markLayout.setVisibility(View.VISIBLE);
+                relativeLayout.invalidate();
+                updateLocation();
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        // basic mode
+                        markLayout.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (markLayout != null) {
+                                    ClipData data = ClipData.newPlainText("", "");
+                                    View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(markLayout);
+                                    markLayout.startDrag(data, shadowBuilder, markLayout, View.DRAG_FLAG_OPAQUE);
+                                    markLayout.setVisibility(View.INVISIBLE);
+
+                                }
+                            }
+                        });
+
+                }
+                return false;
+            }
+        });
+
+        barcodeMark.setOnTouchListener(new View.OnTouchListener() {
+            //onTouch code
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                idHelper = (String) v.getTag();
+                viewHelper = v;
+                final RelativeLayout markLayout;
+                String newTag = VIEW_BARCODE_TAG;
+                markLayout = createMark("barcode", newTag,wrongMark.getHeight(),wrongMark.getWidth());
+                markToUpdate = markLayout;
+                relativeLayout.addView(markLayout,1);
+                markLayout.setVisibility(View.VISIBLE);
+                relativeLayout.invalidate();
+                updateLocation();
+                barcodeMark.setVisibility(View.INVISIBLE);
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        markLayout.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (markLayout != null) {
+                                    ClipData data = ClipData.newPlainText("", "");
+                                    View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(markLayout);
+                                    markLayout.startDrag(data, shadowBuilder, markLayout, View.DRAG_FLAG_OPAQUE);
+                                    markLayout.setVisibility(View.INVISIBLE);
+
+                                }
+                            }
+                        });
+
+                }
+                return false;
+            }
+        });
+
+
 
         // Set the drag surface
         image.setOnDragListener(new View.OnDragListener() {
@@ -308,34 +415,37 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                         x_cord =  event.getX();
                         y_cord =  event.getY();
-                        Size size_mark_prev = marksSize.get(draggedImageTag);
-                        Point mark_prev_location = marksLocation.get(draggedImageTag);
-                        if(copyModeFlag){
-                            double delta_x = (x_cord - (size_mark_prev.width/2))  - mark_prev_location.x ;
-                            double delta_y = (y_cord - (size_mark_prev.height/2)) - mark_prev_location.y ;
-                            View s = (View) event.getLocalState();
-                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),size_mark_prev.height,size_mark_prev.width, s);
-                            for (View mark_selected: marksViews.values() ) {
-                                String MarkTag = (String) mark_selected.getTag(); //(String)mark_selected._mark.getTag();
-                                if(!MarkTag.equals(draggedImageTag)){
-                                    Point curr_mark_prev_location = marksLocation.get(MarkTag);
-                                    int new_x_cord = (int)(curr_mark_prev_location.x + delta_x);
-                                    int new_y_cord = (int)(curr_mark_prev_location.y + delta_y);
-                                    updateDropAction(MarkTag, new_y_cord, new_x_cord, size_mark_prev.height ,size_mark_prev.width,mark_selected);
+                        Size size_mark_prev;
+
+                            size_mark_prev = marksSize.get(draggedImageTag);
+                            Point mark_prev_location = marksLocation.get(draggedImageTag);
+                            if(copyModeFlag){
+                                double delta_x = (x_cord - (size_mark_prev.width/2))  - mark_prev_location.x ;
+                                double delta_y = (y_cord - (size_mark_prev.height/2)) - mark_prev_location.y ;
+                                View s = (View) event.getLocalState();
+                                updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),size_mark_prev.height,size_mark_prev.width, s);
+                                for (View mark_selected: marksViews.values() ) {
+                                    String MarkTag = (String) mark_selected.getTag(); //(String)mark_selected._mark.getTag();
+                                    if(!MarkTag.equals(draggedImageTag)){
+                                        Point curr_mark_prev_location = marksLocation.get(MarkTag);
+                                        int new_x_cord = (int)(curr_mark_prev_location.x + delta_x);
+                                        int new_y_cord = (int)(curr_mark_prev_location.y + delta_y);
+                                        updateDropAction(MarkTag, new_y_cord, new_x_cord, size_mark_prev.height ,size_mark_prev.width,mark_selected);
+                                    }
                                 }
+                                engine.realZoomTo(zoomScale,false); //comment
+                                engine.panTo(pan_x,pan_y,false); //comment
+
+
                             }
-                            engine.realZoomTo(zoomScale,false); //comment
-                            engine.panTo(pan_x,pan_y,false); //comment
+                            else{
+                                View s = (View) event.getLocalState();
+                                updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),size_mark_prev.height,size_mark_prev.width,s);
+                                engine.realZoomTo(zoomScale,false); //comment
+                                engine.panTo(pan_x,pan_y,false); //comment
 
+                            }
 
-                        }
-                        else{
-                            View s = (View) event.getLocalState();
-                            updateDropAction(draggedImageTag,(int)(y_cord - (size_mark_prev.height/2)),(int)(x_cord - (size_mark_prev.width/2)),size_mark_prev.height,size_mark_prev.width,s);
-                            engine.realZoomTo(zoomScale,false); //comment
-                            engine.panTo(pan_x,pan_y,false); //comment
-
-                        }
                         break;
 
                     case DragEvent.ACTION_DRAG_ENDED:
@@ -375,36 +485,37 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     }
 
-    public void createWrongMark ( View v ) {
-        String newTag = VIEW_WRONG_TAG +"_" + counterQuestion + counterWrong;
-        counterWrong++;
-        RelativeLayout markLayout = createMark("WrongAnswerMarker", newTag,wrongMark.getHeight(),wrongMark.getWidth());
-        markToUpdate = markLayout;
-        relativeLayout.addView(markLayout,1);
-        updateLocation();
 
-    }
+//    public void createWrongMark ( View v ) {
+//        String newTag = VIEW_WRONG_TAG +"_" + counterQuestion + counterWrong;
+//        counterWrong++;
+//        RelativeLayout markLayout = createMark("WrongAnswerMarker", newTag,wrongMark.getHeight(),wrongMark.getWidth());
+//        markToUpdate = markLayout;
+//        relativeLayout.addView(markLayout,1);
+//        updateLocation();
+//
+//    }
 
-    public void createRightMark ( View v ) {
-        String newTag = VIEW_RIGHT_TAG + "_" + counterQuestion + counterWrong;
-        counterWrong++;
-        RelativeLayout markLayout = createMark("RightAnswerMarker", newTag,wrongMark.getHeight(),wrongMark.getWidth());
-        markToUpdate = markLayout;
-        relativeLayout.addView(markLayout,1);
-        updateLocation();
+//    public void createRightMark ( View v ) {
+//        String newTag = VIEW_RIGHT_TAG + "_" + counterQuestion + counterWrong;
+//        counterWrong++;
+//        RelativeLayout markLayout = createMark("RightAnswerMarker", newTag,wrongMark.getHeight(),wrongMark.getWidth());
+//        markToUpdate = markLayout;
+//        relativeLayout.addView(markLayout,1);
+//        updateLocation();
+//
+//    }
 
-    }
 
-
-    public void createBarcodeMark ( View v ) {
-        String newTag = VIEW_BARCODE_TAG;
-        RelativeLayout markLayout = createMark("barcode", newTag,wrongMark.getHeight(),wrongMark.getWidth());
-        markToUpdate = markLayout;
-        relativeLayout.addView(markLayout,1);
-        updateLocation();
-        barcodeMark.setVisibility(View.INVISIBLE);
-
-    }
+//    public void createBarcodeMark ( View v ) {
+//        String newTag = VIEW_BARCODE_TAG;
+//        RelativeLayout markLayout = createMark("barcode", newTag,wrongMark.getHeight(),wrongMark.getWidth());
+//        markToUpdate = markLayout;
+//        relativeLayout.addView(markLayout,1);
+//        updateLocation();
+//        barcodeMark.setVisibility(View.INVISIBLE);
+//
+//    }
 
     public void copy (View v ){
         float pan_x = zoomLayout.getPanX(); //comment
