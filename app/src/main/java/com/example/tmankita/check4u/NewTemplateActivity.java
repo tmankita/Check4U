@@ -14,11 +14,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +30,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tmankita.check4u.Database.Template;
@@ -109,7 +112,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         private int lastUserUpdateAnswer = 0 ;
         private Bitmap bitmap;
         private String imagePath;
-        private String idForCreate;
+        private boolean keyboardOff;
 
 
     //Copy Mode
@@ -123,12 +126,15 @@ public class NewTemplateActivity extends AppCompatActivity {
         public Button _plusButton;
         public Button _minusButton;
         public Button _closeButton;
+        public TextView _viewQ;
 
-        public Mark (RelativeLayout mark, Button plusButton, Button minusButton, Button closeButton){
+        public Mark (RelativeLayout mark, Button plusButton, Button minusButton, Button closeButton, TextView viewQ){
             _mark = mark;
             _plusButton = plusButton;
             _minusButton = minusButton;
             _closeButton = closeButton;
+            _viewQ = viewQ;
+
         }
 
     }
@@ -183,7 +189,7 @@ public class NewTemplateActivity extends AppCompatActivity {
             Log.d("LOAD OPENCV", "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
-
+        keyboardOff         = false;
         marksLocation       = new HashMap<>();
         marksSize           = new HashMap<>();
         marks               = new HashMap<>();
@@ -193,7 +199,6 @@ public class NewTemplateActivity extends AppCompatActivity {
         wrongMark           = (ImageView) findViewById(R.id.wrongAns);
         rightMark           = (ImageView) findViewById(R.id.rightAns);
         barcodeMark         = (ImageView) findViewById(R.id.barcode_mark);
-
         zoomLayout          = findViewById(R.id.zoom_layout); //comment
         screenLayout        =  findViewById(R.id.Layout1);
         copy                = findViewById(R.id.copy);
@@ -220,20 +225,19 @@ public class NewTemplateActivity extends AppCompatActivity {
         params1.height = displayMetrics.heightPixels;
         params1.width = displayMetrics.widthPixels;
 
-        relativeLayout.setOnHierarchyChangeListener(new ViewGroup.OnHierarchyChangeListener() {
-            @Override
-            public void onChildViewAdded(View parent, View child) {
-                if(copyModeFlag){
-                    String tag = (String) child.getTag();
-                    marksViews.put(tag,child);
-                }
-            }
-
-            @Override
-            public void onChildViewRemoved(View parent, View child) {
-
-            }
-        });
+//        relativeLayout.setOnHierarchyChangeListener(new ViewGroup.OnHierarchyChangeListener() {
+//            @Override
+//            public void onChildViewAdded(View parent, View child) {
+//                    String tag = (String) child.getTag();
+//                    marksViews.put(tag,child);
+//
+//            }
+//
+//            @Override
+//            public void onChildViewRemoved(View parent, View child) {
+//
+//            }
+//        });
 
         zoomLayout.setVisibility(View.VISIBLE); //comment
 
@@ -378,6 +382,34 @@ public class NewTemplateActivity extends AppCompatActivity {
         });
 
 
+        screenLayout.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+
+                        Rect r = new Rect();
+                        screenLayout.getWindowVisibleDisplayFrame(r);
+                        int screenHeight = screenLayout.getRootView().getHeight();
+
+                        // r.bottom is the position above soft keypad or device button.
+                        // if keypad is shown, the r.bottom is smaller than that before.
+                        int keypadHeight = screenHeight - r.bottom;
+
+                        Log.d("KEYBOARD", "keypadHeight = " + keypadHeight);
+
+                        if (keypadHeight > screenHeight * 0.15) { // 0.15 ratio is perhaps enough to determine keypad height.
+                            // keyboard is opened
+                            if(keyboardOff){
+                                keyboardOff= false;
+                            InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                            imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+                            }
+                        }
+                        else {
+                            // keyboard is closed
+                        }
+                    }
+                });
 
         // Set the drag surface
         image.setOnDragListener(new View.OnDragListener() {
@@ -522,7 +554,7 @@ public class NewTemplateActivity extends AppCompatActivity {
         float pan_y = zoomLayout.getPanY(); //comment
         float zoomScale = zoomLayout.getRealZoom(); //comment
         engine.zoomTo(1,false); //comment
-        ArrayList<Mark> newMarksTogther = new ArrayList<>();
+//        ArrayList<Mark> newMarksTogther = new ArrayList<>();
 
 
         for ( Mark mark: marksTogether.values() ) {
@@ -553,8 +585,8 @@ public class NewTemplateActivity extends AppCompatActivity {
 //              Set the circle location in the a beside the source mark
             params.removeRule(RelativeLayout.CENTER_HORIZONTAL);
             params.removeRule(RelativeLayout.CENTER_VERTICAL);
-            params.topMargin = (int)(loction.y + 100) ;
-            params.rightMargin = (int)(X - loction.x - 100);
+            params.topMargin = (int)(loction.y + 50) ;
+            params.rightMargin = (int)(X - loction.x);
             newMark.setVisibility(View.VISIBLE);
 
             markToUpdate = newMark;
@@ -562,19 +594,29 @@ public class NewTemplateActivity extends AppCompatActivity {
             updateLocation();
             RelativeLayout mark_to_UnHighlight_layout =  mark._mark ;
             mark_to_UnHighlight_layout.setBackgroundColor(Color.parseColor("#00FFFFFF"));
-            newMarksTogther.add(marks.get(newMark.getTag()));
+//            newMarksTogther.add(marks.get(newMark.getTag()));
         }
+        copyModeFlag = false;
+        copy.setVisibility(View.INVISIBLE);
         marksTogether.clear();
         marksViews.clear();
+        exitCopyMode.setVisibility(View.INVISIBLE);
 
-        for (Mark m: newMarksTogther) {
-            String tag = (String) m._mark.getTag();
-            marksTogether.put(tag,m);
-            RelativeLayout mark_to_highlight_layout =  m._mark ;
-            mark_to_highlight_layout.setBackgroundColor(Color.parseColor("#515DA7F1"));
+//        for (final Mark m: newMarksTogther) {
+//            final String tag = (String) m._mark.getTag();
+//            marksTogether.put(tag,m);
+//            RelativeLayout mark_to_highlight_layout =  m._mark ;
+//            mark_to_highlight_layout.setBackgroundColor(Color.parseColor("#515DA7F1"));
+//            m._mark.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    View mark =(View) m._closeButton.getParent();
+//                    marksViews.put(tag,mark);
+//                }
+//            });
 
-        }
-        newMarksTogther.clear();
+//        }
+//        newMarksTogther.clear();
 
 //        copyModeFlag = false;
 //        copy.setVisibility(View.INVISIBLE);
@@ -600,7 +642,7 @@ public class NewTemplateActivity extends AppCompatActivity {
     public void createDataBase( View v ){
         if(!marksLocation.containsKey("BarcodeMarker") || !marksSize.containsKey("BarcodeMarker")){
             Log.i("createDataBase", "Most mark barcode!!! ");
-            Toast.makeText(getApplicationContext(),"Most mark barcode!!!",Toast.LENGTH_LONG);
+            Toast.makeText(getApplicationContext(),"Most mark barcode!!!",Toast.LENGTH_LONG).show();
         }
         else {
             double score = 100 / numberOfQuestions;
@@ -614,17 +656,20 @@ public class NewTemplateActivity extends AppCompatActivity {
             db = new Template(this);
             // calculate inverse matrix
             Matrix inverse = new Matrix();
-            float[] matrixValuesBefore= new float[9];
-            M.getValues(matrixValuesBefore);
+//            float[] matrixValuesBefore= new float[9];
+//            M.getValues(matrixValuesBefore);
             M.invert(inverse);
-
 //            float[] rP= new float[]{(float)reference_point.x,(float)reference_point.y};
 //            inverse.mapPoints(rP);
 
 //            Imgproc.circle(paper, new Point(rP[0],rP[1]), 10, new Scalar(0, 0, 255, 150), 4);
 //            Bitmap bmpBarcode23 = bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
 //            Utils.matToBitmap(paper, bmpBarcode23);
-
+            float[] pForSize1 = new float[2];
+            float[] p1 = new float[2];
+            Point[] ps1 = new Point[4];
+            float[] point = new float[2];
+            Point[] scalePoint = new Point[4];
             for (int i = 0; i < numberOfQuestions; ++i) {
                 for (int j = 0; j < numberOfOptions; ++j) {
                     String tag = questionTable[i][j];
@@ -636,18 +681,18 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                     location = marksLocation.get(tag);
                     size = marksSize.get(tag);
-                    float[] pForSize1 = new float[]{(float) (location.x+size.width), (float)(location.y+size.height)};
-                    float[] p1 = new float[]{(float) location.x, (float) location.y};
+                    pForSize1[0]= (float) (location.x+size.width);
+                    pForSize1[1] = (float)(location.y+size.height);
+                    p1[0] = (float) location.x;
+                    p1[1] = (float) location.y;
 
                     inverse.mapPoints(p1);
                     inverse.mapPoints(pForSize1);
 
-                    Point[] ps1 = new Point[]{
-                            new Point(p1[0],p1[1]),
-                            new Point(pForSize1[0] ,p1[1]),
-                            new Point(p1[0],pForSize1[1]),
-                            new Point(pForSize1[0],pForSize1[1])
-                    };
+                    ps1[0] = new Point(p1[0],p1[1]);
+                    ps1[1] = new Point(pForSize1[0] ,p1[1]);
+                    ps1[2] = new Point(p1[0],pForSize1[1]);
+                    ps1[3] = new Point(pForSize1[0],pForSize1[1]);
 
                     Point[] sorted_2 = detectDocument.sortPoints(ps1);
 
@@ -661,9 +706,9 @@ public class NewTemplateActivity extends AppCompatActivity {
                     RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
                     RectF viewRect = new RectF(0, 0, 4960, 7016);
                     scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
-                    Point[] scalePoint = new Point[4];
+
                     for (int k = 0; k < 4; k++) {
-                        float[] point = new float[]{(float)sorted_2[k].x,(float)sorted_2[k].y};
+                        point[0] =(float)sorted_2[k].x; point[1] = (float)sorted_2[k].y;
                         scaleToRealSize.mapPoints(point);
                         scalePoint[k] = new Point(point[0],point[1]);
                     }
@@ -671,15 +716,15 @@ public class NewTemplateActivity extends AppCompatActivity {
                     size.height = Math.abs(scalePoint[0].y-scalePoint[3].y);
                     size.width = Math.abs(scalePoint[0].x-scalePoint[1].x);
 
-                    Point transfer_point = new Point(Math.round(scalePoint[0].x), Math.round(scalePoint[0].y));
+                    Point transfer_point = new Point(scalePoint[0].x, scalePoint[0].y);
 //                    sumOfBlack = calculateBlackLevel(paper, transfer_point, size);
                     id = (i + 1) * 10 + (j + 1);
                     switch (parts[0]) {
                         case VIEW_WRONG_TAG:
-                            db.insertData(id, (int) transfer_point.x, (int) transfer_point.y, (int) size.height, (int) size.width, sumOfBlack, 0);
+                            db.insertData(id, transfer_point.x,  transfer_point.y,  size.height,  size.width, sumOfBlack, 0);
                             break;
                         case VIEW_RIGHT_TAG:
-                            db.insertData(id, (int) transfer_point.x, (int) transfer_point.y, (int) size.height, (int) size.width, sumOfBlack, 1);
+                            db.insertData(id,  transfer_point.x,  transfer_point.y,  size.height,  size.width, sumOfBlack, 1);
                             break;
                     }
                 }
@@ -689,18 +734,18 @@ public class NewTemplateActivity extends AppCompatActivity {
                 Size size;
                 location = marksLocation.get(VIEW_BARCODE_TAG);
                 size = marksSize.get(VIEW_BARCODE_TAG);
-                float[] pForSize1 = new float[]{(float) (location.x+size.width), (float)(location.y+size.height)};
-                float[] p1 = new float[]{(float) location.x, (float) location.y};
+                pForSize1[0]= (float) (location.x+size.width);
+                pForSize1[1] = (float)(location.y+size.height);
+                p1[0] = (float) location.x;
+                p1[1] = (float) location.y;
 
                 inverse.mapPoints(p1);
                 inverse.mapPoints(pForSize1);
 
-                Point[] ps1 = new Point[]{
-                        new Point(p1[0],p1[1]),
-                        new Point(pForSize1[0] ,p1[1]),
-                        new Point(p1[0],pForSize1[1]),
-                        new Point(pForSize1[0],pForSize1[1])
-                };
+                ps1[0] = new Point(p1[0],p1[1]);
+                ps1[1] = new Point(pForSize1[0] ,p1[1]);
+                ps1[2] = new Point(p1[0],pForSize1[1]);
+                ps1[3] = new Point(pForSize1[0],pForSize1[1]);
 
                 Point[] sorted_2 = detectDocument.sortPoints(ps1);
 
@@ -714,10 +759,9 @@ public class NewTemplateActivity extends AppCompatActivity {
                 RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
                 RectF viewRect = new RectF(0, 0, 4960, 7016);
                 scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
-                Point[] scalePoint = new Point[4];
                 int i=0;
                 for (Point p: sorted_2) {
-                    float[] point = new float[]{(float)p.x,(float)p.y};
+                    point[0] =(float)p.x; point[1] = (float)p.y;
                     scaleToRealSize.mapPoints(point);
                     scalePoint[i] = new Point(point[0],point[1]);
                     i++;
@@ -725,8 +769,8 @@ public class NewTemplateActivity extends AppCompatActivity {
                 size.height = Math.abs(scalePoint[0].y-scalePoint[3].y);
                 size.width = Math.abs(scalePoint[0].x-scalePoint[1].x);
 
-                Point transfer_barcode = new Point(Math.round(scalePoint[0].x), Math.round(scalePoint[0].y));
-                db.insertData(0, (int) transfer_barcode.x, (int) transfer_barcode.y, (int) size.height, (int) size.width, 0, 0);
+                Point transfer_barcode = new Point(scalePoint[0].x, scalePoint[0].y);
+                db.insertData(0,  transfer_barcode.x,  transfer_barcode.y,  size.height,  size.width, 0, 0);
             }
             loading.setVisibility(View.INVISIBLE);
             fadingCircle.stop();
@@ -764,14 +808,16 @@ public class NewTemplateActivity extends AppCompatActivity {
     }
 
     public void setIdQuestionOrAnswer ( View view ){
+        keyboardOff = true;
         lastUserUpdateQuestion = Integer.parseInt(questionIDEdit.getText().toString());
         lastUserUpdateAnswer = Integer.parseInt(answerIDEdit.getText().toString());
         questionTable[lastUserUpdateQuestion-1][lastUserUpdateAnswer-1] = questionToInsertToTheTable;
         RelativeLayout mark_to_UnHighlight_layout =  marks.get(questionToInsertToTheTable)._mark ;
+        String tag = (String) mark_to_UnHighlight_layout.getTag();
         mark_to_UnHighlight_layout.setBackgroundColor(Color.parseColor("#00FFFFFF"));
         layoutSetQuestionID.setVisibility(View.INVISIBLE);
-        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+        marks.get(tag)._viewQ.setText(lastUserUpdateAnswer+", "+lastUserUpdateQuestion);
+
 
     }
 
@@ -788,7 +834,7 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     private RelativeLayout createMark( String tag, String id, int height, int width ) {
         // Create mark layout
-        Rect visibleView;
+//        Rect visibleView;
         final RelativeLayout.LayoutParams markParam;
         RelativeLayout markLayout;
         if(tag.equals("barcode")){
@@ -799,7 +845,7 @@ public class NewTemplateActivity extends AppCompatActivity {
                     barcodeMark.getHeight()
                     );
             marksSize.put(id,new Size(barcodeMark.getWidth(),barcodeMark.getHeight()));
-            visibleView = new Rect();
+//            visibleView = new Rect();
         }
         else {
             markLayout= new RelativeLayout(this);
@@ -809,12 +855,13 @@ public class NewTemplateActivity extends AppCompatActivity {
             markParam = new RelativeLayout.LayoutParams(  // set the layout params for mark
                     height,
                     width);
+
             marksSize.put(id,new Size(height,width));
-            visibleView = new Rect();
+//            visibleView = new Rect();
         }
 
 
-        screenLayout.getChildVisibleRect(relativeLayout,visibleView,null);
+//        screenLayout.getChildVisibleRect(relativeLayout,visibleView,null);
 
         markParam.addRule(RelativeLayout.CENTER_HORIZONTAL);
         markParam.addRule(RelativeLayout.CENTER_VERTICAL);
@@ -903,6 +950,8 @@ public class NewTemplateActivity extends AppCompatActivity {
         imageViewParam.addRule(RelativeLayout.CENTER_HORIZONTAL); // align ImageView in the center
         imageView.setLayoutParams(imageViewParam); // set defined layout params to ImageView
 
+
+
         // Create close button
         // set the layout params for Button
         RelativeLayout.LayoutParams closeButtonParam = new RelativeLayout.LayoutParams(
@@ -930,10 +979,18 @@ public class NewTemplateActivity extends AppCompatActivity {
                         relativeLayout.removeView(layout);
                         if(parts[0].equals(VIEW_BARCODE_TAG))
                             barcodeMark.setVisibility(View.VISIBLE);
-                        return;
-                    }
 
+                    for (int i = 0; i < questionTable.length ; i++) {
+                        for (int j = 0; j < questionTable[i].length ; j++) {
+                            if(questionTable[i][j] != null && questionTable[i][j].equals(id)){
+                                questionTable[i][j]=null;
+                            }
+                        }
+                    }
+                }
+                return;
             }
+
         });
 
         // Create resize buttons
@@ -973,11 +1030,13 @@ public class NewTemplateActivity extends AppCompatActivity {
                 Button plusButton = markSelected._plusButton;
                 Button minusButton = markSelected._minusButton;
                 Button closeButton = markSelected._closeButton;
+                final TextView viewQ = markSelected._viewQ;
                 // Get his layout params
                 RelativeLayout.LayoutParams lParams = (RelativeLayout.LayoutParams) markSelectedLayout.getLayoutParams();
                 RelativeLayout.LayoutParams pParams = (RelativeLayout.LayoutParams) plusButton.getLayoutParams();
                 RelativeLayout.LayoutParams mParams = (RelativeLayout.LayoutParams) minusButton.getLayoutParams();
                 RelativeLayout.LayoutParams cParams = (RelativeLayout.LayoutParams) closeButton.getLayoutParams();
+                RelativeLayout.LayoutParams vParams = (RelativeLayout.LayoutParams) viewQ.getLayoutParams();
                 // get current mark size
                 Size size = marksSize.get(buttonTag);
                 double new_height = size.height + 15;
@@ -992,17 +1051,22 @@ public class NewTemplateActivity extends AppCompatActivity {
                     pParams.width = (int) (0.5*new_width);
                     cParams.height = (int) (0.3*new_height);
                     cParams.width = (int) (0.3*new_width);
+                    vParams.height = (int) (1*new_height);
+                    vParams.width = (int) (1*new_width);
                     // set the changes
                     plusButton.setLayoutParams(pParams);
                     minusButton.setLayoutParams(mParams);
                     closeButton.setLayoutParams(cParams);
+                    viewQ.setLayoutParams(vParams);
+                    viewQ.bringToFront();
                     markSelectedLayout.setLayoutParams(lParams);
                     markSelectedLayout.setVisibility(View.VISIBLE);
                     marks.remove(buttonTag);
                     marksSize.remove(buttonTag);
-                    marks.put(buttonTag,new Mark(markSelectedLayout,plusButton,minusButton,closeButton));
+                    marks.put(buttonTag,new Mark(markSelectedLayout,plusButton,minusButton,closeButton,viewQ));
                     marksSize.put(buttonTag,new Size (new_width,new_height ));
                     markToUpdate =  markSelectedLayout;
+                    viewQ.setTextSize(TypedValue.COMPLEX_UNIT_PX,(int)(0.5*new_width));
 
                     updateLocation();
 
@@ -1026,11 +1090,15 @@ public class NewTemplateActivity extends AppCompatActivity {
                 Button plusButton = markSelected._plusButton;
                 Button minusButton = markSelected._minusButton;
                 Button closeButton = markSelected._closeButton;
+                final TextView viewQ = markSelected._viewQ;
+
                 // Get his layout params
                 RelativeLayout.LayoutParams lParams = (RelativeLayout.LayoutParams) markSelectedLayout.getLayoutParams();
                 RelativeLayout.LayoutParams pParams = (RelativeLayout.LayoutParams) plusButton.getLayoutParams();
                 RelativeLayout.LayoutParams mParams = (RelativeLayout.LayoutParams) minusButton.getLayoutParams();
                 RelativeLayout.LayoutParams cParams = (RelativeLayout.LayoutParams) closeButton.getLayoutParams();
+                RelativeLayout.LayoutParams vParams = (RelativeLayout.LayoutParams) viewQ.getLayoutParams();
+
                 // get current mark size
                 Size size = marksSize.get(buttonTag);
                 double new_height = size.height - 15;
@@ -1045,16 +1113,21 @@ public class NewTemplateActivity extends AppCompatActivity {
                     pParams.width = (int) (0.5*new_width);
                     cParams.height = (int) (0.3*new_height);
                     cParams.width = (int) (0.3*new_width);
+                    vParams.height = (int) (1*new_height);
+                    vParams.width = (int) (1*new_width);
                 // set the changes
                     plusButton.setLayoutParams(pParams);
                     minusButton.setLayoutParams(mParams);
                     closeButton.setLayoutParams(cParams);
+                    viewQ.setLayoutParams(vParams);
+                    viewQ.bringToFront();
                     markSelectedLayout.setLayoutParams(lParams);
                     markSelectedLayout.setVisibility(View.VISIBLE);
                     marks.remove(buttonTag);
                     marksSize.remove(buttonTag);
-                    marks.put(buttonTag,new Mark(markSelectedLayout,plusButton,minusButton,closeButton));
+                    marks.put(buttonTag,new Mark(markSelectedLayout,plusButton,minusButton,closeButton,viewQ));
                     marksSize.put(buttonTag,new Size (new_width,new_height));
+                    viewQ.setTextSize(TypedValue.COMPLEX_UNIT_PX,(int)(0.5*new_width));
 
                     markToUpdate =  markSelectedLayout;
                     updateLocation();
@@ -1065,7 +1138,17 @@ public class NewTemplateActivity extends AppCompatActivity {
             }
         });
 
-
+        // Create view for number question and answer if defined
+        RelativeLayout.LayoutParams viewQParam = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.FILL_PARENT,
+                RelativeLayout.LayoutParams.FILL_PARENT);
+        final TextView viewQ = new TextView(this);
+        viewQ.setTag(id);
+        viewQParam.addRule(RelativeLayout.ALIGN_PARENT_TOP); //
+        viewQParam.addRule(RelativeLayout.ALIGN_PARENT_RIGHT); //
+        viewQ.setLayoutParams(viewQParam); //
+        viewQ.setTextSize(TypedValue.COMPLEX_UNIT_PX,(int)(0.5*height));
+        viewQ.bringToFront();
 
         switch (tag){
 
@@ -1081,6 +1164,8 @@ public class NewTemplateActivity extends AppCompatActivity {
                 // add resize Button in RelativeLayout
                 markLayout.addView(plusButton);
                 markLayout.addView(minusButton);
+                markLayout.addView(viewQ);
+
                 break;
 
             case "barcode":
@@ -1124,10 +1209,13 @@ public class NewTemplateActivity extends AppCompatActivity {
                 // add resize Button in RelativeLayout
                 markLayout.addView(plusButton);
                 markLayout.addView(minusButton);
+
+                markLayout.addView(viewQ);
+
                 break;
             default: break;
         }
-    marks.put(id,new Mark(markLayout, plusButton, minusButton, closeButton));
+    marks.put(id,new Mark(markLayout, plusButton, minusButton, closeButton, viewQ));
     return markLayout;
     }
 

@@ -34,7 +34,7 @@ import static org.opencv.core.Core.NORM_HAMMING;
 public class alignToTemplate {
 
     int MAX_FEATURES = 500;
-    double GOOD_MATCH_PERCENT = 0.15;
+    double GOOD_MATCH_PERCENT = 0.2;
 
     public alignToTemplate (){}
 

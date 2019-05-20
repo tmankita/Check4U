@@ -5,10 +5,10 @@ import java.io.Serializable;
 public class Answer implements Serializable {
     private int questionNumber;
     private int answerNumber;
-    private int locationX;
-    private int locationY;
-    private int height;
-    private int width;
+    private double locationX;
+    private double locationY;
+    private double height;
+    private double width;
     private int sum_of_black;
     private int flagCorrect;
 
@@ -30,7 +30,7 @@ public class Answer implements Serializable {
         this.questionNumber = questionNumber;
     }
 
-    public int getLocationX() {
+    public double getLocationX() {
         return locationX;
     }
 
@@ -38,7 +38,7 @@ public class Answer implements Serializable {
         this.locationX = locationX;
     }
 
-    public int getLocationY() {
+    public double getLocationY() {
         return locationY;
     }
 
@@ -46,7 +46,7 @@ public class Answer implements Serializable {
         this.locationY = locationY;
     }
 
-    public int getHeight() {
+    public double getHeight() {
         return height;
     }
 
@@ -54,7 +54,7 @@ public class Answer implements Serializable {
         this.height = height;
     }
 
-    public int getWidth() {
+    public double getWidth() {
         return width;
     }
 

@@ -51,6 +51,7 @@ import java.io.FileWriter;
 import java.util.ArrayList;
 
 import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
+import static android.widget.Toast.LENGTH_SHORT;
 
 public class oneByOneOrSeries extends AppCompatActivity {
 
@@ -290,10 +291,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
         if(!success){Log.i("scaling","not success!!!!!");}
 
         float[][] points = new float[][]{
-                {barcodeInfo.getLocationX(),barcodeInfo.getLocationY()},
-                {barcodeInfo.getLocationX()+barcodeInfo.getWidth(),barcodeInfo.getLocationY()},
-                {barcodeInfo.getLocationX(),barcodeInfo.getLocationY()+barcodeInfo.getHeight()},
-                {barcodeInfo.getLocationX()+barcodeInfo.getWidth(),barcodeInfo.getLocationY()+barcodeInfo.getHeight()}
+                {(float)barcodeInfo.getLocationX(),(float)barcodeInfo.getLocationY()},
+                {(float)(barcodeInfo.getLocationX()+barcodeInfo.getWidth()),(float)(barcodeInfo.getLocationY())},
+                {(float)(barcodeInfo.getLocationX()),(float)(barcodeInfo.getLocationY()+barcodeInfo.getHeight())},
+                {(float)(barcodeInfo.getLocationX()+barcodeInfo.getWidth()),(float)(barcodeInfo.getLocationY()+barcodeInfo.getHeight())}
         };
         Point[] ps = new Point[4];
         for (int i = 0; i < 4; i++) {
@@ -326,8 +327,25 @@ public class oneByOneOrSeries extends AppCompatActivity {
             SparseArray<Barcode> sparseArray = barcodeDetector.detect(frame);
             if(sparseArray != null && sparseArray.size() > 0){
                 for (int i = 0; i < sparseArray.size(); i++){
-                    Log.d(LOG_TAG, "Value_" + sparseArray.valueAt(i).rawValue + "_" + sparseArray.valueAt(i).displayValue);
-                    id = Integer.parseInt(sparseArray.valueAt(i).rawValue);
+                    try{
+                        Log.d(LOG_TAG, "Value_" + sparseArray.valueAt(i).rawValue + "_" + sparseArray.valueAt(i).displayValue);
+                        id = Integer.parseInt(sparseArray.valueAt(i).rawValue);
+                    }catch(Exception e){
+                        Toast.makeText(this,"Didn't catch the barcode, take the picture again",LENGTH_SHORT).show();
+                        File old_pic = new File(currentImagePath);
+                        if(old_pic.exists())
+                            old_pic.delete();
+                        series.setVisibility(View.INVISIBLE);
+                        oneByOne.setVisibility(View.INVISIBLE);
+                        test_align_Layout.setVisibility(View.INVISIBLE);
+                        test_align.setVisibility(View.INVISIBLE);
+                        realign_button.setVisibility(View.INVISIBLE);
+                        ok_align_button.setVisibility(View.INVISIBLE);
+                        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+                        takePicture.putExtra("templatePath",templatePath);
+                        takePicture.putExtra("caller","oneByOne");
+                        startActivityForResult(takePicture,1);
+                    }
                     break;
 
                 }
@@ -358,7 +376,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         // calculate barcode -> student id
         int id = detectBarcode(paper,bmpBarcode);
         if(id == 0){
-            Toast.makeText(this,"Faild: not success to check this test, because there is no barcode in this test",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"Faild: not success to check this test, because there is no barcode in this test", LENGTH_SHORT).show();
             Log.e("BARCODE","Faild: not success to check this test, because there is no barcode in this test");
             checkIfFinalSheetOrContinue();
 
@@ -406,19 +424,25 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // - j+1 < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 50) > sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 100) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
 
                     }
 
                 }
+                if(flagNeedToCorrectSomeAnswers)
+                    AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
+                flagNeedToCorrectSomeAnswers = false;
+
             }
 
 
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
+                intent.putExtra("sheet", Path);//numberOfQuestions
+                intent.putExtra("numberOfQuestions", numberOfQuestions);
                 startActivityForResult(intent, 2);
             } else {
                 // make binary array for questions -> 1 - right  , 0 - wrong
@@ -460,38 +484,56 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Log.i("onActivityResult","welcome back!");
         if (requestCode == 1) {
             if(resultCode == Activity.RESULT_OK){
-                currentImagePath=data.getStringExtra("sheet");
+                try {
+                    currentImagePath = data.getStringExtra("sheet");
 
-                Mat align = new Mat();
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
-                Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                Utils.bitmapToMat(bmpAlign, align);
+                    Mat align = new Mat();
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-                Bitmap bmpPaper = Bitmap.createBitmap(align.cols(), align.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(align, bmpPaper);
-                Matrix matrix2 = new Matrix();
-                Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
+                    Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
+                    Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                    Utils.bitmapToMat(bmpAlign, align);
 
-                Display display = getWindowManager().getDefaultDisplay();
-                android.graphics.Point size = new android.graphics.Point();
-                display.getSize(size);
-                int width = size.x;
-                int height = size.y;
+                    Bitmap bmpPaper = Bitmap.createBitmap(align.cols(), align.rows(), Bitmap.Config.ARGB_8888);
+                    Utils.matToBitmap(align, bmpPaper);
+                    Matrix matrix2 = new Matrix();
+                    Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
 
-                test_align.setImageBitmap(bOutput);
-                Matrix M = test_align.getImageMatrix();
-                RectF drawableRect = new RectF(0, 0, align.cols(), align.rows());
-                RectF viewRect = new RectF(0, 0, width, height);
-                M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
-                test_align.setImageMatrix(M);
-                test_align.invalidate();
+                    Display display = getWindowManager().getDefaultDisplay();
+                    android.graphics.Point size = new android.graphics.Point();
+                    display.getSize(size);
+                    int width = size.x;
+                    int height = size.y;
 
-                test_align_Layout.setVisibility(View.VISIBLE);
-                test_align.setVisibility(View.VISIBLE);
-                realign_button.setVisibility(View.VISIBLE);
-                ok_align_button.setVisibility(View.VISIBLE);
+                    test_align.setImageBitmap(bOutput);
+                    Matrix M = test_align.getImageMatrix();
+                    RectF drawableRect = new RectF(0, 0, align.cols(), align.rows());
+                    RectF viewRect = new RectF(0, 0, width, height);
+                    M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+                    test_align.setImageMatrix(M);
+                    test_align.invalidate();
+
+                    test_align_Layout.setVisibility(View.VISIBLE);
+                    test_align.setVisibility(View.VISIBLE);
+                    realign_button.setVisibility(View.VISIBLE);
+                    ok_align_button.setVisibility(View.VISIBLE);
+                } catch(Exception e){
+                    Toast.makeText(this, "The alignment procces go wrong, try again", Toast.LENGTH_LONG).show();
+                    File old_pic = new File(currentImagePath);
+                    if(old_pic.exists())
+                        old_pic.delete();
+                    series.setVisibility(View.INVISIBLE);
+                    oneByOne.setVisibility(View.INVISIBLE);
+                    test_align_Layout.setVisibility(View.INVISIBLE);
+                    test_align.setVisibility(View.INVISIBLE);
+                    realign_button.setVisibility(View.INVISIBLE);
+                    ok_align_button.setVisibility(View.INVISIBLE);
+                    Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+                    takePicture.putExtra("templatePath",templatePath);
+                    takePicture.putExtra("caller","oneByOne");
+                    startActivityForResult(takePicture,1);
+                }
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
@@ -537,24 +579,30 @@ public class oneByOneOrSeries extends AppCompatActivity {
         if(!success){Log.i("scaling","not success!!!!!");}
 
         float offset = (float)(0.5 * Math.abs(answer.getLocationY()-(answer.getLocationY()+answer.getHeight()))+10);
+        float[][] pointsF = new float[][]{
+                {(float)answer.getLocationX(),(float)(answer.getLocationY())},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY())},
+                {(float)answer.getLocationX(),(float)(answer.getLocationY()-answer.getHeight())},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-answer.getHeight())}
+        };
         float[][] points = new float[][]{
-                {answer.getLocationX(),answer.getLocationY()-offset},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-offset},
-                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()-offset},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()-offset}
+                {(float)answer.getLocationX(),(float)(answer.getLocationY()-offset)},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-offset)},
+                {(float)answer.getLocationX(),(float)(answer.getLocationY()-answer.getHeight()-offset)},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-answer.getHeight()-offset)}
         };
         float[][] points_1 = new float[][]{
-                {answer.getLocationX(),answer.getLocationY()-offset},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-offset},
-                {answer.getLocationX(),answer.getLocationY()+answer.getHeight()-offset},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()+answer.getHeight()-offset}
+                {(float)answer.getLocationX(),(float)(answer.getLocationY()-offset)},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-offset)},
+                {(float)answer.getLocationX(),(float)(answer.getLocationY()+answer.getHeight()-offset)},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()+answer.getHeight()-offset)}
         };
-        float[][] points_2 = new float[][]{
-                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()-offset},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()-offset},
-                {answer.getLocationX(),answer.getLocationY()-2*answer.getHeight()-offset},
-                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-2*answer.getHeight()-offset}
-        };
+//        float[][] points_2 = new float[][]{
+//                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()-offset},
+//                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()-offset},
+//                {answer.getLocationX(),answer.getLocationY()-2*answer.getHeight()-offset},
+//                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-2*answer.getHeight()-offset}
+//        };
         Point[] ps = new Point[4];
         Point[] ps1 = new Point[4];
         Point[] ps2 = new Point[4];
@@ -563,8 +611,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
             ps[i] = new Point(points[i][0],points[i][1]);
             scaleToImageSize.mapPoints(points_1[i]);
             ps1[i] = new Point(points_1[i][0],points_1[i][1]);
-            scaleToImageSize.mapPoints(points_2[i]);
-            ps2[i] = new Point(points_2[i][0],points_2[i][1]);
+            scaleToImageSize.mapPoints(pointsF[i]);
+            ps2[i] = new Point(pointsF[i][0],pointsF[i][1]);
         }
 
 
@@ -584,10 +632,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 //        for(int col = (int)ps[0].x ; col<ps[1].x ; col++ ){
 //            for(int row = (int)ps[3].y; row<ps[1].y ; row++){
-                for(int col = (int)ps[0].x ; col<ps[1].x ; col++ ){
-                    for(int row = (int)ps2[3].y; row<ps[1].y ; row++){
+        for(int row = (int)ps[2].y; row<ps1[2].y ; row++){
+            for(int col = (int)ps2[0].x ; col<ps2[1].x ; col++ ){
                 blackLevel = blackLevel+ img.get(row,col)[0];
-
             }
         }
 

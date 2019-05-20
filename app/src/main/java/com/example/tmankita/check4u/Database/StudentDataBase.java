@@ -49,20 +49,23 @@ public class StudentDataBase extends SQLiteOpenHelper {
         else
             return grade;
     }
-//("create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , LOCATION_X INTEGER , LOCATION_Y INTEGER, " +
-//                "HEIGHT INTEGER, WIDTH INTEGER, SUM_OF_BLACK INTEGER, FLAG_CORRECT INTEGER )");
+
+    
     private String generateCreateQuery(){
         int i;
+        int j;
         String result = "create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , ";
 
         if(numberOfQuestions == 1)
             result = result + "QUESTION_"+ 1 +" INTEGER , GRADE INTEGER)";
         else {
             for (i = 0; i < numberOfQuestions - 1; i++) {
-                result = result + "QUESTION_" + i + 1 + " INTEGER , ";
+                j=i + 1;
+                result = result + "QUESTION_" + j + " INTEGER , ";
 
             }
-            result = result + "QUESTION_" + i + 1 + " INTEGER , GRADE INTEGER)";
+            j=i + 1;
+            result = result + "QUESTION_" + j + " INTEGER , GRADE INTEGER)";
         }
 
         return result;

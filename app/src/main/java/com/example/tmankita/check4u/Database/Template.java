@@ -33,8 +33,8 @@ public class Template extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , LOCATION_X INTEGER , LOCATION_Y INTEGER, " +
-                "HEIGHT INTEGER, WIDTH INTEGER, SUM_OF_BLACK INTEGER, FLAG_CORRECT INTEGER )");
+        db.execSQL("create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , LOCATION_X DOUBLE , LOCATION_Y DOUBLE, " +
+                "HEIGHT DOUBLE, WIDTH DOUBLE, SUM_OF_BLACK INTEGER, FLAG_CORRECT INTEGER )");
     }
 
     @Override
@@ -43,7 +43,7 @@ public class Template extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean insertData(int id, int location_x, int location_y, int height, int width, int sum_of_black, int correct){
+    public boolean insertData(int id, double location_x, double location_y, double height, double width, int sum_of_black, int correct){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_1,id);

@@ -187,19 +187,42 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     }
 
     private ImageView createMark( String id,Answer answer ) {
+        Matrix scaleToImageSize = new Matrix();
+        RectF viewRect = new RectF(0, 0, paper.cols(), paper.rows());
+        RectF drawableRect = new RectF(0, 0, 4960, 7016);
+        boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
+        float[] p_to_imageViewSize = new float[]{(float)answer.getLocationX(),(float)answer.getLocationY()};
+        float[][] points = new float[][]{
+                {(float)answer.getLocationX(),(float)answer.getLocationY()},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY())},
+                {(float)(answer.getLocationX()),(float)(answer.getLocationY()+answer.getHeight())},
+                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()+answer.getHeight())}
+        };
+
+        org.opencv.core.Point[] ps = new org.opencv.core.Point[4];
+
+
+        for (int i = 0; i < 4; i++) {
+            scaleToImageSize.mapPoints(points[i]);
+            ps[i] = new org.opencv.core.Point(points[i][0],points[i][1]);
+        }
+        scaleToImageSize.mapPoints(p_to_imageViewSize);
+
+        int height = (int) Math.abs(ps[3].y - ps[1].y);;
+        int width =(int) Math.abs(ps[1].x - ps[0].x);
         // create a new ImageView
         ImageView markImageView = new ImageView(ProblematicQuestionsActivity.this);
-        markImageView.setMinimumHeight(answer.getHeight());
-        markImageView.setMinimumWidth(answer.getWidth());
-        markImageView.setMaxHeight(answer.getHeight());
-        markImageView.setMaxWidth(answer.getWidth());
+        markImageView.setMinimumHeight(height);
+        markImageView.setMinimumWidth(width);
+        markImageView.setMaxHeight(height);
+        markImageView.setMaxWidth(width);
         markImageView.setTag(id);
         // set resource in ImageView
         markImageView.setImageResource(R.drawable.square_question);
-        float[] p = new float[]{answer.getLocationX(),answer.getLocationY()};
-        M.mapPoints(p);
-        markImageView.setX(p[0]);
-        markImageView.setY(p[1]);
+        float[] p = new float[]{(float)ps[0].x,(float)ps[0].y};
+        M.mapPoints(p_to_imageViewSize);
+        markImageView.setX(p_to_imageViewSize[0]);
+        markImageView.setY(p_to_imageViewSize[1]);
         markImageView.setBackgroundColor(Color.parseColor("#FF0000"));
 
         markImageView.setOnTouchListener(new View.OnTouchListener() {
