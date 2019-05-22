@@ -24,6 +24,8 @@ public class Template extends SQLiteOpenHelper {
     public static final String COL_5 = "WIDTH";
     public static final String COL_6 = "SUM_OF_BLACK";
     public static final String COL_7 = "FLAG_CORRECT";
+    public static final String COL_8 = "NUMBER_QUESTIONS";
+    public static final String COL_9 = "NUMBER_ANSWERS";
 
 
 
@@ -33,8 +35,8 @@ public class Template extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , LOCATION_X DOUBLE , LOCATION_Y DOUBLE, " +
-                "HEIGHT DOUBLE, WIDTH DOUBLE, SUM_OF_BLACK INTEGER, FLAG_CORRECT INTEGER )");
+        db.execSQL("create table "+ TABLE_NAME + "(ID INTEGER PRIMARY KEY , LOCATION_X FLOAT , LOCATION_Y FLOAT, " +
+                "HEIGHT FLOAT, WIDTH FLOAT, SUM_OF_BLACK INTEGER, FLAG_CORRECT INTEGER, NUMBER_QUESTIONS INTEGER, NUMBER_ANSWERS INTEGER )");
     }
 
     @Override
@@ -43,7 +45,7 @@ public class Template extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public boolean insertData(int id, double location_x, double location_y, double height, double width, int sum_of_black, int correct){
+    public boolean insertData(int id, float location_x, float location_y, float height, float width, int sum_of_black, int correct, int number_questions,int number_answers){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL_1,id);
@@ -53,6 +55,8 @@ public class Template extends SQLiteOpenHelper {
         contentValues.put(COL_5,width);
         contentValues.put(COL_6,sum_of_black);
         contentValues.put(COL_7,correct);
+        contentValues.put(COL_8,number_questions);
+        contentValues.put(COL_9,number_answers);
         long result = db.insert(TABLE_NAME,null,contentValues);
         if(result == -1)
             return false;
@@ -79,6 +83,23 @@ public class Template extends SQLiteOpenHelper {
             return true;
         }
         return false;
+    }
+    public boolean exportDatabase(String toPath) throws IOException {
+        // Close the SQLiteOpenHelper so it will commit the created empty
+        // database to internal storage.
+        close();
+        File newDb = new File(toPath);
+        File oldDb = new File(DB_FILEPATH);
+        if (oldDb.exists()) {
+            FileUtils.copyFile(new FileInputStream(oldDb), new FileOutputStream(newDb));
+            // Access the copied database so SQLiteHelper will cache it and mark
+            // it as created.
+//            getWritableDatabase().close();
+            return true;
+        }
+        return false;
+
+
     }
 
     public String getFilePath (){

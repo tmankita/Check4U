@@ -1,8 +1,7 @@
-package com.example.tmankita.check4u;
+package com.example.tmankita.check4u.Detectors;
 
 import android.graphics.Bitmap;
 
-import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -12,12 +11,10 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.DescriptorMatcher;
 import org.opencv.features2d.Features2d;
 import org.opencv.features2d.ORB;
@@ -29,7 +26,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.example.tmankita.check4u.Camera.TouchActivity.fourPointTransform_touch;
-import static org.opencv.core.Core.NORM_HAMMING;
 
 public class alignToTemplate {
 

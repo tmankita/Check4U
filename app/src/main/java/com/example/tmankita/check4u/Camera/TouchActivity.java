@@ -15,7 +15,6 @@ import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.DragEvent;
@@ -27,10 +26,9 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import com.example.tmankita.check4u.alignToTemplate;
-import com.example.tmankita.check4u.detectDocumentHough;
+import com.example.tmankita.check4u.Detectors.alignToTemplate;
 import com.example.tmankita.check4u.R;
-import com.example.tmankita.check4u.detectDocument;
+import com.example.tmankita.check4u.Detectors.detectDocument;
 import com.github.ybq.android.spinkit.sprite.Sprite;
 import com.github.ybq.android.spinkit.style.FadingCircle;
 
@@ -58,7 +56,6 @@ import java.util.HashMap;
 
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
-import static android.widget.ImageView.ScaleType.FIT_START;
 
 public class TouchActivity extends AppCompatActivity {
     private  static final String TAG= "TouchActivity";
@@ -603,8 +600,8 @@ public class TouchActivity extends AppCompatActivity {
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
 
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "Check4U");
+        String Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/DCIM";
+        File mediaStorageDir = new File(Path);
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
 

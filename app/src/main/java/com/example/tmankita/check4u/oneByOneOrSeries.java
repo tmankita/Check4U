@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
-//import android.graphics.Point;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,6 +30,9 @@ import com.example.tmankita.check4u.Camera.TouchActivity;
 import com.example.tmankita.check4u.Database.Answer;
 import com.example.tmankita.check4u.Database.StudentDataBase;
 import com.example.tmankita.check4u.Database.Template;
+import com.example.tmankita.check4u.Detectors.detectDocument;
+import com.example.tmankita.check4u.Utils.CSVWriter;
+import com.example.tmankita.check4u.Utils.ZipManager;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
@@ -41,14 +43,14 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
-import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
 import static android.widget.Toast.LENGTH_SHORT;
@@ -91,6 +93,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private Bitmap bmpMarks;
     private String templatePath;
     private String currentImagePath;
+    private String dbPath;
 
     // for tests
     Mat imageForTest;
@@ -127,10 +130,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
 
         Bundle extras = getIntent().getExtras();
-        score = extras.getDouble("score");
-        templatePath = extras.getString("templatePath");
-        numberOfQuestions = extras.getInt("numberOfQuestions");
-        numberOfAnswers   = extras.getInt("numberOfAnswers");
+//        score = extras.getDouble("score");
+//        templatePath = extras.getString("templatePath");
+//        numberOfQuestions = extras.getInt("numberOfQuestions");
+//        numberOfAnswers   = extras.getInt("numberOfAnswers");
         need_to_continue  = findViewById(R.id.Layout_if_need_to_continue);
         send_via_email    = findViewById(R.id.Layout_send_via_email);
         info_examsCounter = (TextView) findViewById(R.id.info_count_tests_num);
@@ -153,8 +156,27 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
 
+        dbPath = extras.getString("dbPath");
+        String targetDir =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()+ "/Check4U_DB/UNZIP/"+generateDirName()+"/";
+        ZipManager zipManager = new ZipManager();
+        zipManager.unzip(dbPath,targetDir);
 
-        SQLiteDatabase db_template = SQLiteDatabase.openDatabase(Template.DB_FILEPATH, null, OPEN_READONLY);
+        String templateName = null;
+        String dbName = null;
+        File yourDir = new File(targetDir);
+        for (File f : yourDir.listFiles()) {
+            if (f.isFile() && f.getName().toLowerCase().endsWith("jpg"))
+                templateName = f.getName();
+            else if(f.isFile() && f.getName().toLowerCase().endsWith("db"))
+                dbName = f.getName();
+        }
+
+
+        templatePath = targetDir+"/"+templateName;
+
+        SQLiteDatabase db_template = SQLiteDatabase.openDatabase(targetDir+"/"+dbName, null, OPEN_READONLY);
+
+
         allanswers = extractAllDbTemplateInfo(db_template);
         db_template.close();
 
@@ -162,7 +184,15 @@ public class oneByOneOrSeries extends AppCompatActivity {
         File file = new File(filePath);
         if (file.exists())
             file.delete();
-        students_db = new StudentDataBase(getApplicationContext(),numberOfQuestions);
+        students_db = new StudentDataBase(getApplicationContext(), numberOfQuestions);
+    }
+    private static String generateDirName(){
+
+        // Create a Directory name
+        String timeStamp ="db_"+new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
+
+        return timeStamp;
     }
 
     public void oneByOne (View view){
@@ -350,7 +380,22 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
                 }
             }else {
+                Toast.makeText(this, "The Barcode is not clear, take the picture again ",Toast.LENGTH_LONG).show();
                 Log.e(LOG_TAG,"SparseArray null or empty");
+                File old_pic = new File(currentImagePath);
+                if(old_pic.exists())
+                    old_pic.delete();
+                series.setVisibility(View.INVISIBLE);
+                oneByOne.setVisibility(View.INVISIBLE);
+                test_align_Layout.setVisibility(View.INVISIBLE);
+                test_align.setVisibility(View.INVISIBLE);
+                realign_button.setVisibility(View.INVISIBLE);
+                ok_align_button.setVisibility(View.INVISIBLE);
+                Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+                takePicture.putExtra("templatePath",templatePath);
+                takePicture.putExtra("caller","oneByOne");
+                startActivityForResult(takePicture,1);
+
             }
 
         }else{
@@ -416,6 +461,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         numberOfAnswerThatChoosed = j + 1;
                     }
                 }
+                boolean needToAddtheChoosedOne = false;
                 // make array of answers -> answers[i] = j : i is question number, j is answer number
                 studentAnswers[i] = numberOfAnswerThatChoosed;
                 for (j = 0; j < sumOfBlacks[i].length; j++) {
@@ -424,16 +470,16 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // - j+1 < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 100) > sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 10000) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
+                        needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
 
                     }
 
                 }
-                if(flagNeedToCorrectSomeAnswers)
+                if(needToAddtheChoosedOne)
                     AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
-                flagNeedToCorrectSomeAnswers = false;
 
             }
 
@@ -644,8 +690,17 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     private Answer[][] extractAllDbTemplateInfo(SQLiteDatabase db_template) {
 
+        Cursor c = db_template.query(Template.TABLE_NAME,new String[]{"ID","NUMBER_QUESTIONS","NUMBER_ANSWERS"},"ID = 0",null,null,null,"ID");
+        if (c.moveToFirst()) {
+            numberOfQuestions = c.getInt(1);
+            numberOfAnswers = c.getInt(2);
+            score = 100/numberOfQuestions;
+        }
+
+
         Answer[][] allAnswers = new Answer[numberOfQuestions+1][numberOfAnswers];
         Cursor cursor = db_template.query(Template.TABLE_NAME,null,null,null,null,null,"ID");
+
 
         //if TABLE has rows
         if (cursor.moveToFirst()) {
@@ -658,10 +713,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
                 answer.setAnswerNumber(answerNumber);
                 answer.setQuestionNumber(questionNumber);
-                answer.setLocationX(cursor.getInt(1));
-                answer.setLocationY(cursor.getInt(2));
-                answer.setHeight(cursor.getInt(3));
-                answer.setWidth(cursor.getInt(4));
+                answer.setLocationX(cursor.getFloat(1));
+                answer.setLocationY(cursor.getFloat(2));
+                answer.setHeight(cursor.getFloat(3));
+                answer.setWidth(cursor.getFloat(4));
                 answer.setSum_of_black(cursor.getInt(5));
                 answer.setFlagCorrect(cursor.getInt(6));
                 if(answerNumber==0 && questionNumber==0)

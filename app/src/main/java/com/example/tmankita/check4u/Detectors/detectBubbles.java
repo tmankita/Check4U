@@ -1,4 +1,4 @@
-package com.example.tmankita.check4u;
+package com.example.tmankita.check4u.Detectors;
 
 import android.graphics.Bitmap;
 

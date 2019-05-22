@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.Bundle;
@@ -90,7 +91,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
 
-        zoomLayout          = (ZoomLayout) findViewById(R.id.zoom_layout);
+        zoomLayout          = (ZoomLayout) findViewById(R.id.zoom_layout1);
         image               = (ImageView) findViewById(R.id.NewPicture);
         layout              = (ConstraintLayout) findViewById(R.id.Layout_image);
         questionIDEdit      = (EditText) findViewById(R.id.questionID);
@@ -110,7 +111,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         String imagePath = (String) extras.getString("sheet");
         problematicAnswers = (ArrayList<Answer>) extras.getSerializable("problematicAnswers");
         numberOfQuestions = extras.getInt("numberOfQuestions");
-        toFix = new int[numberOfQuestions];
+        toFix = new int[numberOfQuestions+1];
         for (int i = 0; i < numberOfQuestions; i++) {
             toFix[i] = 0;
         }
@@ -131,13 +132,12 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         engine.zoomTo(1,false);
         image.setImageBitmap(bitmap);
         M = image.getImageMatrix();
-        RectF drawableRect = new RectF(0, 0, width, height);
-        RectF viewRect = new RectF(0, 0, image.getWidth(), image.getHeight());
+        RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
+        RectF viewRect = new RectF(0, 0, width, height);
         M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
         image.setImageMatrix(M);
         image.invalidate();
         zoomLayout.setVisibility(View.VISIBLE);
-
 
         generateMarks();
 
@@ -145,7 +145,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
 
     private void generateMarks (){
 
-        engine.zoomTo(1,false);
+
 
         for (Answer answer: problematicAnswers) {
             String newTag = answer.getQuestionNumber() + "_" +answer.getAnswerNumber();
@@ -191,36 +191,39 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         RectF viewRect = new RectF(0, 0, paper.cols(), paper.rows());
         RectF drawableRect = new RectF(0, 0, 4960, 7016);
         boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
-        float[] p_to_imageViewSize = new float[]{(float)answer.getLocationX(),(float)answer.getLocationY()};
+        float[] p_to_imageViewSize = new float[]{answer.getLocationX(),answer.getLocationY()};
         float[][] points = new float[][]{
-                {(float)answer.getLocationX(),(float)answer.getLocationY()},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY())},
-                {(float)(answer.getLocationX()),(float)(answer.getLocationY()+answer.getHeight())},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()+answer.getHeight())}
+                {answer.getLocationX(),answer.getLocationY()},
+                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY())},
+                {(answer.getLocationX()),(answer.getLocationY()+answer.getHeight())},
+                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()+answer.getHeight())}
         };
 
-        org.opencv.core.Point[] ps = new org.opencv.core.Point[4];
+        PointF[] ps_imageView = new PointF[4];
 
 
         for (int i = 0; i < 4; i++) {
             scaleToImageSize.mapPoints(points[i]);
-            ps[i] = new org.opencv.core.Point(points[i][0],points[i][1]);
         }
         scaleToImageSize.mapPoints(p_to_imageViewSize);
 
-        int height = (int) Math.abs(ps[3].y - ps[1].y);;
-        int width =(int) Math.abs(ps[1].x - ps[0].x);
+        for (int i = 0; i < 4; i++) {
+            M.mapPoints(points[i]);
+            ps_imageView[i] = new PointF(points[i][0],points[i][1]);
+        }
+        M.mapPoints(p_to_imageViewSize);
+
+        float height =  Math.abs(ps_imageView[3].y - ps_imageView[1].y);
+        float width = Math.abs(ps_imageView[1].x - ps_imageView[0].x);
         // create a new ImageView
         ImageView markImageView = new ImageView(ProblematicQuestionsActivity.this);
-        markImageView.setMinimumHeight(height);
-        markImageView.setMinimumWidth(width);
-        markImageView.setMaxHeight(height);
-        markImageView.setMaxWidth(width);
+        markImageView.setMinimumHeight((int)height);
+        markImageView.setMinimumWidth((int)width);
+        markImageView.setMaxHeight((int)height);
+        markImageView.setMaxWidth((int)width);
         markImageView.setTag(id);
         // set resource in ImageView
         markImageView.setImageResource(R.drawable.square_question);
-        float[] p = new float[]{(float)ps[0].x,(float)ps[0].y};
-        M.mapPoints(p_to_imageViewSize);
         markImageView.setX(p_to_imageViewSize[0]);
         markImageView.setY(p_to_imageViewSize[1]);
         markImageView.setBackgroundColor(Color.parseColor("#FF0000"));
@@ -251,6 +254,8 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
                             ImageView mark_to_highlight = mark;
                             // Set highlight to the drag mark
                             mark_to_highlight.setBackgroundColor(Color.parseColor("#515DA7F1"));
+                        }else{
+                            lastClickTime = clickTime;
                         }
 
                 }

@@ -1,8 +1,9 @@
-package com.example.tmankita.check4u;
+package com.example.tmankita.check4u.Detectors;
 
 import android.graphics.Bitmap;
 import android.util.Log;
-import android.widget.ImageView;
+
+import com.example.tmankita.check4u.Detectors.detectDocument;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
