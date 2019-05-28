@@ -281,12 +281,12 @@ public class oneByOneOrSeries extends AppCompatActivity {
             need_to_continue.setVisibility(View.INVISIBLE);
 //            send_via_email.setVisibility(View.VISIBLE);
 
-            Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
+            Intent uploadCSV = new Intent(getApplicationContext(), UserDropBoxActivity.class);
             Bundle bundle = new Bundle();
             bundle.putString("caller", "oneByOne");
             bundle.putString("CSV", file.getPath());
-            uploadTemplate.putExtras(bundle);
-            startActivity(uploadTemplate);
+            uploadCSV.putExtras(bundle);
+            startActivity(uploadCSV);
 
         }
         catch(Exception sqlEx)
@@ -357,11 +357,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
             @Override
             protected void onPostExecute( final Void result ) {
                 pd.dismiss();
+                checkIfFinalSheetOrContinue();
+
 
             }
         }.execute();
 
-        checkIfFinalSheetOrContinue();
+
 
     }
 

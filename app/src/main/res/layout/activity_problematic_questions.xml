@@ -122,10 +122,7 @@
             app:verticalPanEnabled="true"
             app:zoomEnabled="true">
 
-            <!--<androidx.constraintlayout.widget.ConstraintLayout-->
-                <!--android:id="@+id/Layout_image"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="match_parent">-->
+
 
                 <ImageView
                     android:id="@+id/NewPicture"
@@ -134,15 +131,6 @@
                     android:scaleType="fitStart"
                     tools:srcCompat="@tools:sample/avatars" />
 
-                <!--android:layout_marginBottom="8dp"-->
-                <!--android:adjustViewBounds="false"-->
-                <!--app:layout_constraintBottom_toBottomOf="parent"-->
-                <!--app:layout_constraintEnd_toEndOf="parent"-->
-                <!--app:layout_constraintStart_toStartOf="parent"-->
-                <!--app:layout_constraintTop_toTopOf="parent"-->
-
-
-            <!--</androidx.constraintlayout.widget.ConstraintLayout>-->
 
         </com.otaliastudios.zoom.ZoomLayout>
 

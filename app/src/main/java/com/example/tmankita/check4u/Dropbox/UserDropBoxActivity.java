@@ -85,12 +85,18 @@ public class UserDropBoxActivity extends DropBoxActivity{
         anotherShareButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+
+
                 File file = new File(inputPath);
                 Uri path = Uri.fromFile(file);
 
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent .setType("text/plain");
+
+                shareIntent .putExtra(Intent.EXTRA_EMAIL, "");
 // the attachment
-                shareIntent .putExtra(Intent.EXTRA_STREAM, path);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, path);
 // the mail subject
                 shareIntent .putExtra(Intent.EXTRA_SUBJECT, "Check4U - Grades DataBase");
 
