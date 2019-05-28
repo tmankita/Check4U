@@ -131,6 +131,7 @@
                     android:id="@+id/NewPicture"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:scaleType="fitStart"
                     tools:srcCompat="@tools:sample/avatars" />
 
                 <!--android:layout_marginBottom="8dp"-->
