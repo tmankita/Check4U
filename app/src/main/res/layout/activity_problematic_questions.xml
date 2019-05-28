@@ -7,10 +7,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
+
     <TableRow
+        android:id="@+id/buttons_row"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/buttons_row">
+        android:layout_height="match_parent">
 
         <Button
             android:id="@+id/create"
@@ -95,9 +96,9 @@
 
     <LinearLayout
         android:id="@+id/problematic_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp">
+        android:layout_marginTop="200px">
 
         <com.otaliastudios.zoom.ZoomLayout
             android:id="@+id/zoom_layout1"
@@ -111,7 +112,7 @@
             app:horizontalPanEnabled="true"
             app:maxZoom="10"
             app:maxZoomType="zoom"
-            app:minZoom="1"
+            app:minZoom="0.8"
             app:minZoomType="zoom"
             app:overPinchable="true"
             app:overScrollHorizontal="true"
@@ -119,26 +120,28 @@
             app:transformation="none"
             app:transformationGravity="top|left"
             app:verticalPanEnabled="true"
-            app:zoomEnabled="true">>
+            app:zoomEnabled="true">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/Layout_image"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+            <!--<androidx.constraintlayout.widget.ConstraintLayout-->
+                <!--android:id="@+id/Layout_image"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent">-->
 
                 <ImageView
                     android:id="@+id/NewPicture"
-                    android:layout_width="412dp"
-                    android:layout_height="693dp"
-                    android:adjustViewBounds="false"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     tools:srcCompat="@tools:sample/avatars" />
 
+                <!--android:layout_marginBottom="8dp"-->
+                <!--android:adjustViewBounds="false"-->
+                <!--app:layout_constraintBottom_toBottomOf="parent"-->
+                <!--app:layout_constraintEnd_toEndOf="parent"-->
+                <!--app:layout_constraintStart_toStartOf="parent"-->
+                <!--app:layout_constraintTop_toTopOf="parent"-->
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!--</androidx.constraintlayout.widget.ConstraintLayout>-->
 
         </com.otaliastudios.zoom.ZoomLayout>
 

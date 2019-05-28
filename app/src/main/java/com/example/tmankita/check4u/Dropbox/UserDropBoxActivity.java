@@ -1,11 +1,14 @@
 package com.example.tmankita.check4u.Dropbox;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import androidx.appcompat.widget.Toolbar;
 
 import android.os.Environment;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -16,6 +19,7 @@ import android.widget.Toast;
 import com.dropbox.core.android.Auth;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.users.FullAccount;
+import com.example.tmankita.check4u.MainActivity;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.Utils.ZipManager;
 import com.example.tmankita.check4u.oneByOneOrSeries;
@@ -36,25 +40,28 @@ public class UserDropBoxActivity extends DropBoxActivity{
     private String path;
     private String templatePath;
     private String inputPath;
-    private ImageView loading;
-    private Sprite fadingCircle;
+    private String caller;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        final Context c = this;
         setContentView(R.layout.activity_dropbox_user);
-        loading = findViewById(R.id.Loading1);
-        fadingCircle = new FadingCircle();
-        fadingCircle.setColor(Color.WHITE);
-        loading.setImageDrawable(fadingCircle);
-        loading.setVisibility(View.INVISIBLE);
-//        final String[] params = new String[2];
+
         Bundle bundle = getIntent().getExtras();
-        path = bundle.getString("TemplateDataBase");
-        templatePath = bundle.getString("templatePath");
-        Button loginButton = (Button)findViewById(R.id.login_button);
-        if(!createZipFile(path,templatePath)){
-            Toast.makeText(this,"can't make zip file!!!", Toast.LENGTH_LONG).show();
+        caller = bundle.getString("caller");
+        Button loginButton = (Button) findViewById(R.id.login_button);
+
+
+        if(caller.equals("oneByOne")){
+            inputPath = bundle.getString("CSV");
+        }
+        else if(caller.equals("newTemplate")) {
+            path = bundle.getString("TemplateDataBase");
+            templatePath = bundle.getString("templatePath");
+            if (!createZipFile(path, templatePath)) {
+                Toast.makeText(this, "can't make zip file!!!", Toast.LENGTH_LONG).show();
+            }
         }
 
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -65,30 +72,55 @@ public class UserDropBoxActivity extends DropBoxActivity{
         });
 
         Button filesButton = (Button)findViewById(R.id.files_button);
+        Button anotherShareButton = (Button)findViewById(R.id.another_share_button);
+        Button noShareButton = (Button)findViewById(R.id.no_share);
+        noShareButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent oneByOneOrSeries = new Intent(c, oneByOneOrSeries.class);
+                oneByOneOrSeries.putExtra("dbPath",inputPath);
+                startActivity(oneByOneOrSeries);
+            }
+        });
+        anotherShareButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File file = new File(inputPath);
+                Uri path = Uri.fromFile(file);
+
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+// the attachment
+                shareIntent .putExtra(Intent.EXTRA_STREAM, path);
+// the mail subject
+                shareIntent .putExtra(Intent.EXTRA_SUBJECT, "Check4U - Grades DataBase");
+
+                StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+                StrictMode.setVmPolicy(builder.build());
+
+                startActivityForResult(Intent.createChooser(shareIntent , "Share"),1);
+            }
+        });
 
         filesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loading.setVisibility(View.VISIBLE);
-                loading.bringToFront();
-                fadingCircle.start();
-                fadingCircle.obtainAnimation();
 
-                new UploadFileTask(getApplicationContext(), DropboxClientFactory.getClient(), new UploadFileTask.Callback() {
+                new UploadFileTask(c, DropboxClientFactory.getClient(), new UploadFileTask.Callback() {
                     @Override
                     public void onUploadComplete(FileMetadata result) {
-                        Toast.makeText(getApplicationContext(),"Template file uploaded succesfully",Toast.LENGTH_SHORT).show();
-                        Intent oneByOneOrSeries = new Intent(getApplicationContext(), oneByOneOrSeries.class);
+
+                        Toast.makeText(c,"Template file uploaded succesfully",Toast.LENGTH_SHORT).show();
+                        Intent oneByOneOrSeries = new Intent(c, oneByOneOrSeries.class);
                         oneByOneOrSeries.putExtra("dbPath",inputPath);
                         startActivity(oneByOneOrSeries);
                     }
 
                     @Override
                     public void onError(Exception e) {
-                        Toast.makeText(getApplicationContext(),"Error occurred while trying to upload to dropbox",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(c,"Error occurred while trying to upload to dropbox",Toast.LENGTH_SHORT).show();
 
                     }
-                }).execute(inputPath);
+                }).execute(inputPath,caller);
             }
         });
     }
@@ -137,22 +169,13 @@ public class UserDropBoxActivity extends DropBoxActivity{
         String[] s = new String[]{localUriDB,localUriTemplate};
         inputPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()+ "/Check4U_DB/ZIP/"+getOutputName();
 
-//        File StorageDir = new File(Environment.getExternalStorageDirectory(), "Check4U_DB");
-//
-//        // Create the storage directory if it does not exist
-//        if (! StorageDir.exists()){
-//            if (! StorageDir.mkdirs()){
-//                Log.d("Check4U", "failed to create directory");
-//                return false;
-//            }
-//        }
-
         ZipManager zipManager = new ZipManager();
         zipManager.zip(s, inputPath);
         File f = new File(inputPath);
         f.setReadable(true);
         return true;
     }
+
     private static String getOutputName(){
 
         // Create a Directory name
@@ -160,5 +183,13 @@ public class UserDropBoxActivity extends DropBoxActivity{
 
 
         return timeStamp+".zip";
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1) {
+            // think about erase all the pictures, the db not erase
+            startActivity(new Intent(getApplicationContext(), MainActivity.class));
+        }
     }
 }

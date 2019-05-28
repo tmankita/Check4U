@@ -1,6 +1,5 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
@@ -49,39 +48,19 @@
             android:id="@+id/files_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Upload Template"/>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
+            android:text="Upload to DropBox"/>
+        <Button
+            style="@style/ButtonStyle"
+            android:id="@+id/another_share_button"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <com.github.ybq.android.spinkit.SpinKitView
-                android:id="@+id/spin_kit1"
-                style="@style/SpinKitView.Large.FadingCircle"
-                android:layout_width="109dp"
-                android:layout_height="116dp"
-                android:layout_gravity="center"
-                android:visibility="invisible"
-                app:SpinKit_Color="@color/colorAccent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <ImageView
-                android:id="@+id/Loading1"
-                android:layout_width="156dp"
-                android:layout_height="156dp"
-                android:layout_gravity="center"
-                android:background="#131E55"
-                android:visibility="invisible"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
+            android:layout_height="wrap_content"
+            android:text="Share by other Applications"/>
+        <Button
+            style="@style/ButtonStyle"
+            android:id="@+id/no_share"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No need Share"/>
 
 
     </LinearLayout>

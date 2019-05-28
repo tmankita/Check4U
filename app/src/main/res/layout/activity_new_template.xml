@@ -7,23 +7,7 @@
     android:id="@+id/Layout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <com.github.ybq.android.spinkit.SpinKitView xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/spin_kit"
-        style="@style/SpinKitView.Large.FadingCircle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        app:SpinKit_Color="@color/colorAccent"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"/>
 
-    <ImageView
-        android:id="@+id/Loading"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:background="#131E55"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"/>
     <TableRow
         android:layout_width="match_parent"
         android:layout_height="500px"
@@ -137,7 +121,7 @@
             <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:text="How much questions \n in the test?"
+                android:text="How many questions \n in the test?"
                 android:textAlignment="viewStart"
                 android:textStyle="bold"
                 />
@@ -159,7 +143,7 @@
             <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
-                android:text="How much answers for \n each question in the test?"
+                android:text="How many answers for \n each question in the test?"
                 android:textAlignment="viewStart"
                 android:textStyle="bold"
                 />
@@ -255,12 +239,14 @@
         android:id="@+id/Layout2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="60dp">
+        android:layout_marginTop="200px"
+
+        >
 
         <com.otaliastudios.zoom.ZoomLayout
             android:id="@+id/zoom_layout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:scrollbars="vertical|horizontal"
             app:alignment="top|left"
             app:animationDuration="280"
@@ -269,7 +255,7 @@
             app:horizontalPanEnabled="true"
             app:maxZoom="10"
             app:maxZoomType="zoom"
-            app:minZoom="1"
+            app:minZoom="0.8"
             app:minZoomType="zoom"
             app:overPinchable="true"
             app:overScrollHorizontal="true"
@@ -278,24 +264,30 @@
             app:transformationGravity="top|left"
             app:verticalPanEnabled="true"
             app:zoomEnabled="true">
+
             <!--app:transformation="centerInside" -->
             <!--app:transformationGravity="auto"-->
             <RelativeLayout
                 android:id="@+id/Layout"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                >
 
                 <ImageView
                     android:id="@+id/NewPicture"
-                    android:layout_width="412dp"
-                    android:layout_height="693dp"
-                    android:adjustViewBounds="false"
-                    android:scaleType="fitXY"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scaleType="fitStart"
                     tools:srcCompat="@tools:sample/avatars" />
+                <!--android:layout_alignParentBottom="true"-->
+                <!--android:layout_marginBottom="0dp"-->
+                <!--app:layout_constraintBottom_toBottomOf="parent"-->
+                <!--app:layout_constraintEnd_toEndOf="parent"-->
+                <!--app:layout_constraintStart_toStartOf="parent"-->
+                <!--app:layout_constraintTop_toTopOf="parent"-->
+                <!--android:adjustViewBounds="false"-->
+                <!--android:layout_alignParentBottom="true"-->
+
 
 
             </RelativeLayout>

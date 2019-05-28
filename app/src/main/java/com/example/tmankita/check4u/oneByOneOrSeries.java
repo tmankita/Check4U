@@ -3,6 +3,8 @@ package com.example.tmankita.check4u;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -11,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.StrictMode;
@@ -26,11 +29,13 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.dropbox.core.v2.files.FileMetadata;
 import com.example.tmankita.check4u.Camera.TouchActivity;
 import com.example.tmankita.check4u.Database.Answer;
 import com.example.tmankita.check4u.Database.StudentDataBase;
 import com.example.tmankita.check4u.Database.Template;
 import com.example.tmankita.check4u.Detectors.detectDocument;
+import com.example.tmankita.check4u.Dropbox.UserDropBoxActivity;
 import com.example.tmankita.check4u.Utils.CSVWriter;
 import com.example.tmankita.check4u.Utils.ZipManager;
 import com.google.android.gms.vision.Frame;
@@ -57,7 +62,11 @@ import static android.widget.Toast.LENGTH_SHORT;
 
 public class oneByOneOrSeries extends AppCompatActivity {
 
+    //image - student test
     private Mat paper;
+    private String currentImagePath;
+
+    //DB
     private Answer[][] allanswers;
     private double score;
     private  int numberOfQuestions;
@@ -66,37 +75,41 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private int[] studentAnswers;
     private int[] correctAnswers;
     int id;
+    private String dbPath;
+    private String templatePath;
+
+    //Views
     private TableLayout need_to_continue;
     private Button series;
     private Button oneByOne;
-    private TableLayout send_via_email;
-    private Button send;
-    private EditText email;
-    private File file;
+//    private TableLayout send_via_email;
+//    private Button send;
+//    private EditText email;
     private ImageView test_align;
     private Button ok_align_button;
     private Button realign_button;
     private RelativeLayout test_align_Layout;
-
-
-
-
-    //To print
-    private int totalExamsThatProcessedUntilNow;
-    private double lastGrade;
-    private double averageUntilNow;
     private TextView info_examsCounter;
     private TextView info_lastGrade;
     private TextView info_average;
 
+    //To counters
+    private int totalExamsThatProcessedUntilNow;
+    private double lastGrade;
+    private double averageUntilNow;
+
     //helpers
     private Bitmap bmpMarks;
-    private String templatePath;
-    private String currentImagePath;
-    private String dbPath;
+    private float realA4Width = 4960;//(float)796.8;
+    private float realA4Height = 7016;//(float)1123.2;
+
+
+
+    // CSV
+    private File file;
 
     // for tests
-    Mat imageForTest;
+    private Mat imageForTest;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -128,64 +141,87 @@ public class oneByOneOrSeries extends AppCompatActivity {
             Log.d("LOAD OPENCV", "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
+        final Context c = this;
 
-        Bundle extras = getIntent().getExtras();
-//        score = extras.getDouble("score");
-//        templatePath = extras.getString("templatePath");
-//        numberOfQuestions = extras.getInt("numberOfQuestions");
-//        numberOfAnswers   = extras.getInt("numberOfAnswers");
+        Bundle  extras = getIntent().getExtras();
+
         need_to_continue  = findViewById(R.id.Layout_if_need_to_continue);
-        send_via_email    = findViewById(R.id.Layout_send_via_email);
+//        send_via_email    = findViewById(R.id.Layout_send_via_email);
         info_examsCounter = (TextView) findViewById(R.id.info_count_tests_num);
         info_lastGrade    = (TextView) findViewById(R.id.info_last_grade_num);
         info_average      = (TextView) findViewById(R.id.info_average_num);
-        email             = (EditText) findViewById(R.id.edit_email);
+//        email             = (EditText) findViewById(R.id.edit_email);
         series            = (Button) findViewById(R.id.series_button);
         oneByOne          = (Button) findViewById(R.id.oneByOne_button);
-        send              = (Button) findViewById(R.id.send_button);
-        test_align = (ImageView) findViewById(R.id.test_align);
-        ok_align_button = (Button) findViewById(R.id.ok_align);
-        realign_button = (Button) findViewById(R.id.realign);
+//        send              = (Button) findViewById(R.id.send_button);
+        test_align        = (ImageView) findViewById(R.id.test_align);
+        ok_align_button   = (Button) findViewById(R.id.ok_align);
+        realign_button    = (Button) findViewById(R.id.realign);
         test_align_Layout = (RelativeLayout) findViewById(R.id.test_align_layout);
-
-
 
         totalExamsThatProcessedUntilNow = 0;
         lastGrade = 0;
         averageUntilNow = 0;
 
-
-
         dbPath = extras.getString("dbPath");
-        String targetDir =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()+ "/Check4U_DB/UNZIP/"+generateDirName()+"/";
-        ZipManager zipManager = new ZipManager();
-        zipManager.unzip(dbPath,targetDir);
+        final ProgressDialog pd = new ProgressDialog(c);
 
-        String templateName = null;
-        String dbName = null;
-        File yourDir = new File(targetDir);
-        for (File f : yourDir.listFiles()) {
-            if (f.isFile() && f.getName().toLowerCase().endsWith("jpg"))
-                templateName = f.getName();
-            else if(f.isFile() && f.getName().toLowerCase().endsWith("db"))
-                dbName = f.getName();
+        new AsyncTask<Void, Void, Void>() {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+
+            pd.setTitle("Prepare template data base");
+            pd.setMessage("Please wait");
+            pd.setCancelable(false);
+            pd.setIndeterminate(true);
+            pd.show();
         }
+            @Override
+            protected Void doInBackground( final Void ... params ) {
+                // something you know that will take a few seconds
+                Log.e("CHECKL4U","DO IN BACKGROUND");
+                String targetDir =  Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()+ "/Check4U_DB/UNZIP/"+generateDirName()+"/";
+                ZipManager zipManager = new ZipManager();
+                zipManager.unzip(dbPath,targetDir);
+
+                String templateName = null;
+                String dbName = null;
+                File yourDir = new File(targetDir);
+                for (File f : yourDir.listFiles()) {
+                    if (f.isFile() && f.getName().toLowerCase().endsWith("jpg"))
+                        templateName = f.getName();
+                    else if(f.isFile() && f.getName().toLowerCase().endsWith("db"))
+                        dbName = f.getName();
+                }
 
 
-        templatePath = targetDir+"/"+templateName;
+                templatePath = targetDir+"/"+templateName;
 
-        SQLiteDatabase db_template = SQLiteDatabase.openDatabase(targetDir+"/"+dbName, null, OPEN_READONLY);
+                SQLiteDatabase db_template = SQLiteDatabase.openDatabase(targetDir+"/"+dbName, null, OPEN_READONLY);
 
 
-        allanswers = extractAllDbTemplateInfo(db_template);
-        db_template.close();
+                allanswers = extractAllDbTemplateInfo(db_template);
+                db_template.close();
 
-        String filePath = StudentDataBase.DB_FILEPATH;
-        File file = new File(filePath);
-        if (file.exists())
-            file.delete();
-        students_db = new StudentDataBase(getApplicationContext(), numberOfQuestions);
+                String filePath = StudentDataBase.DB_FILEPATH;
+                File file = new File(filePath);
+                if (file.exists())
+                    file.delete();
+                students_db = new StudentDataBase(getApplicationContext(), numberOfQuestions);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute( final Void result ) {
+                pd.dismiss();
+
+            }
+        }.execute();
+
     }
+
     private static String generateDirName(){
 
         // Create a Directory name
@@ -218,17 +254,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     public void finish_check(View view){
     //send via mail
-        File exportDir = new File(Environment.getExternalStorageDirectory(), "");
-        if (!exportDir.exists())
-        {
-            exportDir.mkdirs();
-        }
+        File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
+        File csvDir = new File(exportDir.getPath(),"CSV");
 
-        File file1 = new File(exportDir, "Check4U_StudentDataBase.csv");
-        if (file1.exists())
-            file1.delete();
-
-        file = new File(exportDir, "Check4U_StudentDataBase.csv");
+        file = new File(csvDir, "Check4U_StudentDataBase"+new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+".csv");
         try
         {
             file.createNewFile();
@@ -243,7 +272,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     rowStr[i] = String.valueOf(curCSV.getInt(i));
                 }
 
-                //Which column you want to exprort
                 csvWrite.writeNext(rowStr);
             }
             csvWrite.close();
@@ -251,7 +279,14 @@ public class oneByOneOrSeries extends AppCompatActivity {
             oneByOne.setVisibility(View.INVISIBLE);
             series.setVisibility(View.INVISIBLE);
             need_to_continue.setVisibility(View.INVISIBLE);
-            send_via_email.setVisibility(View.VISIBLE);
+//            send_via_email.setVisibility(View.VISIBLE);
+
+            Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putString("caller", "oneByOne");
+            bundle.putString("CSV", file.getPath());
+            uploadTemplate.putExtras(bundle);
+            startActivity(uploadTemplate);
 
         }
         catch(Exception sqlEx)
@@ -260,28 +295,29 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
     }
 
-    public void sendEmail( View view ){
-
-        Uri path = Uri.fromFile(file);
-        Intent emailIntent = new Intent(Intent.ACTION_SEND);
-// set the type to 'email'
-        emailIntent .setType("text/plain");
-        String address = email.getText().toString();
-
-        String to[] = {address};
-
-        emailIntent .putExtra(Intent.EXTRA_EMAIL, to);
-// the attachment
-        emailIntent .putExtra(Intent.EXTRA_STREAM, path);
-// the mail subject
-        emailIntent .putExtra(Intent.EXTRA_SUBJECT, "Check4U - Grades DataBase");
-
-        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-        StrictMode.setVmPolicy(builder.build());
-
-        startActivityForResult(Intent.createChooser(emailIntent , "Send email..."),3);
-
-    }
+//    public void sendEmail( View view ){
+//
+//        Uri path = Uri.fromFile(file);
+//
+//        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+//// set the type to 'email'
+//        emailIntent .setType("text/plain");
+//        String address = email.getText().toString();
+//
+//        String to[] = {address};
+//
+//        emailIntent .putExtra(Intent.EXTRA_EMAIL, to);
+//// the attachment
+//        emailIntent .putExtra(Intent.EXTRA_STREAM, path);
+//// the mail subject
+//        emailIntent .putExtra(Intent.EXTRA_SUBJECT, "Check4U - Grades DataBase");
+//
+//        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+//        StrictMode.setVmPolicy(builder.build());
+//
+//        startActivityForResult(Intent.createChooser(emailIntent , "Send email..."),3);
+//
+//    }
 
     public void ok_align(View view){
         test_align_Layout.setVisibility(View.INVISIBLE);
@@ -289,8 +325,43 @@ public class oneByOneOrSeries extends AppCompatActivity {
         realign_button.setVisibility(View.INVISIBLE);
         ok_align_button.setVisibility(View.INVISIBLE);
         totalExamsThatProcessedUntilNow++;
-        insertStudent(currentImagePath);
+        final Context c = this;
 
+
+        final ProgressDialog pd = new ProgressDialog(c);
+
+        new AsyncTask<Void, Void, Void>() {
+            @Override
+            protected void onPreExecute() {
+                super.onPreExecute();
+
+
+                pd.setTitle("Prepare template data base");
+                pd.setMessage("Please wait");
+                pd.setCancelable(false);
+                pd.setIndeterminate(true);
+                pd.show();
+            }
+
+            @Override
+            protected Void doInBackground(Void... voids) {
+                boolean res = insertStudent(currentImagePath);
+                if(!res) {
+                    totalExamsThatProcessedUntilNow--;
+                    Toast.makeText(c, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
+                    Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute( final Void result ) {
+                pd.dismiss();
+
+            }
+        }.execute();
+
+        checkIfFinalSheetOrContinue();
 
     }
 
@@ -314,17 +385,18 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Answer barcodeInfo = allanswers[0][0];
 
         Matrix scaleToImageSize = new Matrix();
+//        scaleToImageSize.postScale((sheet.cols()/realA4Width),sheet.rows()/(realA4Height));
+        RectF drawableRect = new RectF(0, 0, realA4Width, realA4Height);
         RectF viewRect = new RectF(0, 0, sheet.cols(), sheet.rows());
-        RectF drawableRect = new RectF(0, 0, 4960, 7016);
         boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
 
         if(!success){Log.i("scaling","not success!!!!!");}
 
         float[][] points = new float[][]{
-                {(float)barcodeInfo.getLocationX(),(float)barcodeInfo.getLocationY()},
-                {(float)(barcodeInfo.getLocationX()+barcodeInfo.getWidth()),(float)(barcodeInfo.getLocationY())},
-                {(float)(barcodeInfo.getLocationX()),(float)(barcodeInfo.getLocationY()+barcodeInfo.getHeight())},
-                {(float)(barcodeInfo.getLocationX()+barcodeInfo.getWidth()),(float)(barcodeInfo.getLocationY()+barcodeInfo.getHeight())}
+                {barcodeInfo.getLocationX(),barcodeInfo.getLocationY()},
+                {(barcodeInfo.getLocationX()+barcodeInfo.getWidth()),(barcodeInfo.getLocationY())},
+                {(barcodeInfo.getLocationX()),(barcodeInfo.getLocationY()+barcodeInfo.getHeight())},
+                {(barcodeInfo.getLocationX()+barcodeInfo.getWidth()),(barcodeInfo.getLocationY()+barcodeInfo.getHeight())}
         };
         Point[] ps = new Point[4];
         for (int i = 0; i < 4; i++) {
@@ -361,7 +433,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         Log.d(LOG_TAG, "Value_" + sparseArray.valueAt(i).rawValue + "_" + sparseArray.valueAt(i).displayValue);
                         id = Integer.parseInt(sparseArray.valueAt(i).rawValue);
                     }catch(Exception e){
-                        Toast.makeText(this,"Didn't catch the barcode, take the picture again",LENGTH_SHORT).show();
+                        barcodeCropped.release();
+//                        Toast.makeText(this,"Didn't catch the barcode, take the picture again",LENGTH_SHORT).show();
                         File old_pic = new File(currentImagePath);
                         if(old_pic.exists())
                             old_pic.delete();
@@ -380,6 +453,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
                 }
             }else {
+                barcodeCropped.release();
                 Toast.makeText(this, "The Barcode is not clear, take the picture again ",Toast.LENGTH_LONG).show();
                 Log.e(LOG_TAG,"SparseArray null or empty");
                 File old_pic = new File(currentImagePath);
@@ -401,10 +475,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }else{
             Log.e(LOG_TAG, "Detector dependencies are not yet downloaded");
         }
+    barcodeCropped.release();
     return id;
     }
 
-    private void insertStudent (String Path) {
+    private boolean insertStudent (String Path) {
         //import the image from path
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
@@ -415,15 +490,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Utils.bitmapToMat(bmpBarcode, paper);
         paper.copyTo(imageForTest);
 
-//        detectBlackSquare blackSquare = new detectBlackSquare();
-//        reference_point = blackSquare.detect(paper);
-
         // calculate barcode -> student id
         int id = detectBarcode(paper,bmpBarcode);
         if(id == 0){
-            Toast.makeText(this,"Faild: not success to check this test, because there is no barcode in this test", LENGTH_SHORT).show();
-            Log.e("BARCODE","Faild: not success to check this test, because there is no barcode in this test");
-            checkIfFinalSheetOrContinue();
+            return false;
 
         }
         //-------------------------------
@@ -448,7 +518,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             }
         Bitmap bmpForTest = bmpMarks.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(imageForTest, bmpForTest);
-// ;
+
             //find question with two answers marked or more
             //get all of them -> show the user all the marks that marked let him to choose the right one
             studentAnswers = new int[numberOfQuestions+1];
@@ -470,7 +540,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // - j+1 < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 10000) > sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 1000) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
@@ -502,8 +572,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
 
             }
-            //need to ask if the last one
-            checkIfFinalSheetOrContinue();
+         return true;
         }
 
     }
@@ -529,7 +598,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.i("onActivityResult","welcome back!");
         if (requestCode == 1) {
-            if(resultCode == Activity.RESULT_OK){
+            if(resultCode == Activity.RESULT_OK){//come back from align detector
                 try {
                     currentImagePath = data.getStringExtra("sheet");
 
@@ -584,7 +653,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             if (resultCode == Activity.RESULT_CANCELED) {
                 //Write your code if there's no result
             }
-        } else if(requestCode == 2){
+        } else if(requestCode == 2){//come back from problematic questions
             int i;
             if(resultCode == Activity.RESULT_OK) {
                 int[] toFix = data.getIntArrayExtra("toFix");
@@ -608,9 +677,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     //Write your code if there's no result
                 }
 
-            }else if(requestCode == 3){
-                startActivity(new Intent(getApplicationContext(),MainActivity.class));
             }
+//        else if(requestCode == 3){// come back from share action
+//            // think about erase all the pictures, the db not erase
+//                startActivity(new Intent(getApplicationContext(),MainActivity.class));
+//            }
 
     }//onActivityResult
 
@@ -618,67 +689,64 @@ public class oneByOneOrSeries extends AppCompatActivity {
         double blackLevel=0.0;
 
         Matrix scaleToImageSize = new Matrix();
+//        scaleToImageSize.postScale((img.cols()/realA4Width),img.rows()/(realA4Height));
         RectF viewRect = new RectF(0, 0, img.cols(), img.rows());
-        RectF drawableRect = new RectF(0, 0, 4960, 7016);
+        RectF drawableRect = new RectF(0, 0, realA4Width, realA4Height);
         boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
 
-        if(!success){Log.i("scaling","not success!!!!!");}
+//        if(!success){Log.i("scaling","not success!!!!!");}
 
-        float offset = (float)(0.5 * Math.abs(answer.getLocationY()-(answer.getLocationY()+answer.getHeight()))+10);
+//        float offset = (float)(0.5 * Math.abs(answer.getLocationY()-(answer.getLocationY()+answer.getHeight()))+10);
         float[][] pointsF = new float[][]{
-                {(float)answer.getLocationX(),(float)(answer.getLocationY())},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY())},
-                {(float)answer.getLocationX(),(float)(answer.getLocationY()-answer.getHeight())},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-answer.getHeight())}
+                {answer.getLocationX(),(answer.getLocationY())},
+                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY())},
+                {answer.getLocationX(),(answer.getLocationY()+answer.getHeight())},
+                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()+answer.getHeight())}
         };
-        float[][] points = new float[][]{
-                {(float)answer.getLocationX(),(float)(answer.getLocationY()-offset)},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-offset)},
-                {(float)answer.getLocationX(),(float)(answer.getLocationY()-answer.getHeight()-offset)},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-answer.getHeight()-offset)}
-        };
-        float[][] points_1 = new float[][]{
-                {(float)answer.getLocationX(),(float)(answer.getLocationY()-offset)},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()-offset)},
-                {(float)answer.getLocationX(),(float)(answer.getLocationY()+answer.getHeight()-offset)},
-                {(float)(answer.getLocationX()+answer.getWidth()),(float)(answer.getLocationY()+answer.getHeight()-offset)}
-        };
-//        float[][] points_2 = new float[][]{
-//                {answer.getLocationX(),answer.getLocationY()-answer.getHeight()-offset},
-//                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-answer.getHeight()-offset},
-//                {answer.getLocationX(),answer.getLocationY()-2*answer.getHeight()-offset},
-//                {answer.getLocationX()+answer.getWidth(),answer.getLocationY()-2*answer.getHeight()-offset}
+//        float[][] points = new float[][]{
+//                {answer.getLocationX(),(answer.getLocationY()-offset)},
+//                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()-offset)},
+//                {answer.getLocationX(),(answer.getLocationY()-answer.getHeight()-offset)},
+//                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()-answer.getHeight()-offset)}
 //        };
-        Point[] ps = new Point[4];
-        Point[] ps1 = new Point[4];
+//        float[][] points_1 = new float[][]{
+//                {answer.getLocationX(),(answer.getLocationY()-offset)},
+//                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()-offset)},
+//                {answer.getLocationX(),(answer.getLocationY()+answer.getHeight()-offset)},
+//                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()+answer.getHeight()-offset)}
+//        };
+
+//        Point[] ps = new Point[4];
+//        Point[] ps1 = new Point[4];
         Point[] ps2 = new Point[4];
+
+
         for (int i = 0; i < 4; i++) {
-            scaleToImageSize.mapPoints(points[i]);
-            ps[i] = new Point(points[i][0],points[i][1]);
-            scaleToImageSize.mapPoints(points_1[i]);
-            ps1[i] = new Point(points_1[i][0],points_1[i][1]);
+//            scaleToImageSize.mapPoints(points[i]);
+//            ps[i] = new Point(points[i][0],points[i][1]);
+//            scaleToImageSize.mapPoints(points_1[i]);
+//            ps1[i] = new Point(points_1[i][0],points_1[i][1]);
             scaleToImageSize.mapPoints(pointsF[i]);
             ps2[i] = new Point(pointsF[i][0],pointsF[i][1]);
         }
 
 
-        Imgproc.line(imageForTest,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(imageForTest,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(imageForTest,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(imageForTest,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(imageForTest,ps1[0],ps1[1],new Scalar(255, 0, 0, 150), 4);
-        Imgproc.line(imageForTest,ps1[1],ps1[2],new Scalar(255, 0, 0, 150), 4);
-        Imgproc.line(imageForTest,ps1[2],ps1[3],new Scalar(255, 0, 0, 150), 4);
-        Imgproc.line(imageForTest,ps1[3],ps1[0],new Scalar(255, 0, 0, 150), 4);
+
+//        Imgproc.line(imageForTest,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,ps1[0],ps1[1],new Scalar(255, 0, 0, 150), 4);
+//        Imgproc.line(imageForTest,ps1[1],ps1[2],new Scalar(255, 0, 0, 150), 4);
+//        Imgproc.line(imageForTest,ps1[2],ps1[3],new Scalar(255, 0, 0, 150), 4);
+//        Imgproc.line(imageForTest,ps1[3],ps1[0],new Scalar(255, 0, 0, 150), 4);
         Imgproc.line(imageForTest,ps2[0],ps2[1],new Scalar(0, 0, 255, 150), 4);
         Imgproc.line(imageForTest,ps2[1],ps2[2],new Scalar(0, 0, 255, 150), 4);
         Imgproc.line(imageForTest,ps2[2],ps2[3],new Scalar(0, 0, 255, 150), 4);
         Imgproc.line(imageForTest,ps2[3],ps2[0],new Scalar(0, 0, 255, 150), 4);
 
 
-//        for(int col = (int)ps[0].x ; col<ps[1].x ; col++ ){
-//            for(int row = (int)ps[3].y; row<ps[1].y ; row++){
-        for(int row = (int)ps[2].y; row<ps1[2].y ; row++){
+        for(int row = (int)ps2[1].y; row<ps2[2].y ; row++){
             for(int col = (int)ps2[0].x ; col<ps2[1].x ; col++ ){
                 blackLevel = blackLevel+ img.get(row,col)[0];
             }

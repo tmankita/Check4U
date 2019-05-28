@@ -1,6 +1,7 @@
 package com.example.tmankita.check4u.Dropbox;
 
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -47,6 +48,17 @@ class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
         mDbxClient = dbxClient;
         mCallback = callback;
     }
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+
+        ProgressDialog pd = new ProgressDialog(this.mContext);
+        pd.setTitle("Uploading Data");
+        pd.setMessage("Please wait, data is sending");
+        pd.setCancelable(false);
+        pd.setIndeterminate(true);
+        pd.show();
+    }
 
     @Override
     protected void onPostExecute(FileMetadata result) {
@@ -64,12 +76,20 @@ class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
     @Override
     protected FileMetadata doInBackground(String... params) {
 
-        String localUriDB = params[0];
+        String localUri = params[0];
+        String caller = params[1];
 
-        File localZip = UriHelpers.getFileForUri(mContext, Uri.fromFile(new File(localUriDB)));
+        File localZip = UriHelpers.getFileForUri(mContext, Uri.fromFile(new File(localUri)));
 
-        if (localZip != null) {
-            String remoteFolderPath = "/databases/";
+        if (localZip != null && caller!=null) {
+            String remoteFolderPath=null;
+
+            if(caller.equals("newTemplate")) {
+                remoteFolderPath = "/databases/";
+            }else if(caller.equals("oneByOne")){
+                remoteFolderPath = "/CSV/";
+            }
+
 
             // Note - this is not ensuring the name is a valid dropbox file name
             String remoteFileZipName = localZip.getName();

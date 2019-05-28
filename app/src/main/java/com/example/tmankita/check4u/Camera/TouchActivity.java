@@ -26,6 +26,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.example.tmankita.check4u.Detectors.TemplateMatching;
 import com.example.tmankita.check4u.Detectors.alignToTemplate;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.Detectors.detectDocument;
@@ -90,7 +91,7 @@ public class TouchActivity extends AppCompatActivity {
     private Matrix M1;
     private String caller;
     private String templatePath;
-    private Mat dcRotate;
+//    private Mat dcRotate;
 
 
 
@@ -517,6 +518,8 @@ public class TouchActivity extends AppCompatActivity {
             else if(caller.equals("oneByOne")){
 
                 alignToTemplate align_to_template = new alignToTemplate();
+//                TemplateMatching template_matching = new TemplateMatching();
+
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
@@ -524,9 +527,12 @@ public class TouchActivity extends AppCompatActivity {
                 Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
                 Mat template = new Mat();
                 Utils.bitmapToMat(bmpT, template);
-                Mat dc = align_to_template.align(orig, template, bmp);
-                dcRotate = new Mat(dc.size(), dc.type());
-                Core.rotate(dc, dcRotate, Core.ROTATE_90_CLOCKWISE);
+                Mat align = align_to_template.align(orig, template, bmp);
+
+
+                Mat dcRotate = new Mat(align.size(), align.type());
+                Core.rotate(align, dcRotate, Core.ROTATE_90_CLOCKWISE);
+//                Mat dc = template_matching.match(template,dcRotate);
 
                 send_image(dcRotate);
             }

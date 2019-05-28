@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         File zipDir = new File(StorageDir.getPath(),"ZIP");
         File unzipDir = new File(StorageDir.getPath(),"UNZIP");
-//        File sqlDir = new File(StorageDir.getPath(),"SQL");
+        File csvDir = new File(StorageDir.getPath(),"CSV");
         File imagesDir = new File(StorageDir.getPath(),"DCIM");
         if (! zipDir.exists()){
             if (! zipDir.mkdirs()){
@@ -78,11 +78,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Check4U", "failed to create directory unzipDir");
             }
         }
-//        if (! sqlDir.exists()){
-//            if (! sqlDir.mkdirs()){
-//                Log.d("Check4U", "failed to create directory sqlDir");
-//            }
-//        }
+        if (! csvDir.exists()){
+            if (! csvDir.mkdirs()){
+                Log.d("Check4U", "failed to create directory csvDir");
+            }
+        }
         if (! imagesDir.exists()){
             if (! imagesDir.mkdirs()){
                 Log.d("Check4U", "failed to create directory imagesDir");
@@ -105,9 +105,8 @@ public class MainActivity extends AppCompatActivity {
                 //Write your code if there's no result
             }
         } else if(requestCode == 2) {
-
-
             if (resultCode == RESULT_OK) {
+                Log.e("CHECKL4U","RESULT PICK FILE");
                 Uri uri = data.getData();
                 String p = uri.getPath();
                 String[] parts = p.split(":");

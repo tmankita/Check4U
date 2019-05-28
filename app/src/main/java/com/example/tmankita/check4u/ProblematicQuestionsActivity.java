@@ -93,7 +93,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
 
         zoomLayout          = (ZoomLayout) findViewById(R.id.zoom_layout1);
         image               = (ImageView) findViewById(R.id.NewPicture);
-        layout              = (ConstraintLayout) findViewById(R.id.Layout_image);
+//        layout              = (ConstraintLayout) findViewById(R.id.Layout_image);
         questionIDEdit      = (EditText) findViewById(R.id.questionID);
         answerIDEdit        = (EditText) findViewById(R.id.answerID);
         layoutSetQuestionID = (TableLayout) findViewById(R.id.LayoutSetID);
@@ -124,20 +124,32 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Utils.bitmapToMat(bmp, paper);
         // set paper on display
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        final int width = size.x;
-        final int height = size.y;
-        engine.zoomTo(1,false);
-        image.setImageBitmap(bitmap);
-        M = image.getImageMatrix();
-        RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
-        RectF viewRect = new RectF(0, 0, width, height);
-        M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
-        image.setImageMatrix(M);
-        image.invalidate();
+//        Display display = getWindowManager().getDefaultDisplay();
+//        Point size = new Point();
+//        display.getSize(size);
+//        final int width = size.x;
+//        final int height = size.y;
+//        engine.zoomTo(1,false);
+//        image.setImageBitmap(bitmap);
+//        M = image.getImageMatrix();
+//        RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
+//        RectF viewRect = new RectF(0, 0, width, height);
+//        M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+//        image.setImageMatrix(M);
+//        image.invalidate();
         zoomLayout.setVisibility(View.VISIBLE);
+
+        M = new Matrix();
+        image.setImageBitmap(bitmap);
+        image.post(new Runnable() {
+            @Override
+            public void run() {
+                M = image.getImageMatrix();
+
+
+            }
+        });
+        image.invalidate();
 
         generateMarks();
 
@@ -151,7 +163,6 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
             String newTag = answer.getQuestionNumber() + "_" +answer.getAnswerNumber();
             ImageView mark = createMark(newTag,answer);
             layout.addView(mark,1);
-//            updateLocation();
         }
 
     }
@@ -191,11 +202,18 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         RectF viewRect = new RectF(0, 0, paper.cols(), paper.rows());
         RectF drawableRect = new RectF(0, 0, 4960, 7016);
         boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
-        float[] p_to_imageViewSize = new float[]{answer.getLocationX(),answer.getLocationY()};
+        float[] p_to_imageViewSize = new float[]{answer.getLocationX(),(answer.getLocationY())};
+//        float[][] points = new float[][]{
+//                {answer.getLocationX(),answer.getLocationY()},
+//                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY())},
+//                {(answer.getLocationX()),(answer.getLocationY()+answer.getHeight())},
+//                {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()+answer.getHeight())}
+//        };
+
         float[][] points = new float[][]{
-                {answer.getLocationX(),answer.getLocationY()},
+                {answer.getLocationX(),(answer.getLocationY())},
                 {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY())},
-                {(answer.getLocationX()),(answer.getLocationY()+answer.getHeight())},
+                {answer.getLocationX(),(answer.getLocationY()+answer.getHeight())},
                 {(answer.getLocationX()+answer.getWidth()),(answer.getLocationY()+answer.getHeight())}
         };
 
@@ -225,7 +243,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         // set resource in ImageView
         markImageView.setImageResource(R.drawable.square_question);
         markImageView.setX(p_to_imageViewSize[0]);
-        markImageView.setY(p_to_imageViewSize[1]);
+        markImageView.setY(p_to_imageViewSize[1]+160);
         markImageView.setBackgroundColor(Color.parseColor("#FF0000"));
 
         markImageView.setOnTouchListener(new View.OnTouchListener() {
