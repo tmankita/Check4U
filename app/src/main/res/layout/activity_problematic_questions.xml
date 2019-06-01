@@ -8,6 +8,53 @@
     android:layout_height="match_parent"
     >
 
+    <TableLayout
+        android:id="@+id/table_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:background="#A59F9F">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/title_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fix problematic answers"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/content_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Double click on the chose answers \n and in the dialog box click set."
+                android:textAlignment="viewStart"
+                android:textStyle="normal" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/ok_dialog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="ok_dialog"
+                android:text="OK" />
+        </TableRow>
+
+    </TableLayout>
+
     <TableRow
         android:id="@+id/buttons_row"
         android:layout_width="match_parent"
@@ -40,7 +87,7 @@
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-            <EditText
+            <TextView
                 android:id="@+id/questionID"
                 android:layout_width="70dp"
                 android:layout_height="fill_parent"
@@ -62,7 +109,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <EditText
+            <TextView
                 android:id="@+id/answerID"
                 android:layout_width="70dp"
                 android:layout_height="fill_parent"
@@ -89,21 +136,27 @@
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:onClick="correctAnswer"
-                android:text="OK" />
+                android:text="Set" />
+            <Button
+                android:id="@+id/mistake"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:onClick="mistakeClick"
+                android:text="No" />
 
         </TableRow>
     </TableLayout>
 
     <LinearLayout
         android:id="@+id/problematic_layout"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="200px">
 
         <com.otaliastudios.zoom.ZoomLayout
             android:id="@+id/zoom_layout1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:scrollbars="vertical|horizontal"
             app:alignment="top|left"
             app:animationDuration="280"
@@ -122,17 +175,24 @@
             app:verticalPanEnabled="true"
             app:zoomEnabled="true">
 
-
+            <RelativeLayout
+                android:id="@+id/Layout_p"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                >
 
                 <ImageView
-                    android:id="@+id/NewPicture"
+                    android:id="@+id/NewPicture_p"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:scaleType="fitStart"
                     tools:srcCompat="@tools:sample/avatars" />
 
+            </RelativeLayout>
+
 
         </com.otaliastudios.zoom.ZoomLayout>
+
 
     </LinearLayout>
 

@@ -420,7 +420,6 @@ public class NewTemplateActivity extends AppCompatActivity {
             private String draggedImageTag;
             private  float x_cord ,y_cord;
             private float zoomScale, pan_y,pan_x; //comment
-
             @Override
             public boolean onDrag(View v, DragEvent event) {
 

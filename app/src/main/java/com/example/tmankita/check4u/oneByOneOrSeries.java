@@ -542,7 +542,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // - j+1 < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 1000) > sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 10000) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
@@ -691,7 +691,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
         double blackLevel=0.0;
 
         Matrix scaleToImageSize = new Matrix();
-//        scaleToImageSize.postScale((img.cols()/realA4Width),img.rows()/(realA4Height));
         RectF viewRect = new RectF(0, 0, img.cols(), img.rows());
         RectF drawableRect = new RectF(0, 0, realA4Width, realA4Height);
         boolean success = scaleToImageSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
