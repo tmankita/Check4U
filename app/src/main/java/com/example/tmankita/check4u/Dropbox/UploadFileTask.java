@@ -36,6 +36,7 @@ class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
     private final DbxClientV2 mDbxClient;
     private final Callback mCallback;
     private Exception mException;
+    private ProgressDialog pd;
     private static final int BUFFER = 80000;
 
     public interface Callback {
@@ -47,12 +48,13 @@ class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
         mContext = context;
         mDbxClient = dbxClient;
         mCallback = callback;
+        pd = new ProgressDialog(this.mContext);
+
     }
+
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-
-        ProgressDialog pd = new ProgressDialog(this.mContext);
         pd.setTitle("Uploading Data");
         pd.setMessage("Please wait, data is sending");
         pd.setCancelable(false);
@@ -63,6 +65,8 @@ class UploadFileTask extends AsyncTask<String, Void, FileMetadata> {
     @Override
     protected void onPostExecute(FileMetadata result) {
         super.onPostExecute(result);
+        pd.dismiss();
+
         Log.e("MYAPP", "here");
         if (mException != null) {
             mCallback.onError(mException);

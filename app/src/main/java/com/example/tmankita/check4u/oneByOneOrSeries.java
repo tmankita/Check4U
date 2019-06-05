@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
-import static android.widget.Toast.LENGTH_SHORT;
 
 public class oneByOneOrSeries extends AppCompatActivity {
 
@@ -100,10 +99,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     //helpers
     private Bitmap bmpMarks;
-    private float realA4Width = 4960;//(float)796.8;
-    private float realA4Height = 7016;//(float)1123.2;
-
-
+    private float realA4Width = 4960;
+    private float realA4Height = 7016;
 
     // CSV
     private File file;
@@ -542,7 +539,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // - j+1 < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 10000) > sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 9000) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
@@ -551,7 +548,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
                 }
                 if(needToAddtheChoosedOne)
-                    AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
+                    if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
+                        AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
 
             }
 
@@ -659,14 +657,14 @@ public class oneByOneOrSeries extends AppCompatActivity {
             int i;
             if(resultCode == Activity.RESULT_OK) {
                 int[] toFix = data.getIntArrayExtra("toFix");
-                for (i = 0; i < toFix.length; i++) {
+                for (i = 1; i < toFix.length; i++) {
                     if (toFix[i] != 0) {
                         studentAnswers[i] = toFix[i];
                     }
                 }
                 // make binary array for questions -> 1 - right  , 0 - wrong
-                int[] binaryCorrectFlag = new int[numberOfQuestions];
-                for (i = 0; i < numberOfQuestions; i++) {
+                int[] binaryCorrectFlag = new int[numberOfQuestions+1];
+                for (i = 1; i < numberOfQuestions+1; i++) {
                     if (correctAnswers[i] == studentAnswers[i])
                         binaryCorrectFlag[i] = 1;
                     else

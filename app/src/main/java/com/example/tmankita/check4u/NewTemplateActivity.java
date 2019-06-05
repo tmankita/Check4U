@@ -594,6 +594,15 @@ public class NewTemplateActivity extends AppCompatActivity {
             Toast.makeText(getApplicationContext(),"Most mark barcode!!!",Toast.LENGTH_LONG).show();
         }
         else {
+            for (String[] q:questionTable) {
+                for (int i = 0; i < q.length ; i++) {
+                    if(q[i]==null){
+                        Toast.makeText(this,"Need to associate  all the  marks to the relevant answers ",Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                }
+
+            }
 
             String filePath = Template.DB_FILEPATH;
             File file = new File(filePath);
@@ -654,7 +663,6 @@ public class NewTemplateActivity extends AppCompatActivity {
 //                Utils.matToBitmap(paper, bmpBarcode23);
 
                     Matrix scaleToRealSize = new Matrix();
-//                    scaleToRealSize.postScale((realA4Width/paper.cols()),(realA4Height/paper.rows()));
                     RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
                     RectF viewRect = new RectF(0, 0, realA4Width, realA4Height);
                     scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
