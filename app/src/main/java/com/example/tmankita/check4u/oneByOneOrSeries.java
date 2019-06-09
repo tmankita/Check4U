@@ -81,9 +81,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private TableLayout need_to_continue;
     private Button series;
     private Button oneByOne;
-//    private TableLayout send_via_email;
-//    private Button send;
-//    private EditText email;
     private ImageView test_align;
     private Button ok_align_button;
     private Button realign_button;
@@ -142,23 +139,22 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
         Bundle  extras = getIntent().getExtras();
 
-        need_to_continue  = findViewById(R.id.Layout_if_need_to_continue);
-//        send_via_email    = findViewById(R.id.Layout_send_via_email);
-        info_examsCounter = (TextView) findViewById(R.id.info_count_tests_num);
-        info_lastGrade    = (TextView) findViewById(R.id.info_last_grade_num);
-        info_average      = (TextView) findViewById(R.id.info_average_num);
-//        email             = (EditText) findViewById(R.id.edit_email);
-        series            = (Button) findViewById(R.id.series_button);
-        oneByOne          = (Button) findViewById(R.id.oneByOne_button);
-//        send              = (Button) findViewById(R.id.send_button);
-        test_align        = (ImageView) findViewById(R.id.test_align);
-        ok_align_button   = (Button) findViewById(R.id.ok_align);
-        realign_button    = (Button) findViewById(R.id.realign);
-        test_align_Layout = (RelativeLayout) findViewById(R.id.test_align_layout);
+        //Views
+        need_to_continue  = (TableLayout)       findViewById(R.id.Layout_if_need_to_continue);
+        info_examsCounter = (TextView)          findViewById(R.id.info_count_tests_num);
+        info_lastGrade    = (TextView)          findViewById(R.id.info_last_grade_num);
+        info_average      = (TextView)          findViewById(R.id.info_average_num);
+        series            = (Button)            findViewById(R.id.series_button);
+        oneByOne          = (Button)            findViewById(R.id.oneByOne_button);
+        test_align        = (ImageView)         findViewById(R.id.test_align);
+        ok_align_button   = (Button)            findViewById(R.id.ok_align);
+        realign_button    = (Button)            findViewById(R.id.realign);
+        test_align_Layout = (RelativeLayout)    findViewById(R.id.test_align_layout);
 
+        //Variables for status of checking tests
         totalExamsThatProcessedUntilNow = 0;
-        lastGrade = 0;
-        averageUntilNow = 0;
+        lastGrade                       = 0;
+        averageUntilNow                 = 0;
 
         dbPath = extras.getString("dbPath");
         final ProgressDialog pd = new ProgressDialog(c);
@@ -250,7 +246,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     public void finish_check(View view){
-    //send via mail
         File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
         File csvDir = new File(exportDir.getPath(),"CSV");
 
@@ -276,7 +271,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
             oneByOne.setVisibility(View.INVISIBLE);
             series.setVisibility(View.INVISIBLE);
             need_to_continue.setVisibility(View.INVISIBLE);
-//            send_via_email.setVisibility(View.VISIBLE);
 
             Intent uploadCSV = new Intent(getApplicationContext(), UserDropBoxActivity.class);
             Bundle bundle = new Bundle();
@@ -292,41 +286,17 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
     }
 
-//    public void sendEmail( View view ){
-//
-//        Uri path = Uri.fromFile(file);
-//
-//        Intent emailIntent = new Intent(Intent.ACTION_SEND);
-//// set the type to 'email'
-//        emailIntent .setType("text/plain");
-//        String address = email.getText().toString();
-//
-//        String to[] = {address};
-//
-//        emailIntent .putExtra(Intent.EXTRA_EMAIL, to);
-//// the attachment
-//        emailIntent .putExtra(Intent.EXTRA_STREAM, path);
-//// the mail subject
-//        emailIntent .putExtra(Intent.EXTRA_SUBJECT, "Check4U - Grades DataBase");
-//
-//        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-//        StrictMode.setVmPolicy(builder.build());
-//
-//        startActivityForResult(Intent.createChooser(emailIntent , "Send email..."),3);
-//
-//    }
-
     public void ok_align(View view){
+        //Update the view Contents
         test_align_Layout.setVisibility(View.INVISIBLE);
         test_align.setVisibility(View.INVISIBLE);
         realign_button.setVisibility(View.INVISIBLE);
         ok_align_button.setVisibility(View.INVISIBLE);
+        //update the status variable
         totalExamsThatProcessedUntilNow++;
+        //start asyncTask to insert the student to DB
         final Context c = this;
-
-
         final ProgressDialog pd = new ProgressDialog(c);
-
         new AsyncTask<Void, Void, Void>() {
             @Override
             protected void onPreExecute() {
@@ -359,9 +329,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
             }
         }.execute();
-
-
-
     }
 
     public void again_align(View view){
@@ -491,12 +458,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
         // calculate barcode -> student id
         int id = detectBarcode(paper,bmpBarcode);
-        if(id == 0){
-            return false;
-
-        }
-        //-------------------------------
-        //
+        if(id == 0) { return false; }
         else {
             int i;
             int j;
@@ -513,7 +475,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     if (correct == 1)
                         correctAnswers[i] = j + 1;
                 }
-
             }
         Bitmap bmpForTest = bmpMarks.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(imageForTest, bmpForTest);
@@ -543,17 +504,12 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         flagNeedToCorrectSomeAnswers = true;
                         needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
-
                     }
-
                 }
                 if(needToAddtheChoosedOne)
                     if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
                         AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
-
             }
-
-
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
@@ -570,11 +526,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         binaryCorrectFlag[i] = 0;
                 }
                 lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
-
             }
          return true;
         }
-
     }
 
     private void checkIfFinalSheetOrContinue(){
@@ -596,7 +550,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.i("onActivityResult","welcome back!");
         if (requestCode == 1) {
             if(resultCode == Activity.RESULT_OK){//come back from align detector
                 try {
@@ -650,10 +603,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     startActivityForResult(takePicture,1);
                 }
             }
-            if (resultCode == Activity.RESULT_CANCELED) {
-                //Write your code if there's no result
-            }
-        } else if(requestCode == 2){//come back from problematic questions
+            if (resultCode == Activity.RESULT_CANCELED) {}
+        }else if(requestCode == 2){//come back from problematic questions
             int i;
             if(resultCode == Activity.RESULT_OK) {
                 int[] toFix = data.getIntArrayExtra("toFix");
@@ -673,17 +624,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
 
                 checkIfFinalSheetOrContinue();
-            }if (resultCode == Activity.RESULT_CANCELED) {
-                    //Write your code if there's no result
-                }
 
-            }
-//        else if(requestCode == 3){// come back from share action
-//            // think about erase all the pictures, the db not erase
-//                startActivity(new Intent(getApplicationContext(),MainActivity.class));
-//            }
+            }if (resultCode == Activity.RESULT_CANCELED) {}
+        }
 
-    }//onActivityResult
+    }
 
     private int calculateBlackLevel(Mat img, Answer answer ){
         double blackLevel=0.0;

@@ -137,7 +137,6 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
             toFix[i] = 0;
         }
 
-
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
@@ -186,9 +185,6 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     }
 
     private void generateMarks (){
-
-
-
         for (Answer answer: problematicAnswers) {
             String newTag = answer.getQuestionNumber() + "_" +answer.getAnswerNumber();
             RelativeLayout mark = createMark(newTag,answer);

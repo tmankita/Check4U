@@ -213,14 +213,18 @@ public class UserDropBoxActivity extends DropBoxActivity{
             @Override
             protected void onPostExecute( final Void result ) {
                 pd.dismiss();
-                startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                Intent main = new Intent(getApplicationContext(), MainActivity.class);
+                main.putExtra("test",inputPath);
+                startActivity(main);
 
             }
         }.execute();
     }
 
     public void no_dialog(View view){
-        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+        Intent main = new Intent(getApplicationContext(), MainActivity.class);
+        main.putExtra("test",inputPath);
+        startActivity(main);
     }
 
     private boolean createZipFile(String... params){
