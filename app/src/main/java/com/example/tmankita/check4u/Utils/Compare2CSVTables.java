@@ -27,12 +27,14 @@ public class Compare2CSVTables {
         try{
             CSVReader reader1 = new CSVReader(new FileReader(pathFile1));
             allElementsCSV1 = reader1.readAll();
+            reader1.close();
         }catch (Exception e){
             Log.e("Compare csv1", "compare: not succeeded  to create CSVReader", e);
         }
         try{
             CSVReader reader2 = new CSVReader(new FileReader(pathFile2));
             allElementsCSV2 = reader2.readAll();
+            reader2.close();
         }catch (Exception e){
             Log.e("Compare csv2", "compare: not succeeded  to create CSVReader", e);
         }

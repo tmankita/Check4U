@@ -43,6 +43,7 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
 
         params = mCamera.getParameters();
         params.setPreviewSize(previewWidth, previewHeight);
+        params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
 
         try {
             mCamera.setParameters(params);
@@ -62,6 +63,7 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
         isCamOpen = 1;
         return isCamOpen;
     }
+
     public int isCamOpen() {
         return isCamOpen;
     }
@@ -169,27 +171,6 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
             e.printStackTrace();
         }
     }
-//        return true;
-//}
-//        Log.i(TAG, "TouchFocus");
-//        try {
-//            final List<Camera.Area> focusList = new ArrayList<Camera.Area>();
-//            Camera.Area focusArea = new Camera.Area(tfocusRect, 1000);
-//            focusList.add(focusArea);
-//
-//            Camera.Parameters para = mCamera.getParameters();
-//            para.setFocusAreas(focusList);
-//            para.setMeteringAreas(focusList);
-//            mCamera.setParameters(para);
-//
-//            mCamera.autoFocus(myAutoFocusCallback);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            Log.i(TAG, "Unable to autofocus");
-//        }
-//
-//    }
-
     /**
      * AutoFocus callback
      */

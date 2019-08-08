@@ -24,53 +24,32 @@ import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int  MY_CAMERA_REQUEST_CODE            = 100;
+    // Used to load the 'native-lib' library on application startup.
+    static {
+        System.loadLibrary("native-lib");
+        System.loadLibrary("opencv_java4");
+    }
+
+    private static final int  CAMERA_CONTINUES_REQUEST_CODE            = 1;
+    private static final int  FILE_PICKER__CONTINUES_REQUEST_CODE      = 2;
     private ImageView icon;
     private Button test;
-    String pathTest;
+    String pathAppResult;
 
-    /**
-     * Button for import Template from device
-     */
-    public   void  ImportTemplate(View view) {
-        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-        chooseFile.setType("application/zip");
-        chooseFile = Intent.createChooser(chooseFile, "Choose a file");
-        startActivityForResult(chooseFile, 2);
-    }
 
-    /**
-     * Button for create new Template
-     */
-    public   void  NewTemplate(View view) {
-        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
-        NewTemplate.putExtra("caller","MainActivity");
-        startActivityForResult(NewTemplate,1);
-    }
 
-    /**
-     * Button for testing the application  correctness
-     */
-    public   void  TestTemplate(View view) {
-        File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
-        File csvDir = new File(exportDir.getPath(),"CSV");
-        String path_manual_table = csvDir.getAbsolutePath()+"/test.csv";
-        File testM = new File(path_manual_table);
-        if(pathTest != null && testM.exists()){
-            Compare2CSVTables test_table = new Compare2CSVTables(pathTest,path_manual_table);
-            test_table.compare();
-        }
-    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         icon = findViewById(R.id.check_icon);
         test = findViewById(R.id.TestTemplate);
 
         Bundle bundle = getIntent().getExtras();
-        pathTest = bundle.getString("test");
+        if(bundle!=null)
+            pathAppResult = bundle.getString("test");
 
         icon.setOnTouchListener(new View.OnTouchListener() {
 
@@ -145,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        if (requestCode == 1) {
+        if (requestCode == CAMERA_CONTINUES_REQUEST_CODE) {
             if(resultCode == Activity.RESULT_OK){
                 String path=data.getStringExtra("sheet");
                 Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
@@ -154,20 +133,60 @@ public class MainActivity extends AppCompatActivity {
             }
             if (resultCode == Activity.RESULT_CANCELED) {}
 
-        } else if(requestCode == 2) {
+        } else if(requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                Log.e("CHECKL4U","RESULT PICK FILE");
                 Uri uri = data.getData();
                 String p = uri.getPath();
                 String[] parts = p.split(":");
                 Intent nextIntent = new Intent(getApplicationContext(), oneByOneOrSeries.class);
                 nextIntent.putExtra("dbPath", parts[1] );
                 startActivity(nextIntent);
-
             }
+            if (resultCode == Activity.RESULT_CANCELED) {}
         }
 
     }
+
+    /**
+     * Button for import Template from device
+     * @param view is import button
+     * @return None
+     */
+    public   void  ImportTemplate(View view) {
+        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+        chooseFile.setType("application/zip");
+        chooseFile = Intent.createChooser(chooseFile, "Choose a file");
+        startActivityForResult(chooseFile, FILE_PICKER__CONTINUES_REQUEST_CODE);
+    }
+
+    /**
+     * Button for create new Template
+     * @param view is new template button
+     * @return None
+     */
+    public   void  NewTemplate(View view) {
+
+        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
+        NewTemplate.putExtra("caller","MainActivity");
+        startActivityForResult(NewTemplate,CAMERA_CONTINUES_REQUEST_CODE);
+    }
+    /**
+     * Button for testing the application  correctness
+     * @param view is test template button
+     * @return None
+     */
+    public   void  TestTemplate(View view) {
+        File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
+        File csvDir = new File(exportDir.getPath(),"CSV");
+        String path_test_table = csvDir.getAbsolutePath()+"/test.csv";
+        File testM = new File(path_test_table);
+        if(pathAppResult != null && testM.exists()){
+            Compare2CSVTables test_table = new Compare2CSVTables(pathAppResult,path_test_table);
+            test_table.compare();
+        }
+    }
+
+    public native void align(long im, long imReference, long aligned);
 
     public static boolean hasPermissions(Context context, String... permissions) {
         if (context != null && permissions != null) {

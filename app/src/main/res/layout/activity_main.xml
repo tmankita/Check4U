@@ -23,7 +23,7 @@
                 android:layout_width="236dp"
                 android:layout_height="55dp"
                 android:layout_marginStart="86dp"
-                android:layout_marginTop="152dp"
+                android:layout_marginTop="100dp"
                 android:layout_marginEnd="62dp"
                 android:onClick="ImportTemplate"
                 android:text="Import Template"
@@ -76,9 +76,9 @@
 
     <ImageView
         android:id="@+id/check_icon"
-        android:layout_width="203dp"
-        android:layout_height="119dp"
-        android:layout_marginTop="70dp"
+        android:layout_width="193dp"
+        android:layout_height="109dp"
+        android:layout_marginTop="10dp"
         android:visibility="visible"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

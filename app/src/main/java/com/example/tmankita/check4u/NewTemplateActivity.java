@@ -10,7 +10,6 @@ import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.os.Environment;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,7 +17,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SizeF;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,8 +34,6 @@ import android.widget.Toast;
 
 import com.example.tmankita.check4u.Database.Template;
 import com.example.tmankita.check4u.Dropbox.UserDropBoxActivity;
-import com.github.ybq.android.spinkit.sprite.Sprite;
-import com.github.ybq.android.spinkit.style.FadingCircle;
 import com.otaliastudios.zoom.ZoomEngine;
 import com.otaliastudios.zoom.ZoomLayout;
 
@@ -46,10 +42,6 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -84,18 +76,15 @@ public class NewTemplateActivity extends AppCompatActivity {
         private EditText questionsNumberEdit;
         private EditText answersNumberEdit;
 
-
-
     //Template Matrix
         private Mat paper;
         private Matrix M;
-        private float realA4Width = 4960;//(float)796.8;
-        private float realA4Height = 7016;//(float)1123.2;
+        private float realA4Width = 4960;
+        private float realA4Height = 7016;
 
     // Create a string for the View label
         private static final String VIEW_WRONG_TAG = "WrongAnswerMarker";
         private static final String VIEW_RIGHT_TAG = "RightAnswerMarker";
-//        private static final String VIEW_QUESTION_TAG = "QuestionMarker";
         private static final String VIEW_BARCODE_TAG = "BarcodeMarker";
 
     //Counters
@@ -120,8 +109,6 @@ public class NewTemplateActivity extends AppCompatActivity {
         private float widthDisplay;
         private float heightDisplay;
 
-
-
     //Copy Mode
         private String idHelper;
         private  boolean copyModeFlag = false;
@@ -145,6 +132,8 @@ public class NewTemplateActivity extends AppCompatActivity {
         }
 
     }
+
+
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -254,14 +243,6 @@ public class NewTemplateActivity extends AppCompatActivity {
         // to sum the black level in matrix
         Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Utils.bitmapToMat(bmp, paper);
-
-
-
-        // set paper on display
-//        widthDisplay = displayMetrics.widthPixels;
-//        heightDisplay = displayMetrics.heightPixels;
-
-
 
 
         M = new Matrix();
@@ -503,6 +484,10 @@ public class NewTemplateActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Update location of v to x_cord and y_cord on the display.
+     * Add mark with the tag :<imagetag> to marksLocation hashMap.
+     */
     public void  updateDropAction(String ImageTag, float y_cord, float x_cord, View v){
         Mark mark = marks.get(ImageTag);
         RelativeLayout mark_select = mark._mark;
@@ -520,7 +505,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         marksLocation.put( tag ,p);
 
     }
-
+    /**
+     *
+     */
     public void copy (View v ){
         float pan_x = zoomLayout.getPanX(); //comment
         float pan_y = zoomLayout.getPanY(); //comment
@@ -572,7 +559,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         engine.realZoomTo(zoomScale,false); //comment
         engine.panTo(pan_x,pan_y,false); //comment
     }
-
+    /**
+     *
+     */
     public void exitCopyMode (View v) {
         for ( Mark mark: marksTogether.values() ) {
             RelativeLayout mark_to_UnHighlight_layout =  mark._mark ;
@@ -585,7 +574,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         exitCopyMode.setVisibility(View.INVISIBLE);
 
     }
-
+    /**
+     *
+     */
     public void createDataBase( View v ){
 //        Bitmap bmpBarcode23 = bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
 
@@ -770,7 +761,9 @@ public class NewTemplateActivity extends AppCompatActivity {
 //            }
 //        }
     }
-
+    /**
+     *
+     */
     public void setIdQuestionOrAnswer ( View view ){
         keyboardOff = true;
         lastUserUpdateQuestion = Integer.parseInt(questionIDEdit.getText().toString());
@@ -784,7 +777,9 @@ public class NewTemplateActivity extends AppCompatActivity {
 
 
     }
-
+    /**
+     *
+     */
     public void setNumbersQuestionAndAnswer ( View view ){
         numberOfQuestions = (Integer.parseInt(questionsNumberEdit.getText().toString()));
         numberOfOptions = (Integer.parseInt(answersNumberEdit.getText().toString()));
@@ -795,7 +790,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
 
     }
-
+    /**
+     *
+     */
     private RelativeLayout createMark( String tag, String id, int height, int width ) {
         // Create mark layout
         final RelativeLayout.LayoutParams markParam;
@@ -1180,8 +1177,9 @@ public class NewTemplateActivity extends AppCompatActivity {
     marks.put(id,new Mark(markLayout, plusButton, minusButton, closeButton, viewQ));
     return markLayout;
     }
-
-
+    /**
+     *
+     */
     private void updateLocation () {
                 String tag = (String) markToUpdate.getTag();
                 float [] location = new float[2];
@@ -1193,47 +1191,26 @@ public class NewTemplateActivity extends AppCompatActivity {
                 }
                 marksLocation.put( tag ,p);
     }
-
-//    private int calculateBlackLevel( Mat img, Point location, Size size ){
-//        double blackLevel=0.0;
-////        double[] currentPixel;
-//        for (int raw = (int)location.y ; raw < (location.y + size.height) ; ++raw){
-//            for (int col = (int)location.x ; col < (location.x + size.width) ; ++col){
-//                blackLevel = blackLevel+ img.get(raw,col)[0];
-//            }
-//        }
-//        return (int)blackLevel;
-//    }
-
+    /**
+     *
+     */
     private void calculateNextQuestionId () {
         if(lastUserUpdateAnswer >= numberOfOptions){
              lastUserUpdateQuestion++;
         }
     }
-
+    /**
+     *
+     */
     private int calculateNextAnswerId () {
         if(lastUserUpdateAnswer >= numberOfOptions)
             return lastUserUpdateAnswer = 1;
         else
             return lastUserUpdateAnswer++;
     }
-
-//    private Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
-//        int width = bm.getWidth();
-//        int height = bm.getHeight();
-//        float scaleWidth = ((float) newWidth) / width;
-//        float scaleHeight = ((float) newHeight) / height;
-//        // CREATE A MATRIX FOR THE MANIPULATION
-//        Matrix matrix = new Matrix();
-//        // RESIZE THE BIT MAP
-//        matrix.postScale(scaleWidth, scaleHeight);
-//        // "RECREATE" THE NEW BITMAP
-//        Bitmap resizedBitmap = Bitmap.createBitmap(
-//                bm, 0, 0, width, height, matrix, false);
-//        bm.recycle();
-//        return resizedBitmap;
-//    }
-
+    /**
+     *
+     */
     public static PointF[] sortPoints_newTemplate( PointF[] src ) {
 
         ArrayList<PointF> srcPoints = new ArrayList<>(Arrays.asList(src));
@@ -1269,6 +1246,22 @@ public class NewTemplateActivity extends AppCompatActivity {
 
         return result;
     }
+
+    //    private Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+//        int width = bm.getWidth();
+//        int height = bm.getHeight();
+//        float scaleWidth = ((float) newWidth) / width;
+//        float scaleHeight = ((float) newHeight) / height;
+//        // CREATE A MATRIX FOR THE MANIPULATION
+//        Matrix matrix = new Matrix();
+//        // RESIZE THE BIT MAP
+//        matrix.postScale(scaleWidth, scaleHeight);
+//        // "RECREATE" THE NEW BITMAP
+//        Bitmap resizedBitmap = Bitmap.createBitmap(
+//                bm, 0, 0, width, height, matrix, false);
+//        bm.recycle();
+//        return resizedBitmap;
+//    }
 
 
 }

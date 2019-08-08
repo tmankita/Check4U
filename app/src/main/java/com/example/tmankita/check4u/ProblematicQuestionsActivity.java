@@ -47,9 +47,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ProblematicQuestionsActivity extends AppCompatActivity {
+    //Image
     private Mat paper;
-    private ArrayList<Answer> problematicAnswers;
     private Matrix M;
+
+    //Views
     private ImageView image;
     private RelativeLayout layout;
     private ZoomLayout zoomLayout;
@@ -59,23 +61,21 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     private TableLayout dialog;
     private ZoomEngine engine;
     private Button finish;
-//    private ImageView markToUpdate;
-//    private HashMap<String,Point> marksLocation;
+
+    //Data Structures
+    private ArrayList<Answer> problematicAnswers;
     private HashMap<String,RelativeLayout> marksImageViews;
     private int[] toFix;
-    private int numberOfQuestions;
-    private String questionToInsertToFix;
-    Boolean finished;
-    int screenWidth;
 
     //helpers
+    private int numberOfQuestions;
+    private String questionToInsertToFix;
+    int screenWidth;
     private int UserUpdateAnswer;
     private int UserUpdateQuestion;
     private Mat imageForTest;
-
-
-
-
+    private String callee;
+    private int id;
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -121,6 +121,12 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         marksImageViews     =  new HashMap<>();
 
 
+        Bundle extras = getIntent().getExtras();
+
+        callee = extras.getString("callee");
+        id = extras.getInt("id");
+
+
         ViewGroup.LayoutParams params1 =  layout.getLayoutParams();
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -128,7 +134,6 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         params1.width = displayMetrics.widthPixels;
         screenWidth = displayMetrics.widthPixels;;
 
-        Bundle extras = getIntent().getExtras();
         String imagePath = (String) extras.getString("sheet");
         problematicAnswers = (ArrayList<Answer>) extras.getSerializable("problematicAnswers");
         numberOfQuestions = extras.getInt("numberOfQuestions");
@@ -146,21 +151,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         paper.copyTo(imageForTest);
 
         // set paper on display
-//        Display display = getWindowManager().getDefaultDisplay();
-//        Point size = new Point();
-//        display.getSize(size);
-//        final int width = size.x;
-//        final int height = size.y;
-//        engine.zoomTo(1,false);
-//        image.setImageBitmap(bitmap);
-//        M = image.getImageMatrix();
-//        RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
-//        RectF viewRect = new RectF(0, 0, width, height);
-//        M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
-//        image.setImageMatrix(M);
-//        image.invalidate();
         zoomLayout.setVisibility(View.VISIBLE);
-//        finished=false;
         M = new Matrix();
         image.setImageBitmap(bitmap);
 
@@ -168,8 +159,6 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
             @Override
             public void run() {
                 M = image.getImageMatrix();
-//                finished = true;
-
             }
         });
 
@@ -179,11 +168,10 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         finish.setVisibility(View.INVISIBLE);
         dialog.setVisibility(View.VISIBLE);
         dialog.bringToFront();
-
-//        generateMarks();
-
     }
-
+    /**
+     *
+     */
     private void generateMarks (){
         for (Answer answer: problematicAnswers) {
             String newTag = answer.getQuestionNumber() + "_" +answer.getAnswerNumber();
@@ -192,48 +180,49 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         }
 
     }
-    //for debug
-//    private void updateLocation () {
-//        String tag = (String) markToUpdate.getTag();
-//        int [] location = new int[2];
-//        location[0]=(int)markToUpdate.getX();
-//        location[1]=(int)markToUpdate.getY();
-//        if(marksLocation.containsKey(tag)) {
-//            marksLocation.remove(tag);
-//        }
-//        marksLocation.put( tag ,new Point(location[0],location[1]));
-//    }
-    //----------
+    /**
+     *
+     */
     public void mistakeClick (View view){
         layoutSetQuestionID.setVisibility(View.VISIBLE);
         RelativeLayout mark_to_Highlight_Green =  marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
         mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#FF0000"));
     }
+    /**
+     *
+     */
     public void ok_dialog (View view){
         dialog.setVisibility(View.INVISIBLE);
         finish.setVisibility(View.VISIBLE);
         image.setVisibility(View.VISIBLE);
         generateMarks();
     }
+    /**
+     *
+     */
     public void correctAnswer ( View view ){
-//        int UserUpdateQuestion = Integer.parseInt(questionIDEdit.getText().toString());
-//        int UserUpdateAnswer = Integer.parseInt(answerIDEdit.getText().toString());
         toFix[UserUpdateQuestion] = UserUpdateAnswer;
         RelativeLayout mark_to_Highlight_Green =  marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
         mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
         layoutSetQuestionID.setVisibility(View.INVISIBLE);
-//        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-//        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+
 
     }
+    /**
+     *
+     */
     public void finish (View view){
         Intent returnIntent = new Intent();
         returnIntent.putExtra("toFix",toFix);
+        returnIntent.putExtra("callee",callee);
+        returnIntent.putExtra("id",id);
         setResult(Activity.RESULT_OK,returnIntent);
         finish();
 
     }
-
+    /**
+     *
+     */
     private RelativeLayout createMark( String id,Answer answer ) {
         Matrix scaleToImageSize = new Matrix();
         RectF drawableRect = new RectF(0, 0, 4960, 7016);
@@ -409,5 +398,18 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
 
         return markLayout;
     }
+
+    //for debug
+//    private void updateLocation () {
+//        String tag = (String) markToUpdate.getTag();
+//        int [] location = new int[2];
+//        location[0]=(int)markToUpdate.getX();
+//        location[1]=(int)markToUpdate.getY();
+//        if(marksLocation.containsKey(tag)) {
+//            marksLocation.remove(tag);
+//        }
+//        marksLocation.put( tag ,new Point(location[0],location[1]));
+//    }
+    //----------
 
 }

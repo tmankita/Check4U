@@ -153,7 +153,6 @@ public class UserDropBoxActivity extends DropBoxActivity{
             }
         });
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -172,7 +171,6 @@ public class UserDropBoxActivity extends DropBoxActivity{
             findViewById(R.id.files_button).setEnabled(false);
         }
     }
-
     @Override
     protected void loadData() {
         new GetCurrentAccountTask(DropboxClientFactory.getClient(), new GetCurrentAccountTask.Callback() {
@@ -189,7 +187,15 @@ public class UserDropBoxActivity extends DropBoxActivity{
             }
         }).execute();
     }
-
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1) {
+            checkIfWantToDelete();
+        }
+    }
+    /**
+     *
+     */
     public void yes_dialog(View view){
         final ProgressDialog pd = new ProgressDialog(this);
         new AsyncTask<Void, Void, Void>() {
@@ -220,13 +226,17 @@ public class UserDropBoxActivity extends DropBoxActivity{
             }
         }.execute();
     }
-
+    /**
+     *
+     */
     public void no_dialog(View view){
         Intent main = new Intent(getApplicationContext(), MainActivity.class);
         main.putExtra("test",inputPath);
         startActivity(main);
     }
-
+    /**
+     *
+     */
     private boolean createZipFile(String... params){
         String localUriDB = params[0];
         String localUriTemplate = params[1];
@@ -241,7 +251,9 @@ public class UserDropBoxActivity extends DropBoxActivity{
         f.setReadable(true);
         return true;
     }
-
+    /**
+     *
+     */
     private static String getOutputName(){
 
         // Create a Directory name
@@ -250,20 +262,17 @@ public class UserDropBoxActivity extends DropBoxActivity{
 
         return timeStamp+".zip";
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 1) {
-            checkIfWantToDelete();
-        }
-    }
-
+    /**
+     *
+     */
     private void checkIfWantToDelete(){
         shareMenu.setVisibility(View.INVISIBLE);
         dialog_delete.setVisibility(View.VISIBLE);
 
     }
-
+    /**
+     *
+     */
     private void removeImagesAndUnzipDirectories(){
         String DCIM_Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()+ "/Check4U_DB/DCIM/";
         String UNZIP_Directory_Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()+ "/Check4U_DB/UNZIP/";

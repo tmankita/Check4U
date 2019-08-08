@@ -43,6 +43,7 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.ByteArrayOutputStream;
@@ -91,8 +92,15 @@ public class TouchActivity extends AppCompatActivity {
     private Matrix M1;
     private String caller;
     private String templatePath;
-//    private Mat dcRotate;
+    private Bitmap bmp;
 
+    // Used to load the 'native-lib' library on application startup.
+    static {
+        System.loadLibrary("native-lib");
+        System.loadLibrary("opencv_java4");
+    }
+
+    public native void align(long im, long imReference, long aligned);
 
 
     @SuppressWarnings("deprecation")
@@ -155,12 +163,13 @@ public class TouchActivity extends AppCompatActivity {
         camView.setDrawingView(drawingView);
 
         // Add a listener to the Capture button
-        ImageButton captureButton = (ImageButton) findViewById(R.id.capture_touch_activity);
+        final ImageButton captureButton = (ImageButton) findViewById(R.id.capture_touch_activity);
 
         captureButton. setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        captureButton.setVisibility(View.INVISIBLE);
                         // get an image from the camera
                         cameraPreview.mCamera.takePicture(null, null, mPicture);
                     }
@@ -244,6 +253,7 @@ public class TouchActivity extends AppCompatActivity {
         // use send image function
 
     }
+
     public void set_test (View view) {
 
         Point[] points_2 = new Point[4];
@@ -431,7 +441,7 @@ public class TouchActivity extends AppCompatActivity {
             Camera.Parameters parameters = camera.getParameters();
 
             //convert the byte[] to Bitmap;
-            Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+            bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
 
             //convert Bitmap to Mat; note the bitmap config ARGB_8888 conversion that
             //allows you to use other image processing methods and still save at the end
@@ -440,11 +450,7 @@ public class TouchActivity extends AppCompatActivity {
             Mat origCopy_before_rotate = new Mat();
             orig.copyTo(origCopy_before_rotate);
 
-//            detectDocumentHough detect = new detectDocumentHough();
 
-
-
-//            paper_obj = detect.detect(orig,bmp);
             if(caller.equals("MainActivity")){
                 paper_obj = detectDocument.findDocument(orig);
                 ArrayList<Point[]> Rps1;
@@ -462,12 +468,11 @@ public class TouchActivity extends AppCompatActivity {
                     right[1]=ps[1];
                     right[2]=ps[2];
                     right[3]=ps[3];
+
                     Log.i("the right!", "x: "+ ps[0].x +" y: "+ps[0].y);
                     Log.i("the right!", "x: "+ ps[1].x +" y: "+ps[1].y);
                     Log.i("the right!", "x: "+ ps[2].x +" y: "+ps[2].y);
                     Log.i("the right!", "x: "+ ps[3].x +" y: "+ps[3].y);
-
-
 
                 }
                 Mat origCopy_rotatetd_with_draw = new Mat();
@@ -516,24 +521,32 @@ public class TouchActivity extends AppCompatActivity {
             }
 
             else if(caller.equals("oneByOne")){
-
-                alignToTemplate align_to_template = new alignToTemplate();
-//                TemplateMatching template_matching = new TemplateMatching();
-
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
-
                 Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
                 Mat template = new Mat();
                 Utils.bitmapToMat(bmpT, template);
-                Mat align = align_to_template.align(orig, template, bmp);
+//
+//                Mat align = new Mat();
+                alignToTemplate align_to_template = new alignToTemplate();
+                Mat align = align_to_template.align(orig, template, bmp); //coment
+
+                if(align.empty()){
+                    Intent returnIntent = new Intent();
+                    setResult(Activity.RESULT_CANCELED,returnIntent);
+                    finish();
+                }
+//                TemplateMatching template_matching = new TemplateMatching();
+//                Mat match = template_matching.match(template, orig);
+
+
+//                Mat aligned = new Mat(new Size(orig.cols(),orig.rows()), CvType.CV_8UC1);
+//                align(orig.nativeObj,template.nativeObj,aligned.nativeObj);
 
 
                 Mat dcRotate = new Mat(align.size(), align.type());
                 Core.rotate(align, dcRotate, Core.ROTATE_90_CLOCKWISE);
-//                Mat dc = template_matching.match(template,dcRotate);
-
                 send_image(dcRotate);
             }
 
@@ -545,14 +558,51 @@ public class TouchActivity extends AppCompatActivity {
         }
     };
 
+    private Mat alignBeforeSend (Mat paper){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
+        Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
+        Mat template = new Mat();
+        Utils.bitmapToMat(bmpT, template);
+
+//                Mat align = new Mat();
+        alignToTemplate align_to_template = new alignToTemplate();
+        Mat align = align_to_template.align(paper,template, bmp); //coment
+
+//        TemplateMatching template_matching = new TemplateMatching();
+//        Mat match = template_matching.match2(template, paper);
+
+//                Mat aligned = new Mat(new Size(orig.cols(),orig.rows()), CvType.CV_8UC1);
+//                align(orig.nativeObj,template.nativeObj,aligned.nativeObj);
+
+
+
+
+        Mat dcRotate = new Mat(align.size(), align.type());
+        Core.rotate(align, dcRotate, Core.ROTATE_90_CLOCKWISE);
+
+        return align;
+    }
+
     private void send_image (Mat paper){
         //srcMat.release();
+        Mat img;
+        img = new Mat();
+        paper.copyTo(img);
+//        if(caller.equals("oneByOne")){
+//           img = alignBeforeSend (paper);
+//        }else {
+//            img = new Mat();
+//            paper.copyTo(img);
+//        }
+
 
         Matrix matrix = new Matrix();
 //        matrix.setRotate(90);
-        Bitmap bmpPaper = Bitmap.createBitmap(paper.cols(), paper.rows(), Bitmap.Config.ARGB_8888);
+        Bitmap bmpPaper = Bitmap.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
 
-        Utils.matToBitmap(paper, bmpPaper);
+        Utils.matToBitmap(img, bmpPaper);
         Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix, true);
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -571,29 +621,10 @@ public class TouchActivity extends AppCompatActivity {
             fos.close();
 
             String path = pictureFile.getAbsolutePath();
-            imageView.setVisibility(View.INVISIBLE);
-            fadingCircle.stop();
             Intent returnIntent = new Intent();
             returnIntent.putExtra("sheet",path);
             setResult(Activity.RESULT_OK,returnIntent);
             finish();
-
-//            if(mode.equals("newTemplate")){
-//                returnIntent.putExtra("sheet",path);
-//                setResult(Activity.RESULT_OK,returnIntent);
-//                finish();
-//                nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
-//                nextIntent.putExtra("sheet", path);
-//            }else if (mode.equals("oneByOne")){
-//                returnIntent.putExtra("sheet",path);
-//                setResult(Activity.RESULT_OK,returnIntent);
-//                finish();
-//                nextIntent = new Intent(getApplicationContext(), ProblematicQuestionsActivity.class);
-//                nextIntent.putExtra("sheet", path);
-//            }
-
-
-//            startActivity(nextIntent);
 
         } catch (FileNotFoundException e) {
             Log.d(TAG, "File not found: " + e.getMessage());
@@ -602,6 +633,7 @@ public class TouchActivity extends AppCompatActivity {
         }
 
     }
+
     private static File getOutputMediaFile(int type){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
