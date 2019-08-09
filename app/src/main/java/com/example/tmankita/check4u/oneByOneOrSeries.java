@@ -32,9 +32,11 @@ import com.example.tmankita.check4u.Camera.TouchActivity;
 import com.example.tmankita.check4u.Database.Answer;
 import com.example.tmankita.check4u.Database.StudentDataBase;
 import com.example.tmankita.check4u.Database.Template;
+import com.example.tmankita.check4u.Detectors.alignToTemplate;
 import com.example.tmankita.check4u.Detectors.detectDocument;
 import com.example.tmankita.check4u.Dropbox.UserDropBoxActivity;
 import com.example.tmankita.check4u.Utils.CSVWriter;
+import com.example.tmankita.check4u.Utils.PDFParser;
 import com.example.tmankita.check4u.Utils.ZipManager;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
@@ -70,6 +72,8 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 public class oneByOneOrSeries extends AppCompatActivity {
 
     private  static final String TAG= "oneOrSeries_Activity";
+    private static final int AFTER_ALIGNMENT_CONTINUES_REQUEST_CODE = 1;
+    private static final int PROBLEMATICֹֹ_QUESTIONSֹ_CONTINUES = 2;
     private static final int FILE_PICKER__CONTINUES_REQUEST_CODE = 3;
 
     //image - student test
@@ -232,10 +236,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         /**
-         *
+         * Continues from alignment
          */
-        if (requestCode == 1) {
-            if (resultCode == Activity.RESULT_OK) {//come back from align detector
+        if (requestCode == AFTER_ALIGNMENT_CONTINUES_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
                 try {
                     currentImagePath =  data.getStringExtra("sheet");
 
@@ -307,7 +311,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         /**
          * Continues from problematic questions
          */
-        else if (requestCode == 2) {//come back
+        else if (requestCode == PROBLEMATICֹֹ_QUESTIONSֹ_CONTINUES) {
             int i;
             if (resultCode == Activity.RESULT_OK) {
                 int currId = data.getIntExtra("id",-1);
@@ -334,11 +338,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     checkIfFinalSheetOrContinue();
                 }
                 else if(callee.equals("Series")){
-
                     while(iterTests.hasNext()) {
                         totalExamsThatProcessedUntilNow++;
                         boolean res = insertStudent(iterTests.next(), "Series");
                         if (!res) {
+                            //write to log file which test not checked
                             totalExamsThatProcessedUntilNow--;
                             Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
                             Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
@@ -353,40 +357,79 @@ public class oneByOneOrSeries extends AppCompatActivity {
             }
             else if (resultCode == Activity.RESULT_CANCELED) {
             }
-
+            /**
+             * Continues from FILE PICKER multiply series mode
+             */
         } else if (requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 File StorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
-                File imagesDir = new File(StorageDir.getPath(), "DCIM");
-                File testsDir = new File(imagesDir.getPath(), "tests_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
+                File SeriesDir = new File(StorageDir.getPath(), "Series");
+                if (!SeriesDir.exists()) {
+                    if (!SeriesDir.mkdirs()) {
+                        Log.d("Check4U", "failed to create directory SeriesDir");
+                    }
+                }
+                File testsDir = new File(SeriesDir.getPath(), "tests_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
                 if (!testsDir.exists()) {
                     if (!testsDir.mkdirs()) {
                         Log.d("Check4U", "failed to create directory testsDir");
                     }
                 }
 
+
                 final ArrayList<String> tests = new ArrayList<>();
+                ArrayList<String> testsImagesPdf = new ArrayList<>();
                 for (int i = 0; i < data.getClipData().getItemCount(); i++) {
                     Uri uri = data.getClipData().getItemAt(i).getUri();
+                    String[] parts = (uri.getPath()).split(":");
+                    currentImagePath = parts[1];
+                    String[] pathParts = (currentImagePath).split(".");
+                    String type = (pathParts[pathParts.length -1]);
 
-                    currentImagePath = uri.getPath();
-                    Mat align = new Mat();
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                    if((type.toLowerCase()).equals("jpg") || (type.toLowerCase()).equals("jpeg")){
+                        Mat align = new Mat();
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-                    Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
-                    Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                    Utils.bitmapToMat(bmpAlign, align);
+                        Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
+                        Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                        Utils.bitmapToMat(bmpAlign, align);
 
-                    String path = saveJpeg(align);
-                    tests.add(path);
+                        String path = saveJpeg(align,testsDir.getAbsolutePath());
+                        tests.add(path);
+                    }else if((type.toLowerCase()).equals("pdf")){
+                        PDFParser parser = new PDFParser(this , testsDir.getAbsolutePath() );
+                        testsImagesPdf = parser.PDF2Jpeg(currentImagePath);
+                    }
 
                 }
+
+                for (String test: testsImagesPdf) {
+                    tests.add(test);
+                }
+                Mat template = new Mat();
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                Bitmap bmp1 = BitmapFactory.decodeFile(templatePath, options);
+                Utils.bitmapToMat(bmp1, template);
                 iterTests = tests.iterator();
                 while(iterTests.hasNext()) {
+                    currentImagePath = iterTests.next();
+                    Mat img = new Mat();
+                    Bitmap bmp = BitmapFactory.decodeFile(currentImagePath, options);
+                    Utils.bitmapToMat(bmp, img);
+                    alignToTemplate align_to_template = new alignToTemplate();
+                    Mat align = align_to_template.align(img, template, bmp);
+                    if(align.empty()){
+                        //write to the log each test we skip
+                        continue;
+                    }
+                    currentImagePath = saveJpeg(align,testsDir.getAbsolutePath());
+
                     totalExamsThatProcessedUntilNow++;
-                    boolean res = insertStudent(iterTests.next(), "Series");
+                    boolean res = insertStudent(currentImagePath, "Series");
                     if (!res) {
+                        //write to the log each test we skip
                         totalExamsThatProcessedUntilNow--;
                         Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
                         Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
@@ -409,7 +452,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @param
      * @return
      */
-    private String saveJpeg(Mat img) {
+    private String saveJpeg(Mat img, String dirPath) {
         String path="";
         Matrix matrix = new Matrix();
         Bitmap bmpPaper = Bitmap.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
@@ -421,7 +464,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         bOutput.compress(Bitmap.CompressFormat.JPEG, 70, stream);
         byte[] paperData = stream.toByteArray();
 
-        File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
+        File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE,dirPath);
         if (pictureFile == null) {
             Log.d(TAG, "Error creating media file, check storage permissions");
             return "";
@@ -442,11 +485,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
         return path;
     }
-    private static File getOutputMediaFile(int type){
+    private static File getOutputMediaFile(int type, String dirPath){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
 
-        String Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/DCIM";
+        String Path = dirPath;          //Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/DCIM";
         File mediaStorageDir = new File(Path);
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
@@ -784,7 +827,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
                         AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
             }
-            int im=0;
+//            int im=0;
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
@@ -803,6 +846,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         binaryCorrectFlag[i] = 0;
                 }
                 lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
+                checkIfFinalSheetOrContinue();
             }
          return true;
         }

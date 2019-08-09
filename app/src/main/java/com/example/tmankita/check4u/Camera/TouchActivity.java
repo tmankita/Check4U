@@ -149,6 +149,8 @@ public class TouchActivity extends AppCompatActivity {
         width = size.x;
         height = size.y;
 
+//        previewWidth = (int)width;
+//        previewHeight = (int)height;
 
         camView = (PreviewSurfaceView) findViewById(R.id.preview_surface);
         SurfaceHolder camHolder = camView.getHolder();

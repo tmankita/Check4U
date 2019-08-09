@@ -30,8 +30,8 @@ import static com.example.tmankita.check4u.Camera.TouchActivity.fourPointTransfo
 
 public class alignToTemplate {
 
-    int MAX_FEATURES = 5000;
-    double GOOD_MATCH_PERCENT = 0.65;
+    int MAX_FEATURES = 2500;
+    double GOOD_MATCH_PERCENT = 0.1;
 
     public alignToTemplate (){}
 
@@ -69,6 +69,8 @@ public class alignToTemplate {
         Imgproc.cvtColor(img, grayImage, Imgproc.COLOR_RGB2GRAY, 4);
         Imgproc.cvtColor(template, grayTemplate, Imgproc.COLOR_RGB2GRAY, 4);
 
+        Imgproc.adaptiveThreshold(grayTemplate, grayTemplate, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
+        Imgproc.adaptiveThreshold(grayImage, grayImage, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -137,7 +139,7 @@ public class alignToTemplate {
         imageMat.fromList(pointsI);
         templateMat.fromList(pointsT);
         //RANSAC
-        Mat H = Calib3d.findHomography( templateMat,imageMat, Calib3d.RANSAC,3.0);
+        Mat H = Calib3d.findHomography( templateMat,imageMat, Calib3d.RANSAC);
 
         //Get the corners from the image_1 ( the object to be "detected" )
         Mat objCorners = new Mat(4, 1, CvType.CV_32FC2), sceneCorners = new Mat();
