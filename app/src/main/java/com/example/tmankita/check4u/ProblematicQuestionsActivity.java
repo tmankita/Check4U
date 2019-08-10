@@ -187,6 +187,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         layoutSetQuestionID.setVisibility(View.VISIBLE);
         RelativeLayout mark_to_Highlight_Green =  marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
         mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#FF0000"));
+        layoutSetQuestionID.setVisibility(View.INVISIBLE);
     }
     /**
      *

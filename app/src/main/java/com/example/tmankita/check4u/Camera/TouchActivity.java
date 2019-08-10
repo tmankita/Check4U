@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,8 +44,8 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -453,7 +454,7 @@ public class TouchActivity extends AppCompatActivity {
             orig.copyTo(origCopy_before_rotate);
 
 
-            if(caller.equals("MainActivity")){
+//            if(caller.equals("MainActivity")){
                 paper_obj = detectDocument.findDocument(orig);
                 ArrayList<Point[]> Rps1;
                 Rps1 = paper_obj.allpoints_original;
@@ -520,37 +521,37 @@ public class TouchActivity extends AppCompatActivity {
                 M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
                 test.setImageMatrix(M);
                 test.invalidate();
-            }
-
-            else if(caller.equals("oneByOne")){
-                BitmapFactory.Options options = new BitmapFactory.Options();
-                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
-                Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
-                Mat template = new Mat();
-                Utils.bitmapToMat(bmpT, template);
+//            }
 //
-//                Mat align = new Mat();
-                alignToTemplate align_to_template = new alignToTemplate();
-                Mat align = align_to_template.align(orig, template, bmp); //coment
-
-                if(align.empty()){
-                    Intent returnIntent = new Intent();
-                    setResult(Activity.RESULT_CANCELED,returnIntent);
-                    finish();
-                }
-//                TemplateMatching template_matching = new TemplateMatching();
-//                Mat match = template_matching.match(template, orig);
-
-
-//                Mat aligned = new Mat(new Size(orig.cols(),orig.rows()), CvType.CV_8UC1);
-//                align(orig.nativeObj,template.nativeObj,aligned.nativeObj);
-
-
-                Mat dcRotate = new Mat(align.size(), align.type());
-                Core.rotate(align, dcRotate, Core.ROTATE_90_CLOCKWISE);
-                send_image(dcRotate);
-            }
+//            else if(caller.equals("oneByOne")){
+//                BitmapFactory.Options options = new BitmapFactory.Options();
+//                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+//                Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
+//                Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
+//                Mat template = new Mat();
+//                Utils.bitmapToMat(bmpT, template);
+////
+////                Mat align = new Mat();
+//                alignToTemplate align_to_template = new alignToTemplate();
+//                Mat align = align_to_template.align(orig, template, bmp); //coment
+//
+//                if(align.empty()){
+//                    Intent returnIntent = new Intent();
+//                    setResult(Activity.RESULT_CANCELED,returnIntent);
+//                    finish();
+//                }
+////                TemplateMatching template_matching = new TemplateMatching();
+////                Mat match = template_matching.match(template, orig);
+//
+//
+////                Mat aligned = new Mat(new Size(orig.cols(),orig.rows()), CvType.CV_8UC1);
+////                align(orig.nativeObj,template.nativeObj,aligned.nativeObj);
+//
+//
+//                Mat dcRotate = new Mat(align.size(), align.type());
+//                Core.rotate(align, dcRotate, Core.ROTATE_90_CLOCKWISE);
+//                send_image(dcRotate);
+//            }
 
 
 
@@ -567,10 +568,17 @@ public class TouchActivity extends AppCompatActivity {
         Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
         Mat template = new Mat();
         Utils.bitmapToMat(bmpT, template);
+//        Mat iconMat;
+//        int refrenceimgID = getResources().getIdentifier("square_mark", "drawable", getPackageName());
+//        try{
+//            iconMat = Utils.loadResource(this, refrenceimgID, Imgcodecs.IMREAD_COLOR);
+//        }catch (Exception e){
+//
+//            return null;
+//        }
 
-//                Mat align = new Mat();
         alignToTemplate align_to_template = new alignToTemplate();
-        Mat align = align_to_template.align(paper,template, bmp); //coment
+        Mat align = align_to_template.align(paper,template,null ,bmp); //coment
 
 //        TemplateMatching template_matching = new TemplateMatching();
 //        Mat match = template_matching.match2(template, paper);
@@ -590,14 +598,14 @@ public class TouchActivity extends AppCompatActivity {
     private void send_image (Mat paper){
         //srcMat.release();
         Mat img;
-        img = new Mat();
-        paper.copyTo(img);
-//        if(caller.equals("oneByOne")){
-//           img = alignBeforeSend (paper);
-//        }else {
-//            img = new Mat();
-//            paper.copyTo(img);
-//        }
+//        img = new Mat();
+//        paper.copyTo(img);
+        if(caller.equals("oneByOne")){
+           img = alignBeforeSend (paper);
+        }else {
+            img = new Mat();
+            paper.copyTo(img);
+        }
 
 
         Matrix matrix = new Matrix();

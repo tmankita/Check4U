@@ -104,7 +104,7 @@ public class TemplateMatching {
     }
 
 
-    public Mat match (Mat template, Mat image){
+    public Point[] match (Mat template, Mat image, String mode){
 
         Size sizeTemplate = new Size(template.cols(),template.rows());
         Size sizeImage = new Size(image.cols(),image.rows());
@@ -112,36 +112,51 @@ public class TemplateMatching {
 
         Mat grayTemplate = new Mat(sizeTemplate, CvType.CV_8UC1);
         Mat grayImage = new Mat(sizeImage, CvType.CV_8UC1);
-        image.copyTo(grayImage);
-//        Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_RGB2GRAY, 4);
+
+
+
+        if(mode.equals("template"))
+            Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_RGB2GRAY, 4);
+        else if(mode.equals("image"))
+            image.copyTo(grayImage);
+
+
+        Bitmap bmpPaper13 = Bitmap.createBitmap(template.cols(), template.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(template, bmpPaper13);
+
         Imgproc.cvtColor(template, grayTemplate, Imgproc.COLOR_RGB2GRAY, 4);
+
+        Bitmap bmpPaper12 = Bitmap.createBitmap(grayTemplate.cols(), grayTemplate.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(grayTemplate, bmpPaper12);
 
 //        Mat resizeTemplate = new Mat(resizeTemplateSize, CvType.CV_8UC1);
 //        Imgproc.resize(grayTemplate,resizeTemplate,resizeTemplateSize);
 
-        double scale = 1;
-        Mat resizeImage = new Mat(sizeImage, CvType.CV_8UC1);
-        while((resizeImage.cols() - grayTemplate.cols()) < 0 || (resizeImage.rows() - grayTemplate.rows()) < 0){
-            double height = scale * resizeImage.size().height;
-            double width = scale * resizeImage.size().width;
-            Size ds = new Size(width,height);
-            resizeImage.release();
-            resizeImage = new Mat(ds, CvType.CV_8UC1);
-            Imgproc.resize( grayImage , resizeImage, ds);
-            scale += 0.00001;
-        }
+//        double scale = 1;
+//        Mat resizeImage = new Mat(sizeImage, CvType.CV_8UC1);
+//        while((resizeImage.cols() - grayTemplate.cols()) < 0 || (resizeImage.rows() - grayTemplate.rows()) < 0){
+//            double height = scale * resizeImage.size().height;
+//            double width = scale * resizeImage.size().width;
+//            Size ds = new Size(width,height);
+//            resizeImage.release();
+//            resizeImage = new Mat(ds, CvType.CV_8UC1);
+//            Imgproc.resize( grayImage , resizeImage, ds);
+//            scale += 0.00001;
+//        }
+//
+//        scale -= 0.00001;
 
-        scale -= 0.00001;
-
-        Mat norTemplate = normalization(grayTemplate);
-        Mat norImage = normalization(resizeImage);
+//        Mat norTemplate = normalization(grayTemplate);
+//        Mat norImage = normalization(resizeImage);
 
 
 
         Mat Template = new Mat(sizeTemplate, CvType.CV_8UC1);
-        Mat Image = new Mat(resizeImage.size(), CvType.CV_8UC1);
-        norImage.copyTo(Image);
-        norTemplate.copyTo(Template);
+        Mat Image = new Mat(grayImage.size(), CvType.CV_8UC1);
+        grayImage.copyTo(Image);
+        grayTemplate.copyTo(Template);
+
+
 
 
 //        Mat padingImage = new Mat(sizeTemplate, CvType.CV_8UC1);
@@ -196,20 +211,20 @@ public class TemplateMatching {
         Imgproc.line(image,sorted[3],sorted[0],new Scalar(0, 0, 255, 150), 4);
 
 
-        Mat match = fourPointTransform_match(resizeImage,sorted);
-
-        Size resultPSize = new Size (match.size().width/scale,match.size().height/scale);
-        Mat resultP = new Mat(resultPSize, CvType.CV_8UC1);
-        Imgproc.resize(match,resultP,resultPSize);
+//        Mat match = fourPointTransform_match(resizeImage,sorted);
+//
+//        Size resultPSize = new Size (match.size().width/scale,match.size().height/scale);
+//        Mat resultP = new Mat(resultPSize, CvType.CV_8UC1);
+//        Imgproc.resize(match,resultP,resultPSize);
 
         Bitmap bmpPaper11 = Bitmap.createBitmap(image.cols(), image.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(image, bmpPaper11);
 
-        Bitmap bmpPaper = Bitmap.createBitmap(resultP.cols(), resultP.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(resultP, bmpPaper);
-        Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), new Matrix(), true);
+//        Bitmap bmpPaper = Bitmap.createBitmap(resultP.cols(), resultP.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(resultP, bmpPaper);
+//        Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), new Matrix(), true);
 
-        return resultP;
+        return sorted;
 
         // / Show me what you got
 //        Core.rectangle(img, matchLoc, new Point(matchLoc.x + templ.cols(),

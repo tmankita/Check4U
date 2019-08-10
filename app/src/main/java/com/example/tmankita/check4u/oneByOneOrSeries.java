@@ -419,9 +419,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     Bitmap bmp = BitmapFactory.decodeFile(currentImagePath, options);
                     Utils.bitmapToMat(bmp, img);
                     alignToTemplate align_to_template = new alignToTemplate();
-                    Mat align = align_to_template.align(img, template, bmp);
+                    Mat align = align_to_template.align1(img, template, bmp); //series_align
                     if(align.empty()){
-                        //write to the log each test we skip
+//                        write to the log each test we skip
                         continue;
                     }
                     currentImagePath = saveJpeg(align,testsDir.getAbsolutePath());
@@ -827,7 +827,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
                         AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
             }
-//            int im=0;
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
@@ -845,7 +844,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     else
                         binaryCorrectFlag[i] = 0;
                 }
-                lastGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
+                double currGrade = students_db.insertRaw(id, studentAnswers, binaryCorrectFlag, (int)score);
+                if(currGrade!= -1)
+                    lastGrade = currGrade;
+                else
+                    totalExamsThatProcessedUntilNow--;
                 checkIfFinalSheetOrContinue();
             }
          return true;
@@ -857,6 +860,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @return
      */
     private void checkIfFinalSheetOrContinue(){
+
+
 
         if(totalExamsThatProcessedUntilNow == 1)
             averageUntilNow = lastGrade;
