@@ -6,6 +6,73 @@
     android:layout_height="match_parent"
     tools:context=".oneByOneOrSeries">
 
+    <TextView
+        android:id="@+id/wait_dialog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#5560A7"
+        android:text="Please Wait"
+        android:textAlignment="viewStart"
+        android:textSize="60sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TableLayout
+        android:id="@+id/Layout_begin_series"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#A59F9F"
+        android:orientation="horizontal"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/begin_question"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Do you want to begin?"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <Button
+                android:id="@+id/no_begin"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="110dp"
+                android:text="No" />
+
+            <Button
+                android:id="@+id/yes_begin"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:onClick="start_check_series"
+                android:text="Yes" />
+
+
+        </TableRow>
+    </TableLayout>
+
+
+
     <TableLayout
         android:id="@+id/Layout_if_need_to_continue"
         android:layout_width="wrap_content"
@@ -30,6 +97,7 @@
                 android:text="Count of checked tests:"
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/info_count_tests_num"
                 android:layout_width="wrap_content"
@@ -37,11 +105,15 @@
                 android:text="10"
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
+
+
+
+
         </TableRow>
+
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
             <TextView
                 android:id="@+id/info_last_grade"
                 android:layout_width="wrap_content"
@@ -56,11 +128,14 @@
                 android:text="90"
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
+
+
+
         </TableRow>
+
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
             <TextView
                 android:id="@+id/info_average"
                 android:layout_width="wrap_content"
@@ -116,60 +191,60 @@
     </TableLayout>
 
     <!--<TableLayout-->
-        <!--android:id="@+id/Layout_send_via_email"-->
-        <!--android:layout_width="300dp"-->
-        <!--android:layout_height="300dp"-->
-        <!--android:background="#A59F9F"-->
-        <!--android:orientation="horizontal"-->
-        <!--android:visibility="invisible"-->
-        <!--app:layout_constraintBottom_toBottomOf="parent"-->
-        <!--app:layout_constraintEnd_toEndOf="parent"-->
-        <!--app:layout_constraintHorizontal_bias="0.5"-->
-        <!--app:layout_constraintStart_toStartOf="parent"-->
-        <!--app:layout_constraintTop_toTopOf="parent">-->
+    <!--android:id="@+id/Layout_send_via_email"-->
+    <!--android:layout_width="300dp"-->
+    <!--android:layout_height="300dp"-->
+    <!--android:background="#A59F9F"-->
+    <!--android:orientation="horizontal"-->
+    <!--android:visibility="invisible"-->
+    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+    <!--app:layout_constraintEnd_toEndOf="parent"-->
+    <!--app:layout_constraintHorizontal_bias="0.5"-->
+    <!--app:layout_constraintStart_toStartOf="parent"-->
+    <!--app:layout_constraintTop_toTopOf="parent">-->
 
-        <!--<TableRow-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent">-->
+    <!--<TableRow-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent">-->
 
-            <!--<TextView-->
-                <!--android:id="@+id/emailQuestion"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:text="Email:"-->
-                <!--android:textAlignment="viewStart"-->
-                <!--android:textStyle="bold" />-->
-
-
-        <!--</TableRow>-->
-
-        <!--<TableRow-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent">-->
-
-            <!--<EditText-->
-                <!--android:id="@+id/edit_email"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:ems="10"-->
-                <!--android:inputType="textEmailAddress" />-->
+    <!--<TextView-->
+    <!--android:id="@+id/emailQuestion"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:text="Email:"-->
+    <!--android:textAlignment="viewStart"-->
+    <!--android:textStyle="bold" />-->
 
 
-        <!--</TableRow>-->
+    <!--</TableRow>-->
 
-        <!--<TableRow-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent">-->
+    <!--<TableRow-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent">-->
 
-            <!--<Button-->
-                <!--android:id="@+id/send_button"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="match_parent"-->
-                <!--android:onClick="sendEmail"-->
-                <!--android:text="Send" />-->
+    <!--<EditText-->
+    <!--android:id="@+id/edit_email"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:ems="10"-->
+    <!--android:inputType="textEmailAddress" />-->
 
 
-        <!--</TableRow>-->
+    <!--</TableRow>-->
+
+    <!--<TableRow-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent">-->
+
+    <!--<Button-->
+    <!--android:id="@+id/send_button"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:onClick="sendEmail"-->
+    <!--android:text="Send" />-->
+
+
+    <!--</TableRow>-->
     <!--</TableLayout>-->
 
     <RelativeLayout

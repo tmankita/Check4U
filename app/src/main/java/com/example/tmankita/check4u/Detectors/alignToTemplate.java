@@ -2,6 +2,7 @@ package com.example.tmankita.check4u.Detectors;
 
 import android.graphics.Bitmap;
 
+
 import org.opencv.android.Utils;
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
@@ -275,28 +276,35 @@ public class alignToTemplate {
         return sorted_2;
     }
 
-    public Mat align ( Mat img,Mat template,Mat icon,Bitmap bitmap) {
+//    public Mat align ( Mat img,Mat template,Mat icon,Bitmap bitmap) {
 
 //        Point[] iconTemplate = alignHelper(template,icon, bitmap,"template");
 //        Point[] iconimage = alignHelper(template,icon,bitmap,"image");
 //        Mat res = transformationBasedHomography(img, template, iconimage, iconTemplate, bitmap);
 
 
-        return align1(img,template,bitmap);
-    }
+//        return align1(img,template,bitmap);
+//    }
 
-    public Mat align1 ( Mat img,Mat template,Bitmap bitmap) {
+    public Mat align1 ( Mat img,Mat template,Bitmap bitmap, String mode) {
         //Convert images to grayscale
         Size sizeTemplate = new Size(template.cols(),template.rows());
         Size sizeImage = new Size(img.cols(),img.rows());
         Mat grayTemplate = new Mat(sizeTemplate, CvType.CV_8UC1);
         Mat grayImage = new Mat(sizeImage, CvType.CV_8UC1);
-        img.copyTo(grayImage);
-//        Imgproc.cvtColor(img, grayImage, Imgproc.COLOR_RGB2GRAY, 4);
+        if(mode.equals("Series"))
+            Imgproc.cvtColor(img, grayImage, Imgproc.COLOR_RGB2GRAY, 4);
+        else if(mode.equals("OneByOne"))
+            img.copyTo(grayImage);
         Imgproc.cvtColor(template, grayTemplate, Imgproc.COLOR_RGB2GRAY, 4);
 
         Imgproc.adaptiveThreshold(grayTemplate, grayTemplate, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
         Imgproc.adaptiveThreshold(grayImage, grayImage, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 15);
+
+
+
+//        if(mode.equals("Series"))
+//            Imgproc.adaptiveThreshold(grayImage, grayImage, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 15, 15);
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

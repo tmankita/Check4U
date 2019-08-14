@@ -8,6 +8,9 @@
     android:layout_height="match_parent"
     >
 
+
+
+
     <TableLayout
         android:id="@+id/table_dialog"
         android:layout_width="wrap_content"
@@ -73,6 +76,7 @@
 
     </TableRow>
 
+
     <TableLayout
         android:id="@+id/LayoutSetID"
         android:layout_width="wrap_content"
@@ -109,7 +113,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <TextView
+            <EditText
                 android:id="@+id/answerID"
                 android:layout_width="70dp"
                 android:layout_height="fill_parent"

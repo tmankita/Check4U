@@ -13,10 +13,12 @@ import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.BoringLayout;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,11 +26,14 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.tmankita.check4u.Database.Answer;
 import com.otaliastudios.zoom.ZoomEngine;
@@ -43,6 +48,7 @@ import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.core.Point;
 
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -56,18 +62,23 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     private RelativeLayout layout;
     private ZoomLayout zoomLayout;
     private TextView questionID;
-    private TextView answerID;
+    private EditText answerID;
     private TableLayout layoutSetQuestionID;
     private TableLayout dialog;
+    private RelativeLayout choose_dialog;
     private ZoomEngine engine;
     private Button finish;
+    private RelativeLayout layoutMain;
 
     //Data Structures
     private ArrayList<Answer> problematicAnswers;
     private HashMap<String,RelativeLayout> marksImageViews;
+    private HashMap<String,RelativeLayout> options;
     private int[] toFix;
 
+
     //helpers
+    private int numberOfAnswers;
     private int numberOfQuestions;
     private String questionToInsertToFix;
     int screenWidth;
@@ -112,8 +123,9 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         zoomLayout          = (ZoomLayout) findViewById(R.id.zoom_layout1);
         image               = (ImageView) findViewById(R.id.NewPicture_p);
         layout              = (RelativeLayout) findViewById(R.id.Layout_p);
-        questionID      = (TextView) findViewById(R.id.questionID);
-        answerID        = (TextView) findViewById(R.id.answerID);
+        layoutMain          = (RelativeLayout) findViewById(R.id.Layout1);
+        questionID          = (TextView) findViewById(R.id.questionID);
+        answerID            = (EditText) findViewById(R.id.answerID);
         layoutSetQuestionID = (TableLayout) findViewById(R.id.LayoutSetID);
         dialog              = (TableLayout) findViewById(R.id.table_dialog);
         engine              = (ZoomEngine) zoomLayout.getEngine();
@@ -125,6 +137,8 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
 
         callee = extras.getString("callee");
         id = extras.getInt("id");
+        numberOfAnswers = extras.getInt("numberOfAnswers");
+
 
 
         ViewGroup.LayoutParams params1 =  layout.getLayoutParams();
@@ -169,6 +183,91 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         dialog.setVisibility(View.VISIBLE);
         dialog.bringToFront();
     }
+
+    private void createChooseDialog(){
+        choose_dialog = new RelativeLayout(this);
+
+        choose_dialog.setTag("choose_dialog");
+        RelativeLayout.LayoutParams dialogParam = new RelativeLayout.LayoutParams(  // set the layout params for mark
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        dialogParam.addRule(RelativeLayout.ALIGN_END, R.id.marks_row);
+        choose_dialog.setLayoutParams(dialogParam);
+        choose_dialog.setBackgroundColor(Color.parseColor("#8B8B8F"));
+
+        TableLayout table = new TableLayout(this);
+        TableLayout.LayoutParams tableParam = new TableLayout.LayoutParams(  // set the layout params for mark
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        table.setLayoutParams(tableParam);
+        table.setShrinkAllColumns(true);
+
+
+        TableRow titleRow = new TableRow(this);
+        TableRow.LayoutParams titleViewParam = new TableRow.LayoutParams(  // set the layout params for mark
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT);
+        titleRow.setLayoutParams(titleViewParam);
+
+
+        for (int i = -1; i <=numberOfAnswers ; i++) {
+            if(i==numberOfAnswers){
+                TextView title = new TextView(this);
+                title.setText("Choose the right answer:");
+                title.setTypeface(Typeface.DEFAULT_BOLD);
+                titleRow.addView(title);
+
+            }else{
+                TextView title = new TextView(this);
+                title.setText(" ");
+                titleRow.addView(title);
+            }
+        }
+        table.addView(titleRow);
+
+        TableRow optionsToChooseRow = new TableRow(this);
+        ViewGroup.LayoutParams optionsParam = new TableRow.LayoutParams(  // set the layout params for mark
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        optionsToChooseRow.setLayoutParams(optionsParam);
+
+
+
+        options = new HashMap<>();
+
+        for (int i = numberOfAnswers; i >=-1 ; i--) {
+            String choose_id ="choose_"+(i+1);
+            Button option_i = new Button(this);
+            option_i.setTag(choose_id);
+
+            if(i>-1 && i<numberOfAnswers){
+                option_i.setText(String.valueOf(i+1));
+                option_i.setTextSize(50);
+                option_i.setBackgroundResource(R.drawable.square_question);
+                option_i.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String tag =(String)v.getTag();
+                        UserUpdateAnswer = Integer.parseInt(tag.split("_")[1]);
+                        toFix[UserUpdateQuestion] = UserUpdateAnswer;
+                        RelativeLayout mark_to_Highlight_Green = marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
+                        mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
+                        choose_dialog.setVisibility(View.INVISIBLE);
+                    }
+                });
+            }else{
+                option_i.setBackgroundColor(Color.parseColor("#8B8B8F"));
+            }
+
+            optionsToChooseRow.addView(option_i);
+        }
+
+
+        table.addView(optionsToChooseRow);
+        choose_dialog.addView(table);
+        layoutMain.addView(choose_dialog);
+        choose_dialog.setVisibility(View.INVISIBLE);
+    }
     /**
      *
      */
@@ -197,15 +296,22 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         finish.setVisibility(View.VISIBLE);
         image.setVisibility(View.VISIBLE);
         generateMarks();
+        createChooseDialog();
     }
     /**
      *
      */
-    public void correctAnswer ( View view ){
-        toFix[UserUpdateQuestion] = UserUpdateAnswer;
-        RelativeLayout mark_to_Highlight_Green =  marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
-        mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
-        layoutSetQuestionID.setVisibility(View.INVISIBLE);
+    public void correctAnswer ( View view ) {
+        int curAnswerId = Integer.parseInt(answerID.getText().toString());
+        if (curAnswerId > 0 && curAnswerId <= numberOfAnswers){
+            UserUpdateAnswer = curAnswerId;
+            toFix[UserUpdateQuestion] = UserUpdateAnswer;
+            RelativeLayout mark_to_Highlight_Green = marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
+            mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
+            layoutSetQuestionID.setVisibility(View.INVISIBLE);
+        }else {
+            Toast.makeText(this,"Insert answer number between range 1 - "+numberOfAnswers, Toast.LENGTH_SHORT).show();
+        }
 
 
     }
@@ -313,13 +419,15 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
                         //double tapping mode
                         if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA){
                             Log.i("Mark", "Double tap!! ");
-                            layoutSetQuestionID.setVisibility(View.VISIBLE);
-                            layoutSetQuestionID.bringToFront();
+//                            layoutSetQuestionID.setVisibility(View.VISIBLE);
+//                            layoutSetQuestionID.bringToFront();
+                            choose_dialog.setVisibility(View.VISIBLE);
+                            choose_dialog.bringToFront();
                             String[] parts =  questionToInsertToFix.split("_");
                             UserUpdateAnswer = Integer.parseInt(parts[1]);
                             UserUpdateQuestion = Integer.parseInt(parts[0]);
-                            questionID.setText(parts[0]);
-                            answerID.setText(parts[1]);
+//                            questionID.setText(parts[0]);
+//                            answerID.setText(parts[1]);
                             RelativeLayout mark_to_highlight = mark;
                             // Set highlight to the drag mark
                             mark_to_highlight.setBackgroundColor(Color.parseColor("#515DA7F1"));
@@ -342,75 +450,10 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         });
 
 
-//
-//        // create a new ImageView
-//        ImageView markImageView = new ImageView(ProblematicQuestionsActivity.this);
-//        markImageView.setMinimumHeight((int)height);
-//        markImageView.setMinimumWidth((int)width);
-//        markImageView.setMaxHeight((int)height);
-//        markImageView.setMaxWidth((int)width);
-//        markImageView.setTag(id);
-//        // set resource in ImageView
-//        markImageView.setImageResource(R.drawable.square_question);
-//        markImageView.setX(p_to_imageViewSize[0]);
-//        markImageView.setY(p_to_imageViewSize[1]);
-//        markImageView.setBackgroundColor(Color.parseColor("#FF0000"));
-//        markImageView.setVisibility(View.VISIBLE);
-//        markImageView.bringToFront();
-//
-//        markImageView.setOnTouchListener(new View.OnTouchListener() {
-//            private long lastClickTime = 0;
-//            private static final long DOUBLE_CLICK_TIME_DELTA = 300;//milliseconds
-//            private long clickTime;
-//            //onTouch code
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//
-//
-//                questionToInsertToFix = (String) v.getTag();
-//
-//                switch (event.getAction()) {
-//                    case MotionEvent.ACTION_DOWN:
-//                        ImageView mark = marksImageViews.get(questionToInsertToFix);
-//                        clickTime = System.currentTimeMillis();
-//                        //double tapping mode
-//                        if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA){
-//                            Log.i("Mark", "Double tap!! ");
-//                            layoutSetQuestionID.setVisibility(View.VISIBLE);
-//                            layoutSetQuestionID.bringToFront();
-//                            String[] parts =  questionToInsertToFix.split("_");
-//                            UserUpdateAnswer = Integer.parseInt(parts[1]);
-//                            UserUpdateQuestion = Integer.parseInt(parts[0]);
-//                            questionID.setText(parts[0]);
-//                            answerID.setText(parts[1]);
-//                            ImageView mark_to_highlight = mark;
-//                            // Set highlight to the drag mark
-//                            mark_to_highlight.setBackgroundColor(Color.parseColor("#515DA7F1"));
-//                        }else{
-//                            lastClickTime = clickTime;
-//                        }
-//
-//                }
-//                return true;
-//            }
-//        });
-
         marksImageViews.put(id,markLayout);
 
         return markLayout;
     }
 
-    //for debug
-//    private void updateLocation () {
-//        String tag = (String) markToUpdate.getTag();
-//        int [] location = new int[2];
-//        location[0]=(int)markToUpdate.getX();
-//        location[1]=(int)markToUpdate.getY();
-//        if(marksLocation.containsKey(tag)) {
-//            marksLocation.remove(tag);
-//        }
-//        marksLocation.put( tag ,new Point(location[0],location[1]));
-//    }
-    //----------
 
 }

@@ -809,18 +809,13 @@ public class NewTemplateActivity extends AppCompatActivity {
         else {
             markLayout= new RelativeLayout(this);
             markLayout.setTag(id);
-            //wrongMark.getHeight()
-            //wrongMark.getWidth()
             markParam = new RelativeLayout.LayoutParams(  // set the layout params for mark
                     height,
                     width);
 
             marksSize.put(id,new SizeF(width,height));
-//            visibleView = new Rect();
         }
 
-
-//        screenLayout.getChildVisibleRect(relativeLayout,visibleView,null);
 
         markParam.addRule(RelativeLayout.CENTER_HORIZONTAL);
         markParam.addRule(RelativeLayout.CENTER_VERTICAL);

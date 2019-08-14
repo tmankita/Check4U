@@ -66,6 +66,11 @@ public class MainActivity extends AppCompatActivity {
                             Log.i("Mark", "Double tap!! ");
                             test.setVisibility(View.INVISIBLE);
 
+                            String pathCSV1 = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/TestCSV/1.csv";
+                            String pathCSV2= Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/TestCSV/2.csv";
+                            Compare2CSVTables c = new Compare2CSVTables(pathCSV1,pathCSV2);
+                            c.compare();
+
                         }else{
                             lastClickTime = clickTime;
                         }
@@ -79,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         String[] PERMISSIONS = {
                 android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 android.Manifest.permission.CAMERA
+
         };
 
         if(!hasPermissions(this, PERMISSIONS)){

@@ -285,11 +285,14 @@ public class UserDropBoxActivity extends DropBoxActivity {
     private void removeImagesAndUnzipDirectories() {
         String DCIM_Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/DCIM/";
         String UNZIP_Directory_Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/UNZIP/";
+        String Series_Directory_Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/Series/";
 
         File DCIM_Dir = new File(DCIM_Path);
         File UNZIP_Dir = new File(UNZIP_Directory_Path);
+        File Series_Dir = new File(Series_Directory_Path);
         deleteContentInDir(DCIM_Dir);
         deleteContentInDir(UNZIP_Dir);
+        deleteContentInDir(Series_Dir);
 
 
     }

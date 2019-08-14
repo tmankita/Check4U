@@ -568,17 +568,9 @@ public class TouchActivity extends AppCompatActivity {
         Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
         Mat template = new Mat();
         Utils.bitmapToMat(bmpT, template);
-//        Mat iconMat;
-//        int refrenceimgID = getResources().getIdentifier("square_mark", "drawable", getPackageName());
-//        try{
-//            iconMat = Utils.loadResource(this, refrenceimgID, Imgcodecs.IMREAD_COLOR);
-//        }catch (Exception e){
-//
-//            return null;
-//        }
 
         alignToTemplate align_to_template = new alignToTemplate();
-        Mat align = align_to_template.align(paper,template,null ,bmp); //coment
+        Mat align = align_to_template.align1(paper,template,bmp,"OneByOne"); //coment
 
 //        TemplateMatching template_matching = new TemplateMatching();
 //        Mat match = template_matching.match2(template, paper);

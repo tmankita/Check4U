@@ -28,6 +28,8 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.artifex.mupdf.fitz.*;
+import com.artifex.mupdf.fitz.android.AndroidDrawDevice;
 import com.example.tmankita.check4u.Camera.TouchActivity;
 import com.example.tmankita.check4u.Database.Answer;
 import com.example.tmankita.check4u.Database.StudentDataBase;
@@ -36,16 +38,17 @@ import com.example.tmankita.check4u.Detectors.alignToTemplate;
 import com.example.tmankita.check4u.Detectors.detectDocument;
 import com.example.tmankita.check4u.Dropbox.UserDropBoxActivity;
 import com.example.tmankita.check4u.Utils.CSVWriter;
-import com.example.tmankita.check4u.Utils.PDFParser;
 import com.example.tmankita.check4u.Utils.ZipManager;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -63,11 +66,11 @@ import java.util.Date;
 import java.util.Iterator;
 
 import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
-import static android.os.Process.THREAD_PRIORITY_BACKGROUND;
 import static android.os.Process.THREAD_PRIORITY_DEFAULT;
 import static android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
+import static com.example.tmankita.check4u.Utils.PDFUtils.getRealPath;
 
 public class oneByOneOrSeries extends AppCompatActivity {
 
@@ -94,6 +97,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     //Views
     private TableLayout need_to_continue;
+    private TableLayout Layout_begin_series;
     private Button series;
     private Button oneByOne;
     private ImageView test_align;
@@ -103,6 +107,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private TextView info_examsCounter;
     private TextView info_lastGrade;
     private TextView info_average;
+    private TextView wait_dialog;
 
     //To counters
     private int totalExamsThatProcessedUntilNow;
@@ -114,6 +119,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private float realA4Width = 4960;
     private float realA4Height = 7016;
     private Iterator<String> iterTests;
+    private File testsDir;
+    private Context context;
+    private int numberOfTest;
+    private int countSeries;
+    private Intent dataFilePickerSeries;
 
     // CSV
     private File file;
@@ -153,19 +163,26 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
         final Context c = this;
 
+        PDFBoxResourceLoader.init(getApplicationContext());
+
         Bundle extras = getIntent().getExtras();
 
         //Views
-        need_to_continue = (TableLayout) findViewById(R.id.Layout_if_need_to_continue);
-        info_examsCounter = (TextView) findViewById(R.id.info_count_tests_num);
-        info_lastGrade = (TextView) findViewById(R.id.info_last_grade_num);
-        info_average = (TextView) findViewById(R.id.info_average_num);
-        series = (Button) findViewById(R.id.series_button);
-        oneByOne = (Button) findViewById(R.id.oneByOne_button);
-        test_align = (ImageView) findViewById(R.id.test_align);
-        ok_align_button = (Button) findViewById(R.id.ok_align);
-        realign_button = (Button) findViewById(R.id.realign);
-        test_align_Layout = (RelativeLayout) findViewById(R.id.test_align_layout);
+        need_to_continue        = (TableLayout) findViewById(R.id.Layout_if_need_to_continue);
+        Layout_begin_series     = (TableLayout) findViewById(R.id.Layout_begin_series);
+        info_examsCounter       = (TextView) findViewById(R.id.info_count_tests_num);
+        info_lastGrade          = (TextView) findViewById(R.id.info_last_grade_num);
+        info_average            = (TextView) findViewById(R.id.info_average_num);
+        series                  = (Button) findViewById(R.id.series_button);
+        oneByOne                = (Button) findViewById(R.id.oneByOne_button);
+        test_align              = (ImageView) findViewById(R.id.test_align);
+        ok_align_button         = (Button) findViewById(R.id.ok_align);
+        realign_button          = (Button) findViewById(R.id.realign);
+        test_align_Layout       = (RelativeLayout) findViewById(R.id.test_align_layout);
+        wait_dialog             = (TextView) findViewById(R.id.wait_dialog);
+        context = this;
+
+        wait_dialog.setVisibility(View.INVISIBLE);
 
         //Variables for status of checking tests
         totalExamsThatProcessedUntilNow = 0;
@@ -329,7 +346,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     else
                         binaryCorrectFlag[i] = 0;
                 }
-                lastGrade = students_db.insertRaw(currId, studentAnswers, binaryCorrectFlag, (int) score);
+                double currGrade = students_db.insertRaw(currId, studentAnswers, binaryCorrectFlag, (int) score);
+                countSeries++;
+
+                if(currGrade!= -1)
+                    lastGrade = currGrade;
+                else
+                    totalExamsThatProcessedUntilNow--;
 
                 String callee = data.getStringExtra("callee");
 
@@ -338,18 +361,36 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     checkIfFinalSheetOrContinue();
                 }
                 else if(callee.equals("Series")){
-                    while(iterTests.hasNext()) {
-                        totalExamsThatProcessedUntilNow++;
-                        boolean res = insertStudent(iterTests.next(), "Series");
-                        if (!res) {
-                            //write to log file which test not checked
-                            totalExamsThatProcessedUntilNow--;
-                            Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
-                            Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
-                        }
-                    }
+//                    Mat template = new Mat();
+//                    BitmapFactory.Options options = new BitmapFactory.Options();
+//                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+//                    Bitmap bmp1 = BitmapFactory.decodeFile(templatePath, options);
+//                    Utils.bitmapToMat(bmp1, template);
+//
+//                    while(iterTests.hasNext()) {
+//                        currentImagePath = iterTests.next();
+//                        Mat img = new Mat();
+//                        Bitmap bmp = BitmapFactory.decodeFile(currentImagePath, options);
+//                        Utils.bitmapToMat(bmp, img);
+//                        alignToTemplate align_to_template = new alignToTemplate();
+//                        Mat align = align_to_template.align1(img, template, bmp,"Series"); //series_align
+//                        if(align.empty()){
+////                        write to the log each test we skip
+//                            continue;
+//                        }
+//                        currentImagePath = saveJpeg(align,testsDir.getAbsolutePath());
+//
+//                        totalExamsThatProcessedUntilNow++;
+//                        boolean res = insertStudent(currentImagePath, "Series");
+//                        if (!res) {
+//                            //write to log file which test not checked
+//                            totalExamsThatProcessedUntilNow--;
+//                            Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
+//                            Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
+//                        }
+//                    }
+                    finishSeries();
 
-                    finish_check(null);
                 }
 
 
@@ -362,6 +403,54 @@ public class oneByOneOrSeries extends AppCompatActivity {
              */
         } else if (requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
+                dataFilePickerSeries = data;
+                oneByOne.setVisibility(View.INVISIBLE);
+                series.setVisibility(View.INVISIBLE);
+                Layout_begin_series.setVisibility(View.VISIBLE);
+
+            }
+        }
+
+    }
+
+
+    public String getRealPathFromURI( Uri uri) {
+
+
+        String fullPath;
+        try{
+        fullPath = getRealPath(getApplicationContext(), uri);
+            return fullPath;
+        }
+        catch(Exception e){
+            Log.d(TAG, "pdf: " + e.getMessage());
+            return "";
+        }
+
+
+
+//            final String id = DocumentsContract.getDocumentId(uri);
+//            final Uri contentUri = ContentUris.withAppendedId(
+//                    Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+//
+//            String[] projection = { MediaStore.Images.Media.DATA };
+//            Cursor cursor = getContentResolver().query(contentUri, projection, null, null, null);
+//            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+//            cursor.moveToFirst();
+//            return cursor.getString(column_index);
+
+
+
+
+    }
+    public void start_check_series(View view){
+        Layout_begin_series.setVisibility(View.INVISIBLE);
+        wait_dialog.setVisibility(View.VISIBLE);
+        wait_dialog.bringToFront();
+        wait_dialog.post(new Runnable() {
+            @Override
+            public void run() {
+
                 File StorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
                 File SeriesDir = new File(StorageDir.getPath(), "Series");
                 if (!SeriesDir.exists()) {
@@ -369,7 +458,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         Log.d("Check4U", "failed to create directory SeriesDir");
                     }
                 }
-                File testsDir = new File(SeriesDir.getPath(), "tests_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
+                testsDir = new File(SeriesDir.getPath(), "tests_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()));
                 if (!testsDir.exists()) {
                     if (!testsDir.mkdirs()) {
                         Log.d("Check4U", "failed to create directory testsDir");
@@ -378,40 +467,75 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
                 final ArrayList<String> tests = new ArrayList<>();
-                ArrayList<String> testsImagesPdf = new ArrayList<>();
-                for (int i = 0; i < data.getClipData().getItemCount(); i++) {
-                    Uri uri = data.getClipData().getItemAt(i).getUri();
-                    String[] parts = (uri.getPath()).split(":");
-                    currentImagePath = parts[1];
-                    String[] pathParts = (currentImagePath).split(".");
-                    String type = (pathParts[pathParts.length -1]);
+                Uri uri = dataFilePickerSeries.getData();
+                currentImagePath = getRealPathFromURI(uri);
 
-                    if((type.toLowerCase()).equals("jpg") || (type.toLowerCase()).equals("jpeg")){
-                        Mat align = new Mat();
-                        BitmapFactory.Options options = new BitmapFactory.Options();
-                        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-                        Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
-                        Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                        Utils.bitmapToMat(bmpAlign, align);
+                 Document doc = Document.openDocument(currentImagePath);
+                 int pageCount = doc.countPages();
+                 int pageIndex=0;
 
-                        String path = saveJpeg(align,testsDir.getAbsolutePath());
-                        tests.add(path);
-                    }else if((type.toLowerCase()).equals("pdf")){
-                        PDFParser parser = new PDFParser(this , testsDir.getAbsolutePath() );
-                        testsImagesPdf = parser.PDF2Jpeg(currentImagePath);
+                com.artifex.mupdf.fitz.Matrix ctm;
+//                Link[] links;
+//                Quad[] hits;
+
+
+
+//                links = page.getLinks();
+//                if (links != null)
+//                    for (Link link : links)
+//                        link.bounds.transform(ctm);
+//                if (zoom != 1)
+//                    ctm.scale(zoom);
+
+                File targetDir = new File(testsDir,"PDF2JPEG");
+                if (!targetDir.exists()) {
+                    if (!targetDir.mkdirs()) {
+                        Log.d("Check4U", "failed to create directory targetDir");
                     }
-
                 }
 
-                for (String test: testsImagesPdf) {
-                    tests.add(test);
-                }
                 Mat template = new Mat();
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bmp1 = BitmapFactory.decodeFile(templatePath, options);
                 Utils.bitmapToMat(bmp1, template);
+
+
+
+                while(pageIndex<pageCount){
+                    Page page = doc.loadPage(pageIndex);
+                    ctm = AndroidDrawDevice.fitPage(page, (int)template.size().width, (int)template.size().height);
+                    Bitmap bitmap = AndroidDrawDevice.drawPage(page,ctm);
+                    Mat image = new Mat();
+                    Utils.bitmapToMat(bitmap, image);
+                    String name = "test_"+pageIndex;
+                    tests.add(saveJpeg(image,targetDir.getAbsolutePath(),name));
+                    pageIndex++;
+                }
+
+
+
+//
+//
+//
+//                if (!targetDir.exists()) {
+//                    if (!targetDir.mkdirs()) {
+//                        Log.d("Check4U", "failed to create directory targetDir");
+//                    }
+//                }
+//
+//                ZipManager zipManager = new ZipManager();
+//                zipManager.unzip(currentImagePath, targetDir.getAbsolutePath()+"/");
+//
+//                for (File f : targetDir.listFiles()) {
+//                    if (f.isFile() && f.getName().toLowerCase().endsWith("jpg")) {
+//                        tests.add(f.getPath());
+//                    }
+//                }
+
+                numberOfTest = tests.size();
+
                 iterTests = tests.iterator();
                 while(iterTests.hasNext()) {
                     currentImagePath = iterTests.next();
@@ -419,40 +543,52 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     Bitmap bmp = BitmapFactory.decodeFile(currentImagePath, options);
                     Utils.bitmapToMat(bmp, img);
                     alignToTemplate align_to_template = new alignToTemplate();
-                    Mat align = align_to_template.align1(img, template, bmp); //series_align
+                    Mat align = align_to_template.align1(img, template, bmp,"Series"); //series_align
                     if(align.empty()){
 //                        write to the log each test we skip
+                        countSeries++;
                         continue;
                     }
-                    currentImagePath = saveJpeg(align,testsDir.getAbsolutePath());
+                    String[] partsPath = currentImagePath.split("/");
+                    String name= partsPath[partsPath.length-1].substring(0,partsPath[partsPath.length-1].length()-4);
+
+                    currentImagePath = saveJpeg(align,testsDir.getAbsolutePath(),name);
 
                     totalExamsThatProcessedUntilNow++;
                     boolean res = insertStudent(currentImagePath, "Series");
                     if (!res) {
                         //write to the log each test we skip
                         totalExamsThatProcessedUntilNow--;
-                        Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
+//                        Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
                         Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
                     }
                 }
-
-                finish_check(null);
+                finishSeries();
 
                 //for each test:
                 //      align to the template- no option for realign
                 //      check the align image and insert it to the student db
                 //finish_check
 
+
+
             }
-        }
+        });
+
 
     }
+    public void finishSeries(){
+        if(countSeries == numberOfTest)
+            createCSV();
+    }
+
+
 
     /**
      * @param
      * @return
      */
-    private String saveJpeg(Mat img, String dirPath) {
+    private String saveJpeg(Mat img, String dirPath, String name) {
         String path="";
         Matrix matrix = new Matrix();
         Bitmap bmpPaper = Bitmap.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
@@ -464,7 +600,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         bOutput.compress(Bitmap.CompressFormat.JPEG, 70, stream);
         byte[] paperData = stream.toByteArray();
 
-        File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE,dirPath);
+        File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE,dirPath,name);
         if (pictureFile == null) {
             Log.d(TAG, "Error creating media file, check storage permissions");
             return "";
@@ -485,7 +621,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
         return path;
     }
-    private static File getOutputMediaFile(int type, String dirPath){
+    private static File getOutputMediaFile(int type, String dirPath, String name){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
 
@@ -503,14 +639,14 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
 
         // Create a media file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        //String timeStamp = //new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         File mediaFile;
         if (type == MEDIA_TYPE_IMAGE){
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                    "IMG_"+ timeStamp + ".jpg");
+                     name + ".jpg");
         } else if(type == MEDIA_TYPE_VIDEO) {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                    "VID_"+ timeStamp + ".mp4");
+                    name + ".mp4");
         } else {
             return null;
         }
@@ -542,16 +678,24 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @return
      */
     public void series (View view){
+        //picker files view - choose all the tests
+        countSeries = 1;
         series.setVisibility(View.INVISIBLE);
         oneByOne.setVisibility(View.INVISIBLE);
 
+//        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+//        chooseFile.setType("application/zip");
+//        chooseFile = Intent.createChooser(chooseFile, "Choose a file");
+
         Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-        chooseFile.setType("image/*");
-        chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        chooseFile = Intent.createChooser(chooseFile, "Choose all student test images");
+//        chooseFile.setType("image/*");
+//        chooseFile.setType("application/zip");
+        chooseFile.setType("application/pdf");
+//        chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        chooseFile = Intent.createChooser(chooseFile, "Choose a zip file");
         startActivityForResult(chooseFile, FILE_PICKER__CONTINUES_REQUEST_CODE);
 
-        //picker files view - choose all the tests
+
 
 
     }
@@ -571,7 +715,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @param
      * @return
      */
-    public void finish_check(View view){
+    public void createCSV(){
         File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
         File csvDir = new File(exportDir.getPath(),"CSV");
 
@@ -610,6 +754,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
         {
             Log.e("SQL_to_CSV", sqlEx.getMessage(), sqlEx);
         }
+    }
+    public void finish_check(View view){
+        createCSV();
     }
     /**
      *
@@ -803,7 +950,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             for (i = 1; i < sumOfBlacks.length; i++) {
                 int minBlack = Integer.MAX_VALUE;
                 for (j = 0; j < sumOfBlacks[i].length; j++) {
-                    if (minBlack > sumOfBlacks[i][j]) {
+                    if (minBlack >= sumOfBlacks[i][j]) {
                         minBlack = sumOfBlacks[i][j];
                         numberOfAnswerThatChoosed = j + 1;
                     }
@@ -817,7 +964,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // - j+1 < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 5) > sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 4) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
@@ -827,11 +974,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
                         AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
             }
+            int in=0;
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
-                intent.putExtra("sheet", Path);//numberOfQuestions
+                intent.putExtra("sheet", Path);
                 intent.putExtra("numberOfQuestions", numberOfQuestions);
+                intent.putExtra("numberOfAnswers", numberOfAnswers);
                 intent.putExtra("callee", callee);
                 intent.putExtra("id", id);
                 startActivityForResult(intent, 2);
@@ -849,7 +998,12 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     lastGrade = currGrade;
                 else
                     totalExamsThatProcessedUntilNow--;
-                checkIfFinalSheetOrContinue();
+                if(callee.equals("Series")){
+                    countSeries++;
+                    return true;
+                }
+                else if(callee.equals("OneByOne"))
+                    checkIfFinalSheetOrContinue();
             }
          return true;
         }
@@ -860,8 +1014,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @return
      */
     private void checkIfFinalSheetOrContinue(){
-
-
 
         if(totalExamsThatProcessedUntilNow == 1)
             averageUntilNow = lastGrade;

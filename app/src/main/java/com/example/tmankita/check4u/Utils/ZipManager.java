@@ -52,6 +52,7 @@ public class ZipManager {
         try {
             FileInputStream fin = new FileInputStream(_zipFile);
             ZipInputStream zin = new ZipInputStream(fin);
+            BufferedInputStream in = new BufferedInputStream(zin);
             ZipEntry ze = null;
             while ((ze = zin.getNextEntry()) != null) {
 
@@ -60,11 +61,18 @@ public class ZipManager {
                     dirChecker(ze.getName());
                 } else {
                     FileOutputStream fout = new FileOutputStream(_targetLocation + ze.getName());
-                    for (int c = zin.read(); c != -1; c = zin.read()) {
-                        fout.write(c);
+                    BufferedOutputStream out = new BufferedOutputStream(fout);
+
+
+                    byte b[] = new byte[1024];
+                    int n;
+                    while ((n = in.read(b,0,1024)) >= 0) {
+                        out.write(b,0,n);
                     }
 
+
                     zin.closeEntry();
+                    out.close();
                     fout.close();
                 }
 
