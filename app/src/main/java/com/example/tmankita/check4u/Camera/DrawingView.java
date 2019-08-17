@@ -7,6 +7,10 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
+import androidx.core.content.ContextCompat;
+
+import com.example.tmankita.check4u.R;
+
 public class DrawingView extends View {
     /**
      * Extends View. Just used to draw Rect when the screen is touched
@@ -24,12 +28,13 @@ public class DrawingView extends View {
         public DrawingView(Context context, AttributeSet attrs) {
             super(context, attrs);
             paint = new Paint();
-            paint.setColor(0xeed7d7d7);
+            int color = ContextCompat.getColor(context, R.color.green);
+            paint.setColor(color);
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(2);
             haveTouch = false;
         }
-
+//0xeed7d7d7
         public void setHaveTouch(boolean val, Rect rect) {
             haveTouch = val;
             touchArea = rect;

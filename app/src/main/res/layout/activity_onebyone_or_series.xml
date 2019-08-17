@@ -6,6 +6,17 @@
     android:layout_height="match_parent"
     tools:context=".oneByOneOrSeries">
 
+    <Button
+        android:id="@+id/finish_check"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="finish_check"
+        android:text="Finish"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="invisible"
+        />
+
     <TextView
         android:id="@+id/wait_dialog"
         android:layout_width="wrap_content"
@@ -75,7 +86,7 @@
 
     <TableLayout
         android:id="@+id/Layout_if_need_to_continue"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#A59F9F"
         android:orientation="horizontal"
@@ -84,17 +95,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        android:stretchColumns="*"
+        >
 
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-
             <TextView
-                android:id="@+id/info_count_tests"
+                android:id="@+id/info_count_temp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Count of checked tests:"
+                android:text=" "
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
 
@@ -106,8 +118,13 @@
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
 
-
-
+            <TextView
+                android:id="@+id/info_count_tests"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Count of checked tests:"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
 
         </TableRow>
 
@@ -115,12 +132,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <TextView
-                android:id="@+id/info_last_grade"
+                android:id="@+id/info_last_temp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Last exam garde:"
+                android:text=" "
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/info_last_grade_num"
                 android:layout_width="wrap_content"
@@ -129,20 +147,27 @@
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
 
-
-
+            <TextView
+                android:id="@+id/info_last_grade"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last exam garde:"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
         </TableRow>
 
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
             <TextView
-                android:id="@+id/info_average"
+                android:id="@+id/info_average_temp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Average:"
+                android:text=" "
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/info_average_num"
                 android:layout_width="wrap_content"
@@ -151,11 +176,44 @@
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/info_average"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Average:"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
+
         </TableRow>
+
+
+    </TableLayout>
+
+
+    <TableLayout
+        android:id="@+id/Layout_if_need_to_continue1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#A59F9F"
+        android:orientation="horizontal"
+        android:visibility="invisible"
+        app:layout_constraintTop_toBottomOf="@+id/Layout_if_need_to_continue"
+        app:layout_constraintStart_toStartOf="@+id/Layout_if_need_to_continue"
+        android:stretchColumns="*"
+        >
+
 
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/questionText_temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" "
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/questionText"
@@ -171,13 +229,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <Button
-                android:id="@+id/finish_check"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_marginLeft="110dp"
-                android:onClick="finish_check"
-                android:text="Finish" />
 
             <Button
                 android:id="@+id/yes"

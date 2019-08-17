@@ -81,7 +81,6 @@
         android:id="@+id/LayoutSetID"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/marks_row"
         android:layout_marginTop="60dp"
         android:layout_marginRight="15dp"
         android:background="#A59F9F"

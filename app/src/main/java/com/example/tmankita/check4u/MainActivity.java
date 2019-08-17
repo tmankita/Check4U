@@ -132,9 +132,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == CAMERA_CONTINUES_REQUEST_CODE) {
             if(resultCode == Activity.RESULT_OK){
-                String path=data.getStringExtra("sheet");
+                String[] imagesPath = data.getStringArrayExtra("sheets");
                 Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
-                nextIntent.putExtra("sheet", path);
+                nextIntent.putExtra("sheets", imagesPath);
                 startActivity(nextIntent);
             }
             if (resultCode == Activity.RESULT_CANCELED) {}
@@ -159,7 +159,9 @@ public class MainActivity extends AppCompatActivity {
      * @return None
      */
     public   void  ImportTemplate(View view) {
-        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+        Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
+                + "/Check4U_DB/ZIP/");
+        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT,uri);
         chooseFile.setType("application/zip");
         chooseFile = Intent.createChooser(chooseFile, "Choose a file");
         startActivityForResult(chooseFile, FILE_PICKER__CONTINUES_REQUEST_CODE);
@@ -172,9 +174,13 @@ public class MainActivity extends AppCompatActivity {
      */
     public   void  NewTemplate(View view) {
 
-        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
-        NewTemplate.putExtra("caller","MainActivity");
-        startActivityForResult(NewTemplate,CAMERA_CONTINUES_REQUEST_CODE);
+//        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
+//        NewTemplate.putExtra("caller","MainActivity");
+//        startActivityForResult(NewTemplate,CAMERA_CONTINUES_REQUEST_CODE);
+
+        Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
+        nextIntent.putExtra("sheets", "");
+        startActivity(nextIntent);
     }
     /**
      * Button for testing the application  correctness

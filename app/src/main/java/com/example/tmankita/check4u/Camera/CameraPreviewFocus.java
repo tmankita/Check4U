@@ -19,15 +19,17 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
 
     public int isCamOpen = 0;
     public boolean isSizeSupported = false;
-    private int previewWidth, previewHeight;
+//    private int previewWidth, previewHeight;
 
     private final static String TAG = "CameraPreview";
 
-    public CameraPreviewFocus(int width, int height) {
-        Log.i("campreview", "Width = " + String.valueOf(width));
-        Log.i("campreview", "Height = " + String.valueOf(height));
-        previewWidth = width;
-        previewHeight = height;
+
+    //int width, int height
+    public CameraPreviewFocus() {
+//        Log.i("campreview", "Width = " + String.valueOf(width));
+//        Log.i("campreview", "Height = " + String.valueOf(height));
+//        previewWidth = width;
+//        previewHeight = height;
     }
 
     private int openCamera() {
@@ -42,7 +44,10 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
         }
 
         params = mCamera.getParameters();
-        params.setPreviewSize(previewWidth, previewHeight);
+        android.hardware.Camera.Size size = params.getPreviewSize();
+
+//        params.setPreviewSize(previewWidth, previewHeight);
+        params.setPreviewSize(size.width, size.height);
         params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
 
         try {

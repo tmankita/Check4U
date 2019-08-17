@@ -10,6 +10,7 @@ import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Environment;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,6 +33,9 @@ import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.artifex.mupdf.fitz.Document;
+import com.artifex.mupdf.fitz.Page;
+import com.artifex.mupdf.fitz.android.AndroidDrawDevice;
 import com.example.tmankita.check4u.Database.Template;
 import com.example.tmankita.check4u.Dropbox.UserDropBoxActivity;
 import com.otaliastudios.zoom.ZoomEngine;
@@ -50,6 +54,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 
+import static com.example.tmankita.check4u.Camera.TouchActivity.send_imageHelper;
+import static com.example.tmankita.check4u.Utils.PDFUtils.getRealPath;
 
 
 public class NewTemplateActivity extends AppCompatActivity {
@@ -234,7 +240,28 @@ public class NewTemplateActivity extends AppCompatActivity {
         zoomLayout.setVisibility(View.VISIBLE); //comment
 
         Bundle extras = getIntent().getExtras();
-        imagePath = extras.getString("sheet");
+        String[] imagesPaths = extras.getStringArray("sheets");
+//        imagePath = imagesPaths[0];
+
+
+
+
+
+        com.artifex.mupdf.fitz.Matrix ctm;
+        File templatePdf = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "template.pdf");
+        Document doc = Document.openDocument(templatePdf.getAbsolutePath());
+        Page page = doc.loadPage(0);
+//        ctm = AndroidDrawDevice.fitPage(page.get);
+        Bitmap bitmap = AndroidDrawDevice.drawPage(page,400);
+        Mat img = new Mat();
+        Utils.bitmapToMat(bitmap, img);
+        imagePath = send_imageHelper(img,"");
+
+
+
+
+
+
 
         image = (ImageView) findViewById(R.id.NewPicture);
         BitmapFactory.Options options = new BitmapFactory.Options();

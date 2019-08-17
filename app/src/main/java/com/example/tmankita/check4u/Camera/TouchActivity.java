@@ -61,6 +61,9 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE;
 import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 
 public class TouchActivity extends AppCompatActivity {
+
+    private static final int REQUEST_CODE_RECAPTURE = 1;
+
     private  static final String TAG= "TouchActivity";
     private PreviewSurfaceView camView;
     private CameraPreviewFocus cameraPreview;
@@ -72,6 +75,7 @@ public class TouchActivity extends AppCompatActivity {
     private Button edit_button;
     private Button ok_button;
     private Button set_button;
+    private Button recapture_button;
     private ImageButton capture_button;
     private ImageView test;
 
@@ -128,6 +132,7 @@ public class TouchActivity extends AppCompatActivity {
         ok_button = (Button) findViewById(R.id.ok_test);
         edit_button = (Button) findViewById(R.id.edit_test);
         set_button = (Button) findViewById(R.id.set_test);
+        recapture_button = (Button) findViewById(R.id.take_agian);
         capture_button = (ImageButton) findViewById(R.id.capture_touch_activity);
         orig = new Mat();
         test = (ImageView) findViewById(R.id.test);
@@ -140,23 +145,19 @@ public class TouchActivity extends AppCompatActivity {
         if(caller.equals("oneByOne"))
             templatePath = extras.getString("templatePath");
 
-//        DisplayMetrics metrics = this.getResources().getDisplayMetrics();
-//        height= (float)metrics.heightPixels;
-//        width = (float)metrics.widthPixels;
-//        ratio = (height/ width);
+
         Display display = getWindowManager().getDefaultDisplay();
         android.graphics.Point size = new android.graphics.Point();
         display.getSize(size);
         width = size.x;
         height = size.y;
 
-//        previewWidth = (int)width;
-//        previewHeight = (int)height;
 
         camView = (PreviewSurfaceView) findViewById(R.id.preview_surface);
         SurfaceHolder camHolder = camView.getHolder();
 
-        cameraPreview = new CameraPreviewFocus(previewWidth, previewHeight);
+//        cameraPreview = new CameraPreviewFocus(previewWidth, previewHeight);
+        cameraPreview = new CameraPreviewFocus();
         camHolder.addCallback(cameraPreview);
         camHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 
@@ -227,6 +228,19 @@ public class TouchActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE_RECAPTURE) {
+            if (resultCode == Activity.RESULT_OK) {
+                String[] imagesPathes = data.getStringArrayExtra("sheets");
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("sheets",imagesPathes);
+                setResult(Activity.RESULT_OK,returnIntent);
+                finish();
+            }  if (resultCode == Activity.RESULT_CANCELED) {}
+        }
+    }
+
     public void ok_test (View view){
         send_image(paper_obj.doc_resized);
     }
@@ -235,7 +249,7 @@ public class TouchActivity extends AppCompatActivity {
         set_button.setVisibility(View.VISIBLE);
         edit_button.setVisibility(View.INVISIBLE);
         ok_button.setVisibility(View.INVISIBLE);
-
+        recapture_button.setVisibility(View.INVISIBLE);
         test.setImageBitmap(origin_bitmap);
         M1 = test.getImageMatrix();
         RectF drawableRect = new RectF(0, 0, origcopy1.cols(), origcopy1.rows());
@@ -292,19 +306,18 @@ public class TouchActivity extends AppCompatActivity {
         }
 
         Mat croped = fourPointTransform_touch(origcopy1,final2);
-//        detectDocument.enhanceDocument(croped);
         Mat cropedGray = new Mat(croped.size(),CvType.CV_8UC1);
-            Imgproc.cvtColor(croped,cropedGray,Imgproc.COLOR_RGBA2GRAY);
-//        Imgproc.circle(origcopy1, right[2], 20, new Scalar(255, 0, 0, 150), 4);
-//
-//        Imgproc.circle(origcopy1, final2[0], 40, new Scalar(0, 0, 255, 150), 4);
-//        Imgproc.circle(origcopy1, final2[1], 40, new Scalar(0, 0, 255, 150), 4);
-//        Imgproc.circle(origcopy1, final2[2], 40, new Scalar(0, 0, 255, 150), 4);
-//        Imgproc.circle(origcopy1, final2[3], 40, new Scalar(0, 0, 255, 150), 4);
-//        Bitmap bmpPaper1 = Bitmap.createBitmap(origcopy1.cols(), origcopy1.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(origcopy1, bmpPaper1);
+        Imgproc.cvtColor(croped,cropedGray,Imgproc.COLOR_RGBA2GRAY);
+        croped.release();
 
         send_image(cropedGray);
+    }
+
+    public void recapture (View view){
+        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+        takePicture.putExtra("templatePath", templatePath);
+        takePicture.putExtra("caller", "oneByOne");
+        startActivityForResult(takePicture, REQUEST_CODE_RECAPTURE);
     }
 
     public static Mat fourPointTransform_touch( Mat src , Point[] pts ) {
@@ -511,6 +524,7 @@ public class TouchActivity extends AppCompatActivity {
                 test.setVisibility(View.VISIBLE);
                 edit_button.setVisibility(View.VISIBLE);
                 ok_button.setVisibility(View.VISIBLE);
+                recapture_button.setVisibility(View.VISIBLE);
                 imageView.setVisibility(View.INVISIBLE);
                 capture_button.setVisibility(View.INVISIBLE);
 
@@ -553,15 +567,10 @@ public class TouchActivity extends AppCompatActivity {
 //                send_image(dcRotate);
 //            }
 
-
-
-
-
-
         }
     };
 
-    private Mat alignBeforeSend (Mat paper){
+    private alignToTemplate alignBeforeSend (Mat paper){
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
@@ -570,7 +579,7 @@ public class TouchActivity extends AppCompatActivity {
         Utils.bitmapToMat(bmpT, template);
 
         alignToTemplate align_to_template = new alignToTemplate();
-        Mat align = align_to_template.align1(paper,template,bmp,"OneByOne"); //coment
+        align_to_template.align1(paper,template,bmp,"OneByOne"); //coment
 
 //        TemplateMatching template_matching = new TemplateMatching();
 //        Mat match = template_matching.match2(template, paper);
@@ -579,27 +588,27 @@ public class TouchActivity extends AppCompatActivity {
 //                align(orig.nativeObj,template.nativeObj,aligned.nativeObj);
 
 
+//        Bitmap bmpBarcode23 = Bitmap.createBitmap(align_to_template.align.cols(), align_to_template.align.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(align_to_template.align, bmpBarcode23);
+//
+//        Mat dcRotateA = new Mat(align_to_template.align.size(), align_to_template.align.type());
+//        Core.rotate(align_to_template.align, dcRotateA, Core.ROTATE_90_CLOCKWISE);
+//        Mat dcRotateS = new Mat(align_to_template.strongMarks.size(), align_to_template.strongMarks.type());
+//        Core.rotate(align_to_template.strongMarks, dcRotateS, Core.ROTATE_90_CLOCKWISE);
+//
+//        Bitmap bmpBarcode24 = Bitmap.createBitmap(dcRotateA.cols(), dcRotateA.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(dcRotateA, bmpBarcode24);
+//        Bitmap bmpBarcode25 = Bitmap.createBitmap(dcRotateS.cols(), dcRotateS.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(dcRotateS, bmpBarcode25);
+//        align_to_template.align.release();
+//        align_to_template.strongMarks.release();
+//        align_to_template.align = dcRotateA;
+//        align_to_template.strongMarks = dcRotateS;
 
-
-        Mat dcRotate = new Mat(align.size(), align.type());
-        Core.rotate(align, dcRotate, Core.ROTATE_90_CLOCKWISE);
-
-        return align;
+        return align_to_template;
     }
 
-    private void send_image (Mat paper){
-        //srcMat.release();
-        Mat img;
-//        img = new Mat();
-//        paper.copyTo(img);
-        if(caller.equals("oneByOne")){
-           img = alignBeforeSend (paper);
-        }else {
-            img = new Mat();
-            paper.copyTo(img);
-        }
-
-
+    static public String send_imageHelper (Mat img, String adding){
         Matrix matrix = new Matrix();
 //        matrix.setRotate(90);
         Bitmap bmpPaper = Bitmap.createBitmap(img.cols(), img.rows(), Bitmap.Config.ARGB_8888);
@@ -611,32 +620,49 @@ public class TouchActivity extends AppCompatActivity {
         bOutput.compress(Bitmap.CompressFormat.JPEG, 70, stream);
         byte[] paperData = stream.toByteArray();
 
-        File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
+        File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE, adding);
         if (pictureFile == null) {
             Log.d(TAG, "Error creating media file, check storage permissions");
-            return;
+            return "";
         }
 
         try {
             FileOutputStream fos = new FileOutputStream(pictureFile);
             fos.write(paperData);
             fos.close();
-
-            String path = pictureFile.getAbsolutePath();
-            Intent returnIntent = new Intent();
-            returnIntent.putExtra("sheet",path);
-            setResult(Activity.RESULT_OK,returnIntent);
-            finish();
+            return pictureFile.getAbsolutePath();
 
         } catch (FileNotFoundException e) {
             Log.d(TAG, "File not found: " + e.getMessage());
+            return "";
         } catch (IOException e) {
             Log.d(TAG, "Error accessing file: " + e.getMessage());
+            return "";
         }
+    }
+
+    private void send_image (Mat paper){
+        //srcMat.release();
+        String[] res = new String[2];
+//        img = new Mat();
+//        paper.copyTo(img);
+        if(caller.equals("oneByOne")){
+            alignToTemplate align_to_template = alignBeforeSend (paper);
+            res[0] = send_imageHelper(align_to_template.align,"a");
+            res[1] = send_imageHelper(align_to_template.strongMarks,"m");
+        }else {
+            res[0] = send_imageHelper(paper,"");
+        }
+
+
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra("sheets",res);
+        setResult(Activity.RESULT_OK,returnIntent);
+        finish();
 
     }
 
-    private static File getOutputMediaFile(int type){
+    private static File getOutputMediaFile(int type,String adding){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
 
@@ -654,7 +680,7 @@ public class TouchActivity extends AppCompatActivity {
         }
 
         // Create a media file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date())+adding;
         File mediaFile;
         if (type == MEDIA_TYPE_IMAGE){
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +

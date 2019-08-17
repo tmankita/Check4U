@@ -81,7 +81,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     //image - student test
     private Mat paper;
+    private Mat paperMarks;
     private String currentImagePath;
+    private String currentImageMarks;
 
     //DB
     private Answer[][] allanswers;
@@ -97,6 +99,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     //Views
     private TableLayout need_to_continue;
+    private TableLayout need_to_continue1;
     private TableLayout Layout_begin_series;
     private Button series;
     private Button oneByOne;
@@ -108,6 +111,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private TextView info_lastGrade;
     private TextView info_average;
     private TextView wait_dialog;
+    private Button finish_check_button;
 
     //To counters
     private int totalExamsThatProcessedUntilNow;
@@ -115,10 +119,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private double averageUntilNow;
 
     //helpers
-    private Bitmap bmpMarks;
     private float realA4Width = 4960;
     private float realA4Height = 7016;
-    private Iterator<String> iterTests;
+//    private Iterator<String> iterTests;
     private File testsDir;
     private Context context;
     private int numberOfTest;
@@ -138,7 +141,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 case LoaderCallbackInterface.SUCCESS: {
                     paper = new Mat();
                     imageForTest = new Mat();
-
+                    paperMarks = new Mat();
                 }
                 break;
                 default: {
@@ -169,6 +172,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
         //Views
         need_to_continue        = (TableLayout) findViewById(R.id.Layout_if_need_to_continue);
+        need_to_continue1        = (TableLayout) findViewById(R.id.Layout_if_need_to_continue1);
         Layout_begin_series     = (TableLayout) findViewById(R.id.Layout_begin_series);
         info_examsCounter       = (TextView) findViewById(R.id.info_count_tests_num);
         info_lastGrade          = (TextView) findViewById(R.id.info_last_grade_num);
@@ -180,6 +184,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         realign_button          = (Button) findViewById(R.id.realign);
         test_align_Layout       = (RelativeLayout) findViewById(R.id.test_align_layout);
         wait_dialog             = (TextView) findViewById(R.id.wait_dialog);
+        finish_check_button     = (Button) findViewById(R.id.finish_check);
         context = this;
 
         wait_dialog.setVisibility(View.INVISIBLE);
@@ -258,39 +263,50 @@ public class oneByOneOrSeries extends AppCompatActivity {
         if (requestCode == AFTER_ALIGNMENT_CONTINUES_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 try {
-                    currentImagePath =  data.getStringExtra("sheet");
+                    String[] imagesPathes = data.getStringArrayExtra("sheets");
+                    currentImagePath =  imagesPathes[0];
+                    currentImageMarks = imagesPathes[1];
+                    //update the status variable
+                    totalExamsThatProcessedUntilNow++;
+                    //insert the student to DB
+                    boolean res = insertStudent(null ,"OneByOne");
+                    if(!res) {
+                        totalExamsThatProcessedUntilNow--;
+                        Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
+                        Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
+                    }
 
-                    Mat align = new Mat();
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-                    Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
-                    Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-                    Utils.bitmapToMat(bmpAlign, align);
-
-                    Bitmap bmpPaper = Bitmap.createBitmap(align.cols(), align.rows(), Bitmap.Config.ARGB_8888);
-                    Utils.matToBitmap(align, bmpPaper);
-                    Matrix matrix2 = new Matrix();
-                    Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
-
-                    Display display = getWindowManager().getDefaultDisplay();
-                    android.graphics.Point size = new android.graphics.Point();
-                    display.getSize(size);
-                    int width = size.x;
-                    int height = size.y;
-
-                    test_align.setImageBitmap(bOutput);
-                    Matrix M = test_align.getImageMatrix();
-                    RectF drawableRect = new RectF(0, 0, align.cols(), align.rows());
-                    RectF viewRect = new RectF(0, 0, width, height);
-                    M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
-                    test_align.setImageMatrix(M);
-                    test_align.invalidate();
-
-                    test_align_Layout.setVisibility(View.VISIBLE);
-                    test_align.setVisibility(View.VISIBLE);
-                    realign_button.setVisibility(View.VISIBLE);
-                    ok_align_button.setVisibility(View.VISIBLE);
+//                    Mat align = new Mat();
+//                    BitmapFactory.Options options = new BitmapFactory.Options();
+//                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+//
+//                    Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
+//                    Bitmap bmpAlign = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+//                    Utils.bitmapToMat(bmpAlign, align);
+//
+//                    Bitmap bmpPaper = Bitmap.createBitmap(align.cols(), align.rows(), Bitmap.Config.ARGB_8888);
+//                    Utils.matToBitmap(align, bmpPaper);
+//                    Matrix matrix2 = new Matrix();
+//                    Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
+//
+//                    Display display = getWindowManager().getDefaultDisplay();
+//                    android.graphics.Point size = new android.graphics.Point();
+//                    display.getSize(size);
+//                    int width = size.x;
+//                    int height = size.y;
+//
+//                    test_align.setImageBitmap(bOutput);
+//                    Matrix M = test_align.getImageMatrix();
+//                    RectF drawableRect = new RectF(0, 0, align.cols(), align.rows());
+//                    RectF viewRect = new RectF(0, 0, width, height);
+//                    M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+//                    test_align.setImageMatrix(M);
+//                    test_align.invalidate();
+//
+//                    test_align_Layout.setVisibility(View.VISIBLE);
+//                    test_align.setVisibility(View.VISIBLE);
+//                    realign_button.setVisibility(View.VISIBLE);
+//                    ok_align_button.setVisibility(View.VISIBLE);
                 } catch (Exception e) {
                     Toast.makeText(this, "The alignment procces go wrong, try again", Toast.LENGTH_LONG).show();
                     File old_pic = new File(currentImagePath);
@@ -298,10 +314,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         old_pic.delete();
                     series.setVisibility(View.INVISIBLE);
                     oneByOne.setVisibility(View.INVISIBLE);
-                    test_align_Layout.setVisibility(View.INVISIBLE);
-                    test_align.setVisibility(View.INVISIBLE);
-                    realign_button.setVisibility(View.INVISIBLE);
-                    ok_align_button.setVisibility(View.INVISIBLE);
+//                    test_align_Layout.setVisibility(View.INVISIBLE);
+//                    test_align.setVisibility(View.INVISIBLE);
+//                    realign_button.setVisibility(View.INVISIBLE);
+//                    ok_align_button.setVisibility(View.INVISIBLE);
                     Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
                     takePicture.putExtra("templatePath", templatePath);
                     takePicture.putExtra("caller", "oneByOne");
@@ -315,10 +331,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     old_pic.delete();
                 series.setVisibility(View.INVISIBLE);
                 oneByOne.setVisibility(View.INVISIBLE);
-                test_align_Layout.setVisibility(View.INVISIBLE);
-                test_align.setVisibility(View.INVISIBLE);
-                realign_button.setVisibility(View.INVISIBLE);
-                ok_align_button.setVisibility(View.INVISIBLE);
+//                test_align_Layout.setVisibility(View.INVISIBLE);
+//                test_align.setVisibility(View.INVISIBLE);
+//                realign_button.setVisibility(View.INVISIBLE);
+//                ok_align_button.setVisibility(View.INVISIBLE);
                 Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
                 takePicture.putExtra("templatePath", templatePath);
                 takePicture.putExtra("caller", "oneByOne");
@@ -401,7 +417,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
             /**
              * Continues from FILE PICKER multiply series mode
              */
-        } else if (requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
+        }
+        else if (requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 dataFilePickerSeries = data;
                 oneByOne.setVisibility(View.INVISIBLE);
@@ -415,8 +432,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
     public String getRealPathFromURI( Uri uri) {
-
-
         String fullPath;
         try{
         fullPath = getRealPath(getApplicationContext(), uri);
@@ -427,30 +442,16 @@ public class oneByOneOrSeries extends AppCompatActivity {
             return "";
         }
 
-
-
-//            final String id = DocumentsContract.getDocumentId(uri);
-//            final Uri contentUri = ContentUris.withAppendedId(
-//                    Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-//
-//            String[] projection = { MediaStore.Images.Media.DATA };
-//            Cursor cursor = getContentResolver().query(contentUri, projection, null, null, null);
-//            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-//            cursor.moveToFirst();
-//            return cursor.getString(column_index);
-
-
-
-
     }
     public void start_check_series(View view){
         Layout_begin_series.setVisibility(View.INVISIBLE);
         wait_dialog.setVisibility(View.VISIBLE);
         wait_dialog.bringToFront();
+
         wait_dialog.post(new Runnable() {
             @Override
             public void run() {
-
+//
                 File StorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
                 File SeriesDir = new File(StorageDir.getPath(), "Series");
                 if (!SeriesDir.exists()) {
@@ -466,7 +467,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 }
 
 
-                final ArrayList<String> tests = new ArrayList<>();
+                final ArrayList<Mat> tests = new ArrayList<>();
                 Uri uri = dataFilePickerSeries.getData();
                 currentImagePath = getRealPathFromURI(uri);
 
@@ -501,8 +502,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 Bitmap bmp1 = BitmapFactory.decodeFile(templatePath, options);
                 Utils.bitmapToMat(bmp1, template);
 
-
-
+                alignToTemplate align_to_template = new alignToTemplate();
+                numberOfTest = pageCount+1;
                 while(pageIndex<pageCount){
                     Page page = doc.loadPage(pageIndex);
                     ctm = AndroidDrawDevice.fitPage(page, (int)template.size().width, (int)template.size().height);
@@ -510,70 +511,34 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     Mat image = new Mat();
                     Utils.bitmapToMat(bitmap, image);
                     String name = "test_"+pageIndex;
-                    tests.add(saveJpeg(image,targetDir.getAbsolutePath(),name));
-                    pageIndex++;
-                }
-
-
-
-//
-//
-//
-//                if (!targetDir.exists()) {
-//                    if (!targetDir.mkdirs()) {
-//                        Log.d("Check4U", "failed to create directory targetDir");
-//                    }
-//                }
-//
-//                ZipManager zipManager = new ZipManager();
-//                zipManager.unzip(currentImagePath, targetDir.getAbsolutePath()+"/");
-//
-//                for (File f : targetDir.listFiles()) {
-//                    if (f.isFile() && f.getName().toLowerCase().endsWith("jpg")) {
-//                        tests.add(f.getPath());
-//                    }
-//                }
-
-                numberOfTest = tests.size();
-
-                iterTests = tests.iterator();
-                while(iterTests.hasNext()) {
-                    currentImagePath = iterTests.next();
-                    Mat img = new Mat();
-                    Bitmap bmp = BitmapFactory.decodeFile(currentImagePath, options);
-                    Utils.bitmapToMat(bmp, img);
-                    alignToTemplate align_to_template = new alignToTemplate();
-                    Mat align = align_to_template.align1(img, template, bmp,"Series"); //series_align
-                    if(align.empty()){
-//                        write to the log each test we skip
+                    align_to_template.align1(image, template, null,"Series");
+                    if(align_to_template.align.empty()){
                         countSeries++;
                         continue;
                     }
-                    String[] partsPath = currentImagePath.split("/");
-                    String name= partsPath[partsPath.length-1].substring(0,partsPath[partsPath.length-1].length()-4);
-
-                    currentImagePath = saveJpeg(align,testsDir.getAbsolutePath(),name);
-
                     totalExamsThatProcessedUntilNow++;
-                    boolean res = insertStudent(currentImagePath, "Series");
+                    boolean res = insertStudent(align_to_template ,"Series");
                     if (!res) {
                         //write to the log each test we skip
                         totalExamsThatProcessedUntilNow--;
 //                        Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
                         Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
                     }
+                    pageIndex++;
+                    Log.d("series", "test: " + countSeries + "finish");
+
                 }
-                finishSeries();
 
                 //for each test:
                 //      align to the template- no option for realign
                 //      check the align image and insert it to the student db
                 //finish_check
 
-
+                finishSeries();
 
             }
         });
+
 
 
     }
@@ -686,12 +651,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
 //        chooseFile.setType("application/zip");
 //        chooseFile = Intent.createChooser(chooseFile, "Choose a file");
-
-        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+        Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath());
+        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT,uri);
 //        chooseFile.setType("image/*");
 //        chooseFile.setType("application/zip");
         chooseFile.setType("application/pdf");
 //        chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
         chooseFile = Intent.createChooser(chooseFile, "Choose a zip file");
         startActivityForResult(chooseFile, FILE_PICKER__CONTINUES_REQUEST_CODE);
 
@@ -741,6 +707,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
             oneByOne.setVisibility(View.INVISIBLE);
             series.setVisibility(View.INVISIBLE);
             need_to_continue.setVisibility(View.INVISIBLE);
+            need_to_continue1.setVisibility(View.INVISIBLE);
+            finish_check_button.setVisibility(View.INVISIBLE);
 
             Intent uploadCSV = new Intent(getApplicationContext(), UserDropBoxActivity.class);
             Bundle bundle = new Bundle();
@@ -772,7 +740,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         //update the status variable
         totalExamsThatProcessedUntilNow++;
         //insert the student to DB
-        boolean res = insertStudent(currentImagePath, "OneByOne");
+        boolean res = insertStudent(null ,"OneByOne");
         if(!res) {
             totalExamsThatProcessedUntilNow--;
             Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
@@ -806,7 +774,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @param
      * @return
      */
-    private int detectBarcode (Mat sheet,Bitmap bitmapSheet){
+    private int detectBarcode (Mat sheet){
         Answer barcodeInfo = allanswers[0][0];
 
         Matrix scaleToImageSize = new Matrix();
@@ -838,10 +806,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Imgproc.line(imageForTest,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
         Imgproc.line(imageForTest,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
 
-        Bitmap bmpBarcodeForTest = bitmapSheet.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(imageForTest, bmpBarcodeForTest);
-
-        Bitmap bmpBarcode = bitmapSheet.createBitmap(barcodeCropped.cols(), barcodeCropped.rows(), Bitmap.Config.ARGB_8888);
+//        Bitmap bmpBarcodeForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(imageForTest, bmpBarcodeForTest);
+//
+        Bitmap bmpBarcode = Bitmap.createBitmap(barcodeCropped.cols(), barcodeCropped.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(barcodeCropped, bmpBarcode);
 
         int id = 0;
@@ -909,19 +877,28 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @param
      * @return
      */
-    private boolean insertStudent (String Path, String callee) {
-        //import the image from path
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        Bitmap bitmap = BitmapFactory.decodeFile(Path, options);
-        // to sum the black level in matrix
-        Bitmap bmpBarcode = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-        bmpMarks = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-        Utils.bitmapToMat(bmpBarcode, paper);
-        paper.copyTo(imageForTest);
+    private boolean insertStudent (alignToTemplate align_to_template, String callee) {
+
+        if(callee.equals("OneByOne")){
+            //import the image from path
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
+            Bitmap bitmap1 = BitmapFactory.decodeFile(currentImageMarks, options);
+            // to sum the black level in matrix
+            Bitmap bmpBarcode = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+            Bitmap bmpStrongMarks = bitmap1.copy(Bitmap.Config.ARGB_8888, true);
+            Utils.bitmapToMat(bmpBarcode, paper);
+            Utils.bitmapToMat(bmpStrongMarks, paperMarks);
+            paper.copyTo(imageForTest);
+        }else if(callee.equals("Series")){
+            align_to_template.align.copyTo(paper);
+            align_to_template.strongMarks.copyTo(paperMarks);
+            paper.copyTo(imageForTest);
+        }
 
         // calculate barcode -> student id
-        int id = detectBarcode(paper,bmpBarcode);
+        int id = detectBarcode(paper);
         if(id == 0) { return false; }
         else {
             int i;
@@ -935,12 +912,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 Answer[] question = allanswers[i];
                 for (j = 0; j < question.length; j++){
                     correct = question[j].getFlagCorrect();
-                    sumOfBlacks[i][j] = calculateBlackLevel(paper, question[j]);
+                    sumOfBlacks[i][j] = calculateBlackLevel(paperMarks, question[j]);
                     if (correct == 1)
                         correctAnswers[i] = j + 1;
                 }
             }
-        Bitmap bmpForTest = bmpMarks.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
+
+        Bitmap bmpForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(imageForTest, bmpForTest);
 
             //find question with two answers marked or more
@@ -964,7 +942,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     // - j+1 < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 4) > sumOfBlacks[i][j]) {
+                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 15) > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
@@ -974,11 +952,14 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
                         AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
             }
-            int in=0;
+//            int in=0;
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
-                intent.putExtra("sheet", Path);
+                if(callee.equals("Series"))
+                    currentImagePath = saveJpeg(align_to_template.align,testsDir.getAbsolutePath(),"test_"+countSeries+"a");
+
+                intent.putExtra("sheet", currentImagePath);
                 intent.putExtra("numberOfQuestions", numberOfQuestions);
                 intent.putExtra("numberOfAnswers", numberOfAnswers);
                 intent.putExtra("callee", callee);
@@ -1032,7 +1013,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
         // print the average so far
         info_average.setText(String.valueOf(averageWith2DigitAfterThePoint));
 
+        finish_check_button.setVisibility(View.VISIBLE);
         need_to_continue.setVisibility(View.VISIBLE);
+        need_to_continue1.setVisibility(View.VISIBLE);
+
     }
     /**
      *

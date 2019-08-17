@@ -71,24 +71,6 @@ public class detectDocument {
 //        Imgproc.cvtColor(doc,doc,Imgproc.COLOR_RGBA2GRAY);
         enhanceDocument(doc);
         return new document(inputRgba,doc,allpoints_original);
-
-
-        //Recalculate to original scale - start Points
-
-
-//
-//            ArrayList<Point> points_original = new ArrayList<>();
-//            MatOfPoint sPoints_temp =  new  MatOfPoint();
-//            for (Point p : quad.points)
-//                points_original.add(new Point(p.x * (inputRgba.size().height / 800), p.y * inputRgba.size().height / 800));
-//
-//        sPoints_temp.fromList( points_original);
-//        Point[] sPoints = sPoints_temp.toArray();
-//        ArrayList<Point[]>res = new ArrayList<>();
-//        res.add(sPoints);
-
-//        return allpoints_original;
-
     }
 
 
@@ -107,6 +89,7 @@ public class detectDocument {
                  }
         points.fromList(points_res);
         contour.points = points.toArray();
+        points.release();
 
     }
 
@@ -119,8 +102,6 @@ public class detectDocument {
 
         Mat resizedImage = new Mat(size, CvType.CV_8UC4);
         Mat grayImage = new Mat(size, CvType.CV_8UC4);
-//        Mat LabImage = new Mat(size, CvType.CV_8UC3);
-//        Mat LImage = new Mat(size, CvType.CV_8UC1);
         Mat canneyImage = new Mat(size, CvType.CV_8UC1);
         Mat bilateralFilterImage = new Mat(size, CvType.CV_8UC1);
         Mat adaptiveThresholdImage = new Mat(size, CvType.CV_8UC1);
@@ -187,6 +168,8 @@ public class detectDocument {
 
             // select biggest 4\5 angles polygon
             if (points.length == 4){
+                approx.release();
+                c2f.release();
 //                allpoints.add(new Quadrilateral(c, foundPoints));
                 return new Quadrilateral(c, foundPoints);
             }
@@ -200,6 +183,8 @@ public class detectDocument {
                 Point Intersection = new Point(Math.floor((n_2-n_1)/(m_1-m_2)),Math.floor((-m_2*n_1+n_2*m_1)/(m_1-m_2)));
 
                 foundPoints[0]= Intersection;
+                approx.release();
+                c2f.release();
 //                allpoints.add(new Quadrilateral(c, foundPoints));
                 return new Quadrilateral(c, foundPoints);
             }
@@ -280,6 +265,8 @@ public class detectDocument {
         Mat m = Imgproc.getPerspectiveTransform(src_mat, dst_mat);
 
         Imgproc.warpPerspective(src, doc, m, doc.size());
+        src_mat.release();
+        dst_mat.release();
 
         return doc;
     }
