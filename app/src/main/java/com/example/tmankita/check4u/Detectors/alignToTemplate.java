@@ -13,7 +13,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -28,7 +27,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.example.tmankita.check4u.Camera.TouchActivity.fourPointTransform_touch;
+import static com.example.tmankita.check4u.Activities.TouchActivity.fourPointTransform_touch;
 import static org.opencv.imgproc.Imgproc.THRESH_BINARY;
 
 public class alignToTemplate {
@@ -55,18 +54,11 @@ public class alignToTemplate {
 
         Mat tempStrongMarks = new Mat(sizeImage, CvType.CV_8UC1);
         Imgproc.threshold( grayImage1, tempStrongMarks, 190.5,255,THRESH_BINARY );
-//        Imgproc.threshold( grayImage, grayImage, 150,255,THRESH_BINARY );
 
-//        Bitmap bmpBarcode25 = bitmap.createBitmap(tempStrongMarks.cols(), tempStrongMarks.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(tempStrongMarks, bmpBarcode25);
 
         Mat grayImage = new Mat(sizeImage, CvType.CV_8UC1);
         Imgproc.adaptiveThreshold(grayTemplate, grayTemplate, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 15, 15);
         Imgproc.adaptiveThreshold(grayImage1, grayImage, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY, 15, 15);
-
-//        Bitmap bmpBarcode27 = bitmap.createBitmap(grayImage.cols(), grayImage.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(grayImage, bmpBarcode27);
-
 
 
 

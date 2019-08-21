@@ -64,9 +64,9 @@ public class ZipManager {
                     BufferedOutputStream out = new BufferedOutputStream(fout);
 
 
-                    byte b[] = new byte[1024];
+                    byte b[] = new byte[BUFFER];
                     int n;
-                    while ((n = in.read(b,0,1024)) >= 0) {
+                    while ((n = in.read(b,0,BUFFER)) >= 0) {
                         out.write(b,0,n);
                     }
 

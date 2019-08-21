@@ -11,7 +11,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 
 
-//https://gist.github.com/HBiSoft/15899990b8cd0723c3a894c1636550a8
+//from https://gist.github.com/HBiSoft/15899990b8cd0723c3a894c1636550a8
 
 public class PDFUtils {
 

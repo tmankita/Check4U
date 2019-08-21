@@ -39,7 +39,7 @@
                 android:id="@+id/content_dialog"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Double click on the chose answers \n and in the dialog box click set."
+                android:text="Double click on the chose answers \n and in the dialog box click on the right answer."
                 android:textAlignment="viewStart"
                 android:textStyle="normal" />
         </TableRow>
@@ -77,78 +77,78 @@
     </TableRow>
 
 
-    <TableLayout
-        android:id="@+id/LayoutSetID"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
-        android:layout_marginRight="15dp"
-        android:background="#A59F9F"
-        android:orientation="horizontal"
-        android:visibility="invisible">
+    <!--<TableLayout-->
+        <!--android:id="@+id/LayoutSetID"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginTop="60dp"-->
+        <!--android:layout_marginRight="15dp"-->
+        <!--android:background="#A59F9F"-->
+        <!--android:orientation="horizontal"-->
+        <!--android:visibility="invisible">-->
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <TextView
-                android:id="@+id/questionID"
-                android:layout_width="70dp"
-                android:layout_height="fill_parent"
-                android:layout_marginLeft="55dp"
-                android:text="1"
-                android:textAlignment="viewStart"
-                android:textStyle="bold" />
-            <TextView
-                android:id="@+id/questionText"
-                android:layout_width="70dp"
-                android:layout_height="fill_parent"
-                android:text="Question No."
-                android:textAlignment="viewStart"
-                android:textStyle="bold"
-                />
-        </TableRow>
+        <!--<TableRow-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent">-->
+            <!--<TextView-->
+                <!--android:id="@+id/questionID"-->
+                <!--android:layout_width="70dp"-->
+                <!--android:layout_height="fill_parent"-->
+                <!--android:layout_marginLeft="55dp"-->
+                <!--android:text="1"-->
+                <!--android:textAlignment="viewStart"-->
+                <!--android:textStyle="bold" />-->
+            <!--<TextView-->
+                <!--android:id="@+id/questionText"-->
+                <!--android:layout_width="70dp"-->
+                <!--android:layout_height="fill_parent"-->
+                <!--android:text="Question No."-->
+                <!--android:textAlignment="viewStart"-->
+                <!--android:textStyle="bold"-->
+                <!--/>-->
+        <!--</TableRow>-->
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <!--<TableRow-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent">-->
 
-            <EditText
-                android:id="@+id/answerID"
-                android:layout_width="70dp"
-                android:layout_height="fill_parent"
-                android:layout_marginLeft="55dp"
-                android:text="a"
-                android:textAlignment="viewStart"
-                android:textStyle="bold"
-                />
+            <!--<EditText-->
+                <!--android:id="@+id/answerID"-->
+                <!--android:layout_width="70dp"-->
+                <!--android:layout_height="fill_parent"-->
+                <!--android:layout_marginLeft="55dp"-->
+                <!--android:text="a"-->
+                <!--android:textAlignment="viewStart"-->
+                <!--android:textStyle="bold"-->
+                <!--/>-->
 
-            <TextView
-                android:id="@+id/answerText"
-                android:layout_width="70dp"
-                android:layout_height="fill_parent"
-                android:text="Answer No."
-                android:textAlignment="viewStart"
-                android:textStyle="bold"
-                />
-        </TableRow>
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <Button
-                android:id="@+id/setID"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:onClick="correctAnswer"
-                android:text="Set" />
-            <Button
-                android:id="@+id/mistake"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:onClick="mistakeClick"
-                android:text="No" />
+            <!--<TextView-->
+                <!--android:id="@+id/answerText"-->
+                <!--android:layout_width="70dp"-->
+                <!--android:layout_height="fill_parent"-->
+                <!--android:text="Answer No."-->
+                <!--android:textAlignment="viewStart"-->
+                <!--android:textStyle="bold"-->
+                <!--/>-->
+        <!--</TableRow>-->
+        <!--<TableRow-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent">-->
+            <!--<Button-->
+                <!--android:id="@+id/setID"-->
+                <!--android:layout_width="50dp"-->
+                <!--android:layout_height="50dp"-->
+                <!--android:onClick="correctAnswer"-->
+                <!--android:text="Set" />-->
+            <!--<Button-->
+                <!--android:id="@+id/mistake"-->
+                <!--android:layout_width="50dp"-->
+                <!--android:layout_height="50dp"-->
+                <!--android:onClick="mistakeClick"-->
+                <!--android:text="No" />-->
 
-        </TableRow>
-    </TableLayout>
+        <!--</TableRow>-->
+    <!--</TableLayout>-->
 
     <LinearLayout
         android:id="@+id/problematic_layout"

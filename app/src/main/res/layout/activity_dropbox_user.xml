@@ -110,13 +110,13 @@
             android:id="@+id/another_share_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Share by other Applications"/>
+            android:text="Share"/>
         <Button
             style="@style/ButtonStyle"
             android:id="@+id/no_share"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="No need Share"/>
+            android:text="No need to Share"/>
 
 
     </LinearLayout>

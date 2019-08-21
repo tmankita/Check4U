@@ -1,4 +1,4 @@
-package com.example.tmankita.check4u;
+package com.example.tmankita.check4u.Activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -19,36 +19,31 @@ import android.os.Environment;
 import android.os.Process;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.Display;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.artifex.mupdf.fitz.*;
 import com.artifex.mupdf.fitz.android.AndroidDrawDevice;
-import com.example.tmankita.check4u.Camera.TouchActivity;
 import com.example.tmankita.check4u.Database.Answer;
 import com.example.tmankita.check4u.Database.StudentDataBase;
 import com.example.tmankita.check4u.Database.Template;
 import com.example.tmankita.check4u.Detectors.alignToTemplate;
 import com.example.tmankita.check4u.Detectors.detectDocument;
 import com.example.tmankita.check4u.Dropbox.UserDropBoxActivity;
+import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.Utils.CSVWriter;
 import com.example.tmankita.check4u.Utils.ZipManager;
 import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
-import com.tom_roush.pdfbox.util.PDFBoxResourceLoader;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
@@ -63,7 +58,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 
 import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
 import static android.os.Process.THREAD_PRIORITY_DEFAULT;
@@ -93,7 +87,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private StudentDataBase students_db;
     private int[] studentAnswers;
     private int[] correctAnswers;
-    int id;
     private String dbPath;
     private String templatePath;
 
@@ -103,10 +96,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private TableLayout Layout_begin_series;
     private Button series;
     private Button oneByOne;
-    private ImageView test_align;
-    private Button ok_align_button;
-    private Button realign_button;
-    private RelativeLayout test_align_Layout;
+//    private ImageView test_align;
+//    private Button ok_align_button;
+//    private Button realign_button;
+//    private RelativeLayout test_align_Layout;
     private TextView info_examsCounter;
     private TextView info_lastGrade;
     private TextView info_average;
@@ -121,9 +114,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     //helpers
     private float realA4Width = 4960;
     private float realA4Height = 7016;
-//    private Iterator<String> iterTests;
     private File testsDir;
-    private Context context;
     private int numberOfTest;
     private int countSeries;
     private Intent dataFilePickerSeries;
@@ -166,7 +157,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
         final Context c = this;
 
-        PDFBoxResourceLoader.init(getApplicationContext());
 
         Bundle extras = getIntent().getExtras();
 
@@ -179,13 +169,12 @@ public class oneByOneOrSeries extends AppCompatActivity {
         info_average            = (TextView) findViewById(R.id.info_average_num);
         series                  = (Button) findViewById(R.id.series_button);
         oneByOne                = (Button) findViewById(R.id.oneByOne_button);
-        test_align              = (ImageView) findViewById(R.id.test_align);
-        ok_align_button         = (Button) findViewById(R.id.ok_align);
-        realign_button          = (Button) findViewById(R.id.realign);
-        test_align_Layout       = (RelativeLayout) findViewById(R.id.test_align_layout);
+//        test_align              = (ImageView) findViewById(R.id.test_align);
+//        ok_align_button         = (Button) findViewById(R.id.ok_align);
+//        realign_button          = (Button) findViewById(R.id.realign);
+//        test_align_Layout       = (RelativeLayout) findViewById(R.id.test_align_layout);
         wait_dialog             = (TextView) findViewById(R.id.wait_dialog);
         finish_check_button     = (Button) findViewById(R.id.finish_check);
-        context = this;
 
         wait_dialog.setVisibility(View.INVISIBLE);
 
@@ -418,6 +407,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
              * Continues from FILE PICKER multiply series mode
              */
         }
+        /**
+         * Continues after pick the pdf with all tests
+         */
         else if (requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 dataFilePickerSeries = data;
@@ -430,19 +422,69 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     }
 
+    /**
+     *
+     * @param view is "ONE-BY-0NE" button
+     * @return None
+     */
+    public void oneByOne (View view){
+        series.setVisibility(View.INVISIBLE);
+        oneByOne.setVisibility(View.INVISIBLE);
+        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+        takePicture.putExtra("templatePath",templatePath);
+        takePicture.putExtra("caller","oneByOne");
+        startActivityForResult(takePicture,1);
+    }
 
-    public String getRealPathFromURI( Uri uri) {
-        String fullPath;
-        try{
-        fullPath = getRealPath(getApplicationContext(), uri);
-            return fullPath;
-        }
-        catch(Exception e){
-            Log.d(TAG, "pdf: " + e.getMessage());
-            return "";
-        }
+    /**
+     *
+     * @param view is "Butch" button
+     * @return None
+     */
+    public void series (View view){
+        //picker files view - choose all the tests
+        countSeries = 1;
+        series.setVisibility(View.INVISIBLE);
+        oneByOne.setVisibility(View.INVISIBLE);
+
+
+        Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath());
+        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT,uri);
+        chooseFile.setType("application/pdf");
+        chooseFile = Intent.createChooser(chooseFile, "Choose a zip file");
+        startActivityForResult(chooseFile, FILE_PICKER__CONTINUES_REQUEST_CODE);
+
+
+
 
     }
+
+    /**
+     *
+     * @param view is the "yes" button int the statistics dialog
+     * @return
+     */
+    public void continue_check(View view){
+        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+        takePicture.putExtra("templatePath",templatePath);
+        takePicture.putExtra("caller","oneByOne");
+        startActivityForResult(takePicture,AFTER_ALIGNMENT_CONTINUES_REQUEST_CODE);
+    }
+
+    /**
+     *
+     * @param view is the "finish" button
+     * @return
+     */
+    public void finish_check(View view){
+        createCSV();
+    }
+
+    /**
+     *
+     * @param view is the "yes" button in the "Butch" display
+     * @return
+     */
     public void start_check_series(View view){
         Layout_begin_series.setVisibility(View.INVISIBLE);
         wait_dialog.setVisibility(View.VISIBLE);
@@ -472,9 +514,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 currentImagePath = getRealPathFromURI(uri);
 
 
-                 Document doc = Document.openDocument(currentImagePath);
-                 int pageCount = doc.countPages();
-                 int pageIndex=0;
+                Document doc = Document.openDocument(currentImagePath);
+                int pageCount = doc.countPages();
+                int pageIndex=0;
 
                 com.artifex.mupdf.fitz.Matrix ctm;
 //                Link[] links;
@@ -489,12 +531,12 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //                if (zoom != 1)
 //                    ctm.scale(zoom);
 
-                File targetDir = new File(testsDir,"PDF2JPEG");
-                if (!targetDir.exists()) {
-                    if (!targetDir.mkdirs()) {
-                        Log.d("Check4U", "failed to create directory targetDir");
-                    }
-                }
+//                File targetDir = new File(testsDir,"PDF2JPEG");
+//                if (!targetDir.exists()) {
+//                    if (!targetDir.mkdirs()) {
+//                        Log.d("Check4U", "failed to create directory targetDir");
+//                    }
+//                }
 
                 Mat template = new Mat();
                 BitmapFactory.Options options = new BitmapFactory.Options();
@@ -510,7 +552,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     Bitmap bitmap = AndroidDrawDevice.drawPage(page,ctm);
                     Mat image = new Mat();
                     Utils.bitmapToMat(bitmap, image);
-                    String name = "test_"+pageIndex;
                     align_to_template.align1(image, template, null,"Series");
                     if(align_to_template.align.empty()){
                         countSeries++;
@@ -542,16 +583,39 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
     }
+
+    /**
+     * function that get the real path from uri.
+     * @param uri is uri of file
+     * @return path in the disk
+     */
+    public String getRealPathFromURI( Uri uri) {
+        String fullPath;
+        try{
+        fullPath = getRealPath(getApplicationContext(), uri);
+            return fullPath;
+        }
+        catch(Exception e){
+            Log.d(TAG, "pdf: " + e.getMessage());
+            return "";
+        }
+
+    }
+
+    /**
+     * function that create the csv file iff all the tests are checked.
+     * @return None
+     */
     public void finishSeries(){
         if(countSeries == numberOfTest)
             createCSV();
     }
 
-
-
     /**
-     * @param
-     * @return
+     * @param img
+     * @param dirPath
+     * @param name
+     * @return path of the jpg file
      */
     private String saveJpeg(Mat img, String dirPath, String name) {
         String path="";
@@ -586,6 +650,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
         return path;
     }
+
+
     private static File getOutputMediaFile(int type, String dirPath, String name){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
@@ -618,69 +684,16 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
         return mediaFile;
     }
+
+
     private static String generateDirName(){
         // Create a Directory name
         String timeStamp ="db_"+new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 
         return timeStamp;
     }
-    /**
-     *
-     * @param
-     * @return
-     */
-    public void oneByOne (View view){
-        series.setVisibility(View.INVISIBLE);
-        oneByOne.setVisibility(View.INVISIBLE);
-        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
-        takePicture.putExtra("templatePath",templatePath);
-        takePicture.putExtra("caller","oneByOne");
-        startActivityForResult(takePicture,1);
-    }
-    /**
-     *
-     * @param
-     * @return
-     */
-    public void series (View view){
-        //picker files view - choose all the tests
-        countSeries = 1;
-        series.setVisibility(View.INVISIBLE);
-        oneByOne.setVisibility(View.INVISIBLE);
-
-//        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-//        chooseFile.setType("application/zip");
-//        chooseFile = Intent.createChooser(chooseFile, "Choose a file");
-        Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath());
-        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT,uri);
-//        chooseFile.setType("image/*");
-//        chooseFile.setType("application/zip");
-        chooseFile.setType("application/pdf");
-//        chooseFile.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-
-        chooseFile = Intent.createChooser(chooseFile, "Choose a zip file");
-        startActivityForResult(chooseFile, FILE_PICKER__CONTINUES_REQUEST_CODE);
 
 
-
-
-    }
-    /**
-     *
-     * @param
-     * @return
-     */
-    public void continue_check(View view){
-        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
-        takePicture.putExtra("templatePath",templatePath);
-        takePicture.putExtra("caller","oneByOne");
-        startActivityForResult(takePicture,1);
-    }
-    /**
-     *
-     * @param
-     * @return
-     */
     public void createCSV(){
         File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
         File csvDir = new File(exportDir.getPath(),"CSV");
@@ -723,52 +736,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             Log.e("SQL_to_CSV", sqlEx.getMessage(), sqlEx);
         }
     }
-    public void finish_check(View view){
-        createCSV();
-    }
-    /**
-     *
-     * @param
-     * @return
-     */
-    public void ok_align(View view){
-        //Update the view Contents
-        test_align_Layout.setVisibility(View.INVISIBLE);
-        test_align.setVisibility(View.INVISIBLE);
-        realign_button.setVisibility(View.INVISIBLE);
-        ok_align_button.setVisibility(View.INVISIBLE);
-        //update the status variable
-        totalExamsThatProcessedUntilNow++;
-        //insert the student to DB
-        boolean res = insertStudent(null ,"OneByOne");
-        if(!res) {
-            totalExamsThatProcessedUntilNow--;
-            Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
-            Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
-        }
 
-    }
-
-    /**
-     *
-     * @param
-     * @return
-     */
-    public void again_align(View view){
-        File old_pic = new File(currentImagePath);
-        if(old_pic.exists())
-            old_pic.delete();
-        series.setVisibility(View.INVISIBLE);
-        oneByOne.setVisibility(View.INVISIBLE);
-        test_align_Layout.setVisibility(View.INVISIBLE);
-        test_align.setVisibility(View.INVISIBLE);
-        realign_button.setVisibility(View.INVISIBLE);
-        ok_align_button.setVisibility(View.INVISIBLE);
-        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
-        takePicture.putExtra("templatePath",templatePath);
-        takePicture.putExtra("caller","oneByOne");
-        startActivityForResult(takePicture,1);
-    }
     /**
      *
      * @param
@@ -834,10 +802,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
                             old_pic.delete();
                         series.setVisibility(View.INVISIBLE);
                         oneByOne.setVisibility(View.INVISIBLE);
-                        test_align_Layout.setVisibility(View.INVISIBLE);
-                        test_align.setVisibility(View.INVISIBLE);
-                        realign_button.setVisibility(View.INVISIBLE);
-                        ok_align_button.setVisibility(View.INVISIBLE);
+//                        test_align_Layout.setVisibility(View.INVISIBLE);
+//                        test_align.setVisibility(View.INVISIBLE);
+//                        realign_button.setVisibility(View.INVISIBLE);
+//                        ok_align_button.setVisibility(View.INVISIBLE);
                         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
                         takePicture.putExtra("templatePath",templatePath);
                         takePicture.putExtra("caller","oneByOne");
@@ -855,10 +823,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     old_pic.delete();
                 series.setVisibility(View.INVISIBLE);
                 oneByOne.setVisibility(View.INVISIBLE);
-                test_align_Layout.setVisibility(View.INVISIBLE);
-                test_align.setVisibility(View.INVISIBLE);
-                realign_button.setVisibility(View.INVISIBLE);
-                ok_align_button.setVisibility(View.INVISIBLE);
+//                test_align_Layout.setVisibility(View.INVISIBLE);
+//                test_align.setVisibility(View.INVISIBLE);
+//                realign_button.setVisibility(View.INVISIBLE);
+//                ok_align_button.setVisibility(View.INVISIBLE);
                 Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
                 takePicture.putExtra("templatePath",templatePath);
                 takePicture.putExtra("caller","oneByOne");
@@ -872,6 +840,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     barcodeCropped.release();
     return id;
     }
+
     /**
      *
      * @param
@@ -989,6 +958,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
          return true;
         }
     }
+
     /**
      *
      * @param
@@ -1018,6 +988,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         need_to_continue1.setVisibility(View.VISIBLE);
 
     }
+
     /**
      *
      * @param
@@ -1067,6 +1038,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
         return (int)(Math.floor(blackLevel/(d * ((row - (int)ps2[1].y) * (col - (int)ps2[0].x)))));
     }
+
     /**
      *
      * @param
@@ -1114,4 +1086,49 @@ public class oneByOneOrSeries extends AppCompatActivity {
         return allAnswers;
     }
 
+
+
+    //    /**
+//     *
+//     * @param
+//     * @return
+//     */
+//    public void ok_align(View view){
+//        //Update the view Contents
+//        test_align_Layout.setVisibility(View.INVISIBLE);
+//        test_align.setVisibility(View.INVISIBLE);
+//        realign_button.setVisibility(View.INVISIBLE);
+//        ok_align_button.setVisibility(View.INVISIBLE);
+//        //update the status variable
+//        totalExamsThatProcessedUntilNow++;
+//        //insert the student to DB
+//        boolean res = insertStudent(null ,"OneByOne");
+//        if(!res) {
+//            totalExamsThatProcessedUntilNow--;
+//            Toast.makeText(this, "Faild: not success to check this test, because there is no barcode in this test", Toast.LENGTH_LONG).show();
+//            Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
+//        }
+//
+//    }
+
+//    /**
+//     *
+//     * @param
+//     * @return
+//     */
+//    public void again_align(View view){
+//        File old_pic = new File(currentImagePath);
+//        if(old_pic.exists())
+//            old_pic.delete();
+//        series.setVisibility(View.INVISIBLE);
+//        oneByOne.setVisibility(View.INVISIBLE);
+//        test_align_Layout.setVisibility(View.INVISIBLE);
+//        test_align.setVisibility(View.INVISIBLE);
+//        realign_button.setVisibility(View.INVISIBLE);
+//        ok_align_button.setVisibility(View.INVISIBLE);
+//        Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+//        takePicture.putExtra("templatePath",templatePath);
+//        takePicture.putExtra("caller","oneByOne");
+//        startActivityForResult(takePicture,1);
+//    }
 }

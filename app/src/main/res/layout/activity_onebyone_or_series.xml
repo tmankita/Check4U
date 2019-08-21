@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".oneByOneOrSeries">
+    tools:context=".Activities.oneByOneOrSeries">
 
     <Button
         android:id="@+id/finish_check"
@@ -21,9 +21,11 @@
         android:id="@+id/wait_dialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#5560A7"
+        android:background="#0A0A0A"
+        android:fontFamily="casual"
         android:text="Please Wait"
         android:textAlignment="viewStart"
+        android:textColor="#FFFFFF"
         android:textSize="60sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -199,7 +201,7 @@
         android:visibility="invisible"
         app:layout_constraintTop_toBottomOf="@+id/Layout_if_need_to_continue"
         app:layout_constraintStart_toStartOf="@+id/Layout_if_need_to_continue"
-        android:stretchColumns="*"
+        android:shrinkColumns="*"
         >
 
 
@@ -241,100 +243,44 @@
         </TableRow>
     </TableLayout>
 
-    <!--<TableLayout-->
-    <!--android:id="@+id/Layout_send_via_email"-->
-    <!--android:layout_width="300dp"-->
-    <!--android:layout_height="300dp"-->
-    <!--android:background="#A59F9F"-->
-    <!--android:orientation="horizontal"-->
-    <!--android:visibility="invisible"-->
-    <!--app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--app:layout_constraintEnd_toEndOf="parent"-->
-    <!--app:layout_constraintHorizontal_bias="0.5"-->
-    <!--app:layout_constraintStart_toStartOf="parent"-->
-    <!--app:layout_constraintTop_toTopOf="parent">-->
 
-    <!--<TableRow-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent">-->
+    <!--<RelativeLayout-->
+        <!--android:id="@+id/test_align_layout"-->
+        <!--android:layout_width="412dp"-->
+        <!--android:layout_height="731dp"-->
+        <!--android:visibility="invisible"-->
+        <!--app:layout_constraintStart_toStartOf="parent"-->
+        <!--app:layout_constraintTop_toTopOf="parent">-->
 
-    <!--<TextView-->
-    <!--android:id="@+id/emailQuestion"-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:text="Email:"-->
-    <!--android:textAlignment="viewStart"-->
-    <!--android:textStyle="bold" />-->
+        <!--<ImageView-->
+            <!--android:id="@+id/test_align"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_alignParentStart="true"-->
+            <!--android:scaleType="fitXY"-->
+            <!--android:visibility="invisible"-->
+            <!--tools:srcCompat="@tools:sample/avatars" />-->
 
-
-    <!--</TableRow>-->
-
-    <!--<TableRow-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent">-->
-
-    <!--<EditText-->
-    <!--android:id="@+id/edit_email"-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:ems="10"-->
-    <!--android:inputType="textEmailAddress" />-->
+        <!--<Button-->
+            <!--android:id="@+id/ok_align"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:onClick="ok_align"-->
+            <!--android:text="OK"-->
+            <!--android:visibility="invisible" />-->
 
 
-    <!--</TableRow>-->
-
-    <!--<TableRow-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent">-->
-
-    <!--<Button-->
-    <!--android:id="@+id/send_button"-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:onClick="sendEmail"-->
-    <!--android:text="Send" />-->
+        <!--<Button-->
+            <!--android:id="@+id/realign"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginRight="100dp"-->
+            <!--android:onClick="again_align"-->
+            <!--android:text="Realign"-->
+            <!--android:visibility="invisible" />-->
 
 
-    <!--</TableRow>-->
-    <!--</TableLayout>-->
-
-    <RelativeLayout
-        android:id="@+id/test_align_layout"
-        android:layout_width="412dp"
-        android:layout_height="731dp"
-        android:visibility="invisible"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageView
-            android:id="@+id/test_align"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentStart="true"
-            android:scaleType="fitXY"
-            android:visibility="invisible"
-            tools:srcCompat="@tools:sample/avatars" />
-
-        <Button
-            android:id="@+id/ok_align"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="ok_align"
-            android:text="OK"
-            android:visibility="invisible" />
-
-
-        <Button
-            android:id="@+id/realign"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginRight="100dp"
-            android:onClick="again_align"
-            android:text="Realign"
-            android:visibility="invisible" />
-
-
-    </RelativeLayout>
+    <!--</RelativeLayout>-->
 
     <Button
         android:id="@+id/oneByOne_button"
@@ -344,7 +290,7 @@
         android:layout_marginTop="152dp"
         android:layout_marginEnd="62dp"
         android:onClick="oneByOne"
-        android:text="One by One"
+        android:text="One-by-One"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -358,7 +304,7 @@
         android:layout_marginEnd="62dp"
         android:layout_marginBottom="146dp"
         android:onClick="series"
-        android:text="Series"
+        android:text="Bunch-Processing"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

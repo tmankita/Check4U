@@ -3,19 +3,15 @@ package com.example.tmankita.check4u.Dropbox;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import androidx.appcompat.widget.Toolbar;
 
 import android.os.Environment;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TextView;
@@ -24,19 +20,15 @@ import android.widget.Toast;
 import com.dropbox.core.android.Auth;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.users.FullAccount;
-import com.example.tmankita.check4u.Database.StudentDataBase;
-import com.example.tmankita.check4u.MainActivity;
+import com.example.tmankita.check4u.Activities.MainActivity;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.Utils.ZipManager;
-import com.example.tmankita.check4u.oneByOneOrSeries;
-import com.github.ybq.android.spinkit.sprite.Sprite;
-import com.github.ybq.android.spinkit.style.FadingCircle;
+import com.example.tmankita.check4u.Activities.oneByOneOrSeries;
+
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import static android.database.sqlite.SQLiteDatabase.OPEN_READONLY;
 
 
 /**
@@ -191,13 +183,18 @@ public class UserDropBoxActivity extends DropBoxActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        /**
+         * Continues from sharing/ uploading
+         */
         if (requestCode == 1) {
             checkIfWantToDelete();
         }
     }
 
     /**
-     *
+     * on click function to remove all the files that the application create during use.
+     * @param view is the button "yes"
+     * @return None
      */
     public void yes_dialog(View view) {
         final ProgressDialog pd = new ProgressDialog(this);
@@ -232,7 +229,9 @@ public class UserDropBoxActivity extends DropBoxActivity {
     }
 
     /**
-     *
+     * on click function to not remove all the files that the application create during use.
+     * @param view is the button "yes"
+     * @return None
      */
     public void no_dialog(View view) {
         Intent main = new Intent(getApplicationContext(), MainActivity.class);
@@ -241,7 +240,9 @@ public class UserDropBoxActivity extends DropBoxActivity {
     }
 
     /**
-     *
+     * function that create zip file.
+     * @param params is String array that contain all the paths of the files you want to compress to one zip file.
+     * @return true iff success to create the zip file
      */
     private boolean createZipFile(String... params) {
         String localUriDB = params[0];
@@ -259,7 +260,8 @@ public class UserDropBoxActivity extends DropBoxActivity {
     }
 
     /**
-     *
+     * generate zip file name.
+     * @return <name>
      */
     private static String getOutputName() {
 
@@ -297,15 +299,20 @@ public class UserDropBoxActivity extends DropBoxActivity {
 
     }
 
+    /**
+     *
+     */
     private void deleteContentInDir(File dir) {
-        for (File f : dir.listFiles()) {
-            if (f.isFile())
-                f.delete();
-            else if(f.isDirectory()){
-                deleteContentInDir(f);
-                f.delete();
-            }
+        if(dir.exists()){
+            for (File f : dir.listFiles()) {
+                if (f.isFile())
+                    f.delete();
+                else if(f.isDirectory()){
+                    deleteContentInDir(f);
+                    f.delete();
+                }
 
+            }
         }
     }
 }

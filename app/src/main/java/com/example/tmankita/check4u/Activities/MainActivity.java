@@ -1,4 +1,4 @@
-package com.example.tmankita.check4u;
+package com.example.tmankita.check4u.Activities;
 
 import android.app.Activity;
 import android.content.Context;
@@ -15,27 +15,34 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TableLayout;
+import android.widget.Toast;
 
-import com.example.tmankita.check4u.Camera.TouchActivity;
+import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.Utils.Compare2CSVTables;
 
 import java.io.File;
+
+import static com.example.tmankita.check4u.Utils.PDFUtils.getRealPath;
 
 
 public class MainActivity extends AppCompatActivity {
 
     // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
-        System.loadLibrary("opencv_java4");
-    }
+//    static {
+//        System.loadLibrary("native-lib");
+//        System.loadLibrary("opencv_java4");
+//    }
 
-    private static final int  CAMERA_CONTINUES_REQUEST_CODE            = 1;
-    private static final int  FILE_PICKER__CONTINUES_REQUEST_CODE      = 2;
+    private static final int  CAMERA_CONTINUES_REQUEST_CODE                 = 1;
+    private static final int  FILE_PICKER__CONTINUES_REQUEST_CODE           = 2;
+    private static final int  FILE_PICKER_TEMPLATE__CONTINUES_REQUEST_CODE  = 3;
+
     private ImageView icon;
     private Button test;
     String pathAppResult;
-
+    private TableLayout main_table;
+    private TableLayout choose_table;
 
 
     @Override
@@ -46,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
 
         icon = findViewById(R.id.check_icon);
         test = findViewById(R.id.TestTemplate);
+        main_table = findViewById(R.id.main_table);
+        choose_table = findViewById(R.id.choose_table);
 
         Bundle bundle = getIntent().getExtras();
         if(bundle!=null)
@@ -63,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                         clickTime = System.currentTimeMillis();
                         //double tapping mode
                         if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA){
-                            Log.i("Mark", "Double tap!! ");
+//                            Log.i("Mark", "Double tap!! ");
                             test.setVisibility(View.INVISIBLE);
 
                             String pathCSV1 = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/TestCSV/1.csv";
@@ -87,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
 
         };
 
-        if(!hasPermissions(this, PERMISSIONS)){
+        if(! hasPermissions(this, PERMISSIONS)){
             ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
         }
 
@@ -96,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (! StorageDir.exists()){
             if (! StorageDir.mkdirs()){
-                Log.d("Check4U", "failed to create directory StorageDir");
+//                Log.d("Check4U", "failed to create directory StorageDir");
             }
         }
 
@@ -107,39 +116,46 @@ public class MainActivity extends AppCompatActivity {
 
         if (! zipDir.exists()){
             if (! zipDir.mkdirs()){
-                Log.d("Check4U", "failed to create directory zipDir");
+//                Log.d("Check4U", "failed to create directory zipDir");
             }
         }
         if (! unzipDir.exists()){
             if (! unzipDir.mkdirs()){
-                Log.d("Check4U", "failed to create directory unzipDir");
+//                Log.d("Check4U", "failed to create directory unzipDir");
             }
         }
         if (! csvDir.exists()){
             if (! csvDir.mkdirs()){
-                Log.d("Check4U", "failed to create directory csvDir");
+//                Log.d("Check4U", "failed to create directory csvDir");
             }
         }
         if (! imagesDir.exists()){
             if (! imagesDir.mkdirs()){
-                Log.d("Check4U", "failed to create directory imagesDir");
+//                Log.d("Check4U", "failed to create directory imagesDir");
             }
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
+        /**
+         * continues after take picture for creating new template
+         */
         if (requestCode == CAMERA_CONTINUES_REQUEST_CODE) {
             if(resultCode == Activity.RESULT_OK){
                 String[] imagesPath = data.getStringArrayExtra("sheets");
                 Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
+                nextIntent.putExtra("caller_main", "take_picture");
                 nextIntent.putExtra("sheets", imagesPath);
                 startActivity(nextIntent);
             }
             if (resultCode == Activity.RESULT_CANCELED) {}
 
-        } else if(requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
+        }
+        /**
+         * continues after pick zip file of template
+         */
+        else if(requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Uri uri = data.getData();
                 String p = uri.getPath();
@@ -147,6 +163,29 @@ public class MainActivity extends AppCompatActivity {
                 Intent nextIntent = new Intent(getApplicationContext(), oneByOneOrSeries.class);
                 nextIntent.putExtra("dbPath", parts[1] );
                 startActivity(nextIntent);
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {}
+        }
+        /**
+         * continues after pick a PDF file of key sheet
+         */
+        else if(requestCode == FILE_PICKER_TEMPLATE__CONTINUES_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Uri uri = data.getData();
+                String fullPath;
+                try{
+                    fullPath = getRealPath(getApplicationContext(), uri);
+                    String[] imagesPath = {fullPath};
+                    Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
+                    nextIntent.putExtra("caller_main", "importPDF");
+                    nextIntent.putExtra("sheets", imagesPath);
+                    startActivity(nextIntent);
+
+                }
+                catch(Exception e){
+//                    Log.d("Main", "pdf: " + e.getMessage());
+                    Toast.makeText(this,"Can't ACCESS to the PDF file!",Toast.LENGTH_LONG).show();
+                }
             }
             if (resultCode == Activity.RESULT_CANCELED) {}
         }
@@ -173,33 +212,64 @@ public class MainActivity extends AppCompatActivity {
      * @return None
      */
     public   void  NewTemplate(View view) {
+        main_table.setVisibility(View.INVISIBLE);
+        choose_table.setVisibility(View.VISIBLE);
 
-//        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
-//        NewTemplate.putExtra("caller","MainActivity");
-//        startActivityForResult(NewTemplate,CAMERA_CONTINUES_REQUEST_CODE);
 
-        Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
-        nextIntent.putExtra("sheets", "");
-        startActivity(nextIntent);
+
+
+//        Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
+//        nextIntent.putExtra("sheets", "");
+//        startActivity(nextIntent);
     }
+
     /**
      * Button for testing the application  correctness
      * @param view is test template button
      * @return None
      */
     public   void  TestTemplate(View view) {
-        File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
-        File csvDir = new File(exportDir.getPath(),"CSV");
-        String path_test_table = csvDir.getAbsolutePath()+"/test.csv";
-        File testM = new File(path_test_table);
-        if(pathAppResult != null && testM.exists()){
-            Compare2CSVTables test_table = new Compare2CSVTables(pathAppResult,path_test_table);
-            test_table.compare();
-        }
+//        File exportDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Check4U_DB");
+//        File csvDir = new File(exportDir.getPath(),"CSV");
+//        String path_test_table = csvDir.getAbsolutePath()+"/test.csv";
+//        File testM = new File(path_test_table);
+//        if(pathAppResult != null && testM.exists()){
+//            Compare2CSVTables test_table = new Compare2CSVTables(pathAppResult,path_test_table);
+//            test_table.compare();
+//        }
     }
 
-    public native void align(long im, long imReference, long aligned);
+    /**
+     * Button for import template from pdf
+     * @param view is import button
+     * @return None
+     */
+    public void ImportPDF(View view){
+        Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
+                + "/Check4U_DB/ZIP/");
+        Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT,uri);
+        chooseFile.setType("application/zip");
+        chooseFile = Intent.createChooser(chooseFile, "Choose a file");
+        startActivityForResult(chooseFile, FILE_PICKER_TEMPLATE__CONTINUES_REQUEST_CODE);
+    }
 
+    /**
+     * Button for take a picture of template
+     * @param view is open camera button
+     * @return None
+     */
+    public void take_picture(View view){
+        Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
+        NewTemplate.putExtra("caller","MainActivity");
+        startActivityForResult(NewTemplate,CAMERA_CONTINUES_REQUEST_CODE);
+    }
+
+    /**
+     * function that check if the app have all the permissions that he need.
+     * @param context is the context that need the permissions.
+     * @param permissions are all the permissions that you want to check.
+     * @return true if have all the permissions
+     */
     public static boolean hasPermissions(Context context, String... permissions) {
         if (context != null && permissions != null) {
             for (String permission : permissions) {
@@ -210,4 +280,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
+
+    //    public native void align(long im, long imReference, long aligned);
 }

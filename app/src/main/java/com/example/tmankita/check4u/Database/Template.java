@@ -63,6 +63,7 @@ public class Template extends SQLiteOpenHelper {
         else
             return true;
     }
+
     //https://stackoverflow.com/questions/6540906/simple-export-and-import-of-a-sqlite-database-on-android
     /**
      * Copies the database file at the specified location over the current
@@ -94,7 +95,6 @@ public class Template extends SQLiteOpenHelper {
             FileUtils.copyFile(new FileInputStream(oldDb), new FileOutputStream(newDb));
             // Access the copied database so SQLiteHelper will cache it and mark
             // it as created.
-//            getWritableDatabase().close();
             return true;
         }
         return false;

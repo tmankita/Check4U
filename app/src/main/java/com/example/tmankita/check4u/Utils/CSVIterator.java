@@ -1,6 +1,6 @@
 package com.example.tmankita.check4u.Utils;
 
-// copy from https://github.com/jlawrie/opencsv/blob/master/src/au/com/bytecode/opencsv/CSVIterator.java
+//from https://github.com/jlawrie/opencsv/blob/master/src/au/com/bytecode/opencsv/CSVIterator.java
 
 import java.io.IOException;
 import java.util.Iterator;

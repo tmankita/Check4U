@@ -20,7 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class detectDocument {
-// https://github.com/ctodobom/OpenNoteScanner/blob/master/app/src/main/java/com/todobom/opennotescanner/ImageProcessor.java
+//from  https://github.com/ctodobom/OpenNoteScanner/blob/master/app/src/main/java/com/todobom/opennotescanner/ImageProcessor.java
     /**
      *  Object that encapsulates the contour and 4 points that makes the larger
      *  rectangle on the image
@@ -68,7 +68,6 @@ public class detectDocument {
             sPoints_temp.fromList( points_original);
             allpoints_original.add(sPoints_temp.toArray());
         doc = fourPointTransform (inputRgba , quad.points);
-//        Imgproc.cvtColor(doc,doc,Imgproc.COLOR_RGBA2GRAY);
         enhanceDocument(doc);
         return new document(inputRgba,doc,allpoints_original);
     }

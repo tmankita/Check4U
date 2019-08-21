@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+//from https://github.com/jayrambhia/Touch2Focus/blob/master/src/com/fenchtose/touch2focus/CameraPreview.java
+
+
 public class CameraPreviewFocus implements SurfaceHolder.Callback {
 
     public Camera mCamera = null;
@@ -19,17 +23,12 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
 
     public int isCamOpen = 0;
     public boolean isSizeSupported = false;
-//    private int previewWidth, previewHeight;
 
     private final static String TAG = "CameraPreview";
 
 
     //int width, int height
     public CameraPreviewFocus() {
-//        Log.i("campreview", "Width = " + String.valueOf(width));
-//        Log.i("campreview", "Height = " + String.valueOf(height));
-//        previewWidth = width;
-//        previewHeight = height;
     }
 
     private int openCamera() {
@@ -39,16 +38,19 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
 
         mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_BACK);
 
+
         if (mCamera == null) {
             return -1;
         }
 
         params = mCamera.getParameters();
-        android.hardware.Camera.Size size = params.getPreviewSize();
+        android.hardware.Camera.Size sizePreview = params.getPreviewSize();
+        android.hardware.Camera.Size sizePicture = params.getPictureSize();
 
-//        params.setPreviewSize(previewWidth, previewHeight);
-        params.setPreviewSize(size.width, size.height);
+        params.setPreviewSize(sizePreview.width, sizePreview.height);
         params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        params.setJpegQuality(100);
+        params.setPictureSize(sizePicture.width,sizePicture.height);
 
         try {
             mCamera.setParameters(params);

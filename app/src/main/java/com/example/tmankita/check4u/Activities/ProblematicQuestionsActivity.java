@@ -1,32 +1,24 @@
-package com.example.tmankita.check4u;
+package com.example.tmankita.check4u.Activities;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import android.app.Activity;
-import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.PointF;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.text.BoringLayout;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.TypedValue;
-import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -36,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tmankita.check4u.Database.Answer;
+import com.example.tmankita.check4u.R;
 import com.otaliastudios.zoom.ZoomEngine;
 import com.otaliastudios.zoom.ZoomLayout;
 
@@ -44,11 +37,7 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.core.Point;
 
-import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -61,9 +50,9 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     private ImageView image;
     private RelativeLayout layout;
     private ZoomLayout zoomLayout;
-    private TextView questionID;
-    private EditText answerID;
-    private TableLayout layoutSetQuestionID;
+//    private TextView questionID;
+//    private EditText answerID;
+//    private TableLayout layoutSetQuestionID;
     private TableLayout dialog;
     private RelativeLayout choose_dialog;
     private ZoomEngine engine;
@@ -87,6 +76,8 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     private Mat imageForTest;
     private String callee;
     private int id;
+
+
 
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -124,9 +115,9 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         image               = (ImageView) findViewById(R.id.NewPicture_p);
         layout              = (RelativeLayout) findViewById(R.id.Layout_p);
         layoutMain          = (RelativeLayout) findViewById(R.id.Layout1);
-        questionID          = (TextView) findViewById(R.id.questionID);
-        answerID            = (EditText) findViewById(R.id.answerID);
-        layoutSetQuestionID = (TableLayout) findViewById(R.id.LayoutSetID);
+//        questionID          = (TextView) findViewById(R.id.questionID);
+//        answerID            = (EditText) findViewById(R.id.answerID);
+//        layoutSetQuestionID = (TableLayout) findViewById(R.id.LayoutSetID);
         dialog              = (TableLayout) findViewById(R.id.table_dialog);
         engine              = (ZoomEngine) zoomLayout.getEngine();
         finish              = (Button) findViewById(R.id.create);
@@ -184,46 +175,41 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         dialog.bringToFront();
     }
 
+
     private void createChooseDialog(){
+
         choose_dialog = new RelativeLayout(this);
 
         choose_dialog.setTag("choose_dialog");
-        RelativeLayout.LayoutParams dialogParam = new RelativeLayout.LayoutParams(  // set the layout params for mark
+        RelativeLayout.LayoutParams dialogParam = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         dialogParam.addRule(RelativeLayout.ALIGN_END, R.id.marks_row);
         choose_dialog.setLayoutParams(dialogParam);
         choose_dialog.setBackgroundColor(Color.parseColor("#8B8B8F"));
 
+        LinearLayout layout = new LinearLayout(this);
+        layout.setTag("dialog");
+        LinearLayout.LayoutParams dialogParam1 = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        layout.setLayoutParams(dialogParam1);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        TextView title = new TextView(this);
+        title.setText("Choose the right answer:");
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        layout.addView(title);
+
+
+
         TableLayout table = new TableLayout(this);
         TableLayout.LayoutParams tableParam = new TableLayout.LayoutParams(  // set the layout params for mark
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         table.setLayoutParams(tableParam);
-        table.setShrinkAllColumns(true);
+        table.setStretchAllColumns(true);
 
-
-        TableRow titleRow = new TableRow(this);
-        TableRow.LayoutParams titleViewParam = new TableRow.LayoutParams(  // set the layout params for mark
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
-        titleRow.setLayoutParams(titleViewParam);
-
-
-        for (int i = -1; i <=numberOfAnswers ; i++) {
-            if(i==numberOfAnswers){
-                TextView title = new TextView(this);
-                title.setText("Choose the right answer:");
-                title.setTypeface(Typeface.DEFAULT_BOLD);
-                titleRow.addView(title);
-
-            }else{
-                TextView title = new TextView(this);
-                title.setText(" ");
-                titleRow.addView(title);
-            }
-        }
-        table.addView(titleRow);
 
         TableRow optionsToChooseRow = new TableRow(this);
         ViewGroup.LayoutParams optionsParam = new TableRow.LayoutParams(  // set the layout params for mark
@@ -231,45 +217,40 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         optionsToChooseRow.setLayoutParams(optionsParam);
 
-
-
         options = new HashMap<>();
 
-        for (int i = numberOfAnswers; i >=-1 ; i--) {
-            String choose_id ="choose_"+(i+1);
+        for (int i = numberOfAnswers; i >0 ; i--) {
+            String choose_id ="choose_"+(i);
             Button option_i = new Button(this);
             option_i.setTag(choose_id);
-
-            if(i>-1 && i<numberOfAnswers){
-                option_i.setText(String.valueOf(i+1));
-                option_i.setTextSize(50);
-                option_i.setBackgroundResource(R.drawable.square_question);
-                option_i.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String tag =(String)v.getTag();
-                        UserUpdateAnswer = Integer.parseInt(tag.split("_")[1]);
-                        toFix[UserUpdateQuestion] = UserUpdateAnswer;
-                        RelativeLayout mark_to_Highlight_Green = marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
-                        mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
-                        choose_dialog.setVisibility(View.INVISIBLE);
-                    }
-                });
-            }else{
-                option_i.setBackgroundColor(Color.parseColor("#8B8B8F"));
-            }
-
+            option_i.setText(String.valueOf(i));
+            option_i.setTextSize(50);
+            option_i.setBackgroundResource(R.drawable.square_question);
+            option_i.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String tag =(String)v.getTag();
+                    UserUpdateAnswer = Integer.parseInt(tag.split("_")[1]);
+                    toFix[UserUpdateQuestion] = UserUpdateAnswer;
+                    RelativeLayout mark_to_Highlight_Green = marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
+                    mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
+                    choose_dialog.setVisibility(View.INVISIBLE);
+                }
+            });
             optionsToChooseRow.addView(option_i);
         }
 
-
         table.addView(optionsToChooseRow);
-        choose_dialog.addView(table);
+        layout.addView(table);
+        choose_dialog.addView(layout);
         layoutMain.addView(choose_dialog);
         choose_dialog.setVisibility(View.INVISIBLE);
+
     }
+
     /**
-     *
+     * function that generate layouts of marks with all the functionality they need and add it to the main layout of this activity.
+     * @return None
      */
     private void generateMarks (){
         for (Answer answer: problematicAnswers) {
@@ -279,17 +260,11 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         }
 
     }
+
     /**
-     *
-     */
-    public void mistakeClick (View view){
-        layoutSetQuestionID.setVisibility(View.VISIBLE);
-        RelativeLayout mark_to_Highlight_Green =  marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
-        mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#FF0000"));
-        layoutSetQuestionID.setVisibility(View.INVISIBLE);
-    }
-    /**
-     *
+     * Button for start to build all the marks that need to choose manually.
+     * @param view is the "OK" button
+     * @return None
      */
     public void ok_dialog (View view){
         dialog.setVisibility(View.INVISIBLE);
@@ -298,25 +273,11 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         generateMarks();
         createChooseDialog();
     }
-    /**
-     *
-     */
-    public void correctAnswer ( View view ) {
-        int curAnswerId = Integer.parseInt(answerID.getText().toString());
-        if (curAnswerId > 0 && curAnswerId <= numberOfAnswers){
-            UserUpdateAnswer = curAnswerId;
-            toFix[UserUpdateQuestion] = UserUpdateAnswer;
-            RelativeLayout mark_to_Highlight_Green = marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
-            mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
-            layoutSetQuestionID.setVisibility(View.INVISIBLE);
-        }else {
-            Toast.makeText(this,"Insert answer number between range 1 - "+numberOfAnswers, Toast.LENGTH_SHORT).show();
-        }
 
-
-    }
     /**
-     *
+     * Button to finish the manually correct.
+     * @param view is the "finish" button
+     * @return None
      */
     public void finish (View view){
         Intent returnIntent = new Intent();
@@ -327,8 +288,12 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         finish();
 
     }
+
     /**
-     *
+     * Button to finish the manually correct.
+     * @param id is
+     * @param answer is
+     * @return layout of mark
      */
     private RelativeLayout createMark( String id,Answer answer ) {
         Matrix scaleToImageSize = new Matrix();
@@ -456,4 +421,35 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
     }
 
 
+
+//    /**
+//     * Button for exit from choose answer dialog
+//     * @param view is the "No" button
+//     * @return None
+//     */
+//    public void mistakeClick (View view){
+//        layoutSetQuestionID.setVisibility(View.VISIBLE);
+//        RelativeLayout mark_to_Highlight_Green =  marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
+//        mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#FF0000"));
+//        layoutSetQuestionID.setVisibility(View.INVISIBLE);
+//    }
+//    /**
+//     * Button to set number of question and answer to the specific mark
+//     * @param view is the "Set" button
+//     * @return None
+//     */
+//    public void correctAnswer ( View view ) {
+//        int curAnswerId = Integer.parseInt(answerID.getText().toString());
+//        if (curAnswerId > 0 && curAnswerId <= numberOfAnswers){
+//            UserUpdateAnswer = curAnswerId;
+//            toFix[UserUpdateQuestion] = UserUpdateAnswer;
+//            RelativeLayout mark_to_Highlight_Green = marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
+//            mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
+//            layoutSetQuestionID.setVisibility(View.INVISIBLE);
+//        }else {
+//            Toast.makeText(this,"Insert answer number between range 1 - "+numberOfAnswers, Toast.LENGTH_SHORT).show();
+//        }
+//
+//
+//    }
 }

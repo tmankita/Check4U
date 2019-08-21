@@ -1,4 +1,4 @@
-package com.example.tmankita.check4u.Camera;
+package com.example.tmankita.check4u.Activities;
 
 
 import android.app.Activity;
@@ -6,11 +6,9 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Matrix;
 
 import android.graphics.RectF;
-import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.os.Environment;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,12 +25,12 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import com.example.tmankita.check4u.Detectors.TemplateMatching;
+import com.example.tmankita.check4u.Camera.CameraPreviewFocus;
+import com.example.tmankita.check4u.Camera.DrawingView;
+import com.example.tmankita.check4u.Camera.PreviewSurfaceView;
 import com.example.tmankita.check4u.Detectors.alignToTemplate;
 import com.example.tmankita.check4u.R;
 import com.example.tmankita.check4u.Detectors.detectDocument;
-import com.github.ybq.android.spinkit.sprite.Sprite;
-import com.github.ybq.android.spinkit.style.FadingCircle;
 
 
 import org.opencv.android.BaseLoaderCallback;
@@ -45,7 +43,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.imgcodecs.Imgcodecs;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -68,8 +65,6 @@ public class TouchActivity extends AppCompatActivity {
     private PreviewSurfaceView camView;
     private CameraPreviewFocus cameraPreview;
     private DrawingView drawingView;
-    private Sprite fadingCircle;
-    private ImageView imageView;
     private detectDocument.document paper_obj;
     private Mat orig;
     private Button edit_button;
@@ -78,9 +73,6 @@ public class TouchActivity extends AppCompatActivity {
     private Button recapture_button;
     private ImageButton capture_button;
     private ImageView test;
-
-    private int previewWidth = 1280;
-    private int previewHeight = 720;
 
     private String VIEW_EDIT_TAG = "coronerMark";
     private int counter_coroner = 1;
@@ -93,19 +85,18 @@ public class TouchActivity extends AppCompatActivity {
     private static  float width;
     private Mat origcopy1;
     private Mat rotated_no_draw;
-    private Point[] right;
     private Matrix M1;
     private String caller;
     private String templatePath;
     private Bitmap bmp;
 
     // Used to load the 'native-lib' library on application startup.
-    static {
-        System.loadLibrary("native-lib");
-        System.loadLibrary("opencv_java4");
-    }
+//    static {
+//        System.loadLibrary("native-lib");
+//        System.loadLibrary("opencv_java4");
+//    }
 
-    public native void align(long im, long imReference, long aligned);
+//    public native void align(long im, long imReference, long aligned);
 
 
     @SuppressWarnings("deprecation")
@@ -124,11 +115,6 @@ public class TouchActivity extends AppCompatActivity {
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
         testLayout = (RelativeLayout) findViewById(R.id.testlayout);
-        imageView = (ImageView) findViewById(R.id.imageView);
-        fadingCircle = new FadingCircle();
-        fadingCircle.setColor(Color.WHITE);
-        imageView.setImageDrawable(fadingCircle);
-        imageView.setVisibility(View.INVISIBLE);
         ok_button = (Button) findViewById(R.id.ok_test);
         edit_button = (Button) findViewById(R.id.edit_test);
         set_button = (Button) findViewById(R.id.set_test);
@@ -228,8 +214,107 @@ public class TouchActivity extends AppCompatActivity {
         });
     }
 
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case LoaderCallbackInterface.SUCCESS:
+                {
+                    Log.i(TAG, "OpenCV loaded successfully");
+
+                } break;
+                default:
+                {
+                    super.onManagerConnected(status);
+                } break;
+            }
+        }
+    };
+
+
+    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
+
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+
+//            Log.d(TAG, "in On Picture Taken, data length: "+ data.length);
+
+            //get the camera parameters
+//            Camera.Parameters parameters = camera.getParameters();
+
+            //convert the byte[] to Bitmap;
+            bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+            //convert Bitmap to Mat; note the bitmap config ARGB_8888 conversion that
+            //allows you to use other image processing methods and still save at the end
+            bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
+            Utils.bitmapToMat(bmp, orig);
+            Mat origCopy_before_rotate = new Mat();
+            orig.copyTo(origCopy_before_rotate);
+
+
+            paper_obj = detectDocument.findDocument(orig);
+            ArrayList<Point[]> Rps1;
+            Rps1 = paper_obj.allpoints_original;
+            for (Point[] ps : Rps1)
+            {
+
+                Imgproc.line(origCopy_before_rotate,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
+                Imgproc.line(origCopy_before_rotate,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
+                Imgproc.line(origCopy_before_rotate,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
+                Imgproc.line(origCopy_before_rotate,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+
+            }
+            Mat origCopy_rotatetd_with_draw = new Mat();
+            rotated_no_draw = new Mat();
+            Core.rotate(orig, rotated_no_draw, Core.ROTATE_90_CLOCKWISE);
+            Core.rotate(origCopy_before_rotate, origCopy_rotatetd_with_draw, Core.ROTATE_90_CLOCKWISE);
+            Core.rotate(paper_obj.doc_resized,paper_obj.doc_resized,Core.ROTATE_90_CLOCKWISE);
+            origcopy1 = new Mat();
+
+            rotated_no_draw.copyTo(origcopy1);
+
+            Bitmap bmpPaper_UNTOUCH = Bitmap.createBitmap(rotated_no_draw.cols(), rotated_no_draw.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(rotated_no_draw, bmpPaper_UNTOUCH);
+            Matrix matrix1 = new Matrix();
+            origin_bitmap = Bitmap.createBitmap(bmpPaper_UNTOUCH, 0, 0, bmpPaper_UNTOUCH.getWidth(), bmpPaper_UNTOUCH.getHeight(), matrix1, true);
+
+
+            //srcMat.release();
+            Bitmap bmpPaper = Bitmap.createBitmap(origCopy_rotatetd_with_draw.cols(), origCopy_rotatetd_with_draw.rows(), Bitmap.Config.ARGB_8888);
+
+
+            Utils.matToBitmap(origCopy_rotatetd_with_draw, bmpPaper);
+            Matrix matrix2 = new Matrix();
+            Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
+
+
+            PreviewSurfaceView cameraPr = (PreviewSurfaceView) findViewById(R.id.preview_surface);
+            cameraPr.setVisibility(View.INVISIBLE);
+
+            testLayout.setVisibility(View.VISIBLE);
+            test.setVisibility(View.VISIBLE);
+            edit_button.setVisibility(View.VISIBLE);
+            ok_button.setVisibility(View.VISIBLE);
+            recapture_button.setVisibility(View.VISIBLE);
+            capture_button.setVisibility(View.INVISIBLE);
+
+            test.setImageBitmap(bOutput);
+            Matrix M = test.getImageMatrix();
+            RectF drawableRect = new RectF(0, 0, origCopy_rotatetd_with_draw.cols(), origCopy_before_rotate.rows());
+            RectF viewRect = new RectF(0, 0, width, height);
+            M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
+            test.setImageMatrix(M);
+            test.invalidate();
+
+        }
+    };
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        /**
+         * Continues from take picture again
+         */
         if (requestCode == REQUEST_CODE_RECAPTURE) {
             if (resultCode == Activity.RESULT_OK) {
                 String[] imagesPathes = data.getStringArrayExtra("sheets");
@@ -241,10 +326,20 @@ public class TouchActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Button for confirm that the automate edges detecting success.
+     * @param view is "OK" button
+     * @return None
+     */
     public void ok_test (View view){
         send_image(paper_obj.doc_resized);
     }
 
+    /**
+     * Button for editing manually the edge detecting of the template.
+     * @param view is "Edit" Button
+     * @return None
+     */
     public void edit_test(View view){
         set_button.setVisibility(View.VISIBLE);
         edit_button.setVisibility(View.INVISIBLE);
@@ -271,6 +366,11 @@ public class TouchActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Button for setting the manual coroners of the template.
+     * @param view is "Set" button
+     * @return None
+     */
     public void set_test (View view) {
 
         Point[] points_2 = new Point[4];
@@ -313,6 +413,11 @@ public class TouchActivity extends AppCompatActivity {
         send_image(cropedGray);
     }
 
+    /**
+     * Button for taking a new picture of template.
+     * @param view is 'Recapture" button
+     * @return None
+     */
     public void recapture (View view){
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
         takePicture.putExtra("templatePath", templatePath);
@@ -320,6 +425,12 @@ public class TouchActivity extends AppCompatActivity {
         startActivityForResult(takePicture, REQUEST_CODE_RECAPTURE);
     }
 
+    /**
+     * Function the transform from src to the pts on the src
+     * @param src is the image we want apply the four points transformation
+     * @param pts is the four points for the transformation
+     * @return new image after transform
+     */
     public static Mat fourPointTransform_touch( Mat src , Point[] pts ) {
 
         Point tl = pts[0];
@@ -357,15 +468,21 @@ public class TouchActivity extends AppCompatActivity {
         return doc;
     }
 
+    /**
+     * update the location of v to x_cord and y_cord on the display.
+     * @param CoronerTag is
+     * @param y_cord is
+     * @param x_cord is
+     * @param v is
+     * @return None
+     */
     public void  updateDropAction(String CoronerTag, float y_cord, float x_cord, View v ){
 
-//        RelativeLayout coroner_select = marksCoroners.get(CoronerTag);
         View view = v;
         view.setVisibility(View.VISIBLE);
         view.setX(x_cord);
         view.setY(y_cord);
         view.invalidate();
-//        Point p = new Point(x_cord+(250/2),y_cord+(250/2));
         Point p = new Point(x_cord,y_cord);
         if(coronersLoaction.containsKey(CoronerTag))
             coronersLoaction.remove(CoronerTag);
@@ -373,6 +490,12 @@ public class TouchActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * function build mark layout for edge detect editing
+     * @param x is
+     * @param y is
+     * @return None
+     */
     public void build_coroner(int x,int y){
         String newTag = VIEW_EDIT_TAG +"_" + counter_coroner;
         counter_coroner++;
@@ -420,156 +543,18 @@ public class TouchActivity extends AppCompatActivity {
         imageView.setImageResource(R.drawable.square_wrong_answer);
         // add ImageView in RelativeLayout
         markLayout.addView(imageView);
-//        markLayout.setX(x);
-//        markLayout.setY(y);
-        testLayout.addView(markLayout,2);
+
+        testLayout.addView(markLayout,3);
         marksCoroners.put(newTag,markLayout);
 
     }
 
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                {
-                    Log.i(TAG, "OpenCV loaded successfully");
 
-                } break;
-                default:
-                {
-                    super.onManagerConnected(status);
-                } break;
-            }
-        }
-    };
-
-    private Camera.PictureCallback mPicture = new Camera.PictureCallback() {
-
-        @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
-            imageView.setVisibility(View.INVISIBLE); //loading animation
-//            imageView.bringToFront();
-//            fadingCircle.start();
-            Log.d(TAG, "in On Picture Taken, data length: "+ data.length);
-
-            //get the camera parameters
-            Camera.Parameters parameters = camera.getParameters();
-
-            //convert the byte[] to Bitmap;
-            bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
-
-            //convert Bitmap to Mat; note the bitmap config ARGB_8888 conversion that
-            //allows you to use other image processing methods and still save at the end
-            bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
-            Utils.bitmapToMat(bmp, orig);
-            Mat origCopy_before_rotate = new Mat();
-            orig.copyTo(origCopy_before_rotate);
-
-
-//            if(caller.equals("MainActivity")){
-                paper_obj = detectDocument.findDocument(orig);
-                ArrayList<Point[]> Rps1;
-                Rps1 = paper_obj.allpoints_original;
-                right = new Point[4];
-                for (Point[] ps : Rps1)
-                {
-
-                    Imgproc.line(origCopy_before_rotate,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
-                    Imgproc.line(origCopy_before_rotate,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
-                    Imgproc.line(origCopy_before_rotate,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
-                    Imgproc.line(origCopy_before_rotate,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
-
-                    right[0]=ps[0];
-                    right[1]=ps[1];
-                    right[2]=ps[2];
-                    right[3]=ps[3];
-
-                    Log.i("the right!", "x: "+ ps[0].x +" y: "+ps[0].y);
-                    Log.i("the right!", "x: "+ ps[1].x +" y: "+ps[1].y);
-                    Log.i("the right!", "x: "+ ps[2].x +" y: "+ps[2].y);
-                    Log.i("the right!", "x: "+ ps[3].x +" y: "+ps[3].y);
-
-                }
-                Mat origCopy_rotatetd_with_draw = new Mat();
-                rotated_no_draw = new Mat();
-                Core.rotate(orig, rotated_no_draw, Core.ROTATE_90_CLOCKWISE);
-                Core.rotate(origCopy_before_rotate, origCopy_rotatetd_with_draw, Core.ROTATE_90_CLOCKWISE);
-                Core.rotate(paper_obj.doc_resized,paper_obj.doc_resized,Core.ROTATE_90_CLOCKWISE);
-                origcopy1 = new Mat();
-
-                rotated_no_draw.copyTo(origcopy1);
-
-
-
-                Bitmap bmpPaper_UNTOUCH = Bitmap.createBitmap(rotated_no_draw.cols(), rotated_no_draw.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(rotated_no_draw, bmpPaper_UNTOUCH);
-                Matrix matrix1 = new Matrix();
-                origin_bitmap = Bitmap.createBitmap(bmpPaper_UNTOUCH, 0, 0, bmpPaper_UNTOUCH.getWidth(), bmpPaper_UNTOUCH.getHeight(), matrix1, true);
-
-
-                //srcMat.release();
-                Bitmap bmpPaper = Bitmap.createBitmap(origCopy_rotatetd_with_draw.cols(), origCopy_rotatetd_with_draw.rows(), Bitmap.Config.ARGB_8888);
-
-
-                Utils.matToBitmap(origCopy_rotatetd_with_draw, bmpPaper);
-                Matrix matrix2 = new Matrix();
-                Bitmap bOutput = Bitmap.createBitmap(bmpPaper, 0, 0, bmpPaper.getWidth(), bmpPaper.getHeight(), matrix2, true);
-
-
-                PreviewSurfaceView cameraPr = (PreviewSurfaceView) findViewById(R.id.preview_surface);
-                cameraPr.setVisibility(View.INVISIBLE);
-
-                testLayout.setVisibility(View.VISIBLE);
-                test.setVisibility(View.VISIBLE);
-                edit_button.setVisibility(View.VISIBLE);
-                ok_button.setVisibility(View.VISIBLE);
-                recapture_button.setVisibility(View.VISIBLE);
-                imageView.setVisibility(View.INVISIBLE);
-                capture_button.setVisibility(View.INVISIBLE);
-
-                test.setImageBitmap(bOutput);
-                Matrix M = test.getImageMatrix();
-                RectF drawableRect = new RectF(0, 0, origCopy_rotatetd_with_draw.cols(), origCopy_before_rotate.rows());
-                RectF viewRect = new RectF(0, 0, width, height);
-                M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
-                test.setImageMatrix(M);
-                test.invalidate();
-//            }
-//
-//            else if(caller.equals("oneByOne")){
-//                BitmapFactory.Options options = new BitmapFactory.Options();
-//                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-//                Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
-//                Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
-//                Mat template = new Mat();
-//                Utils.bitmapToMat(bmpT, template);
-////
-////                Mat align = new Mat();
-//                alignToTemplate align_to_template = new alignToTemplate();
-//                Mat align = align_to_template.align(orig, template, bmp); //coment
-//
-//                if(align.empty()){
-//                    Intent returnIntent = new Intent();
-//                    setResult(Activity.RESULT_CANCELED,returnIntent);
-//                    finish();
-//                }
-////                TemplateMatching template_matching = new TemplateMatching();
-////                Mat match = template_matching.match(template, orig);
-//
-//
-////                Mat aligned = new Mat(new Size(orig.cols(),orig.rows()), CvType.CV_8UC1);
-////                align(orig.nativeObj,template.nativeObj,aligned.nativeObj);
-//
-//
-//                Mat dcRotate = new Mat(align.size(), align.type());
-//                Core.rotate(align, dcRotate, Core.ROTATE_90_CLOCKWISE);
-//                send_image(dcRotate);
-//            }
-
-        }
-    };
-
+    /**
+     * run the alignment algorithem on paper and template
+     * @param paper
+     * @return alignToTemplate Object that contain align image and strong marks align image
+     */
     private alignToTemplate alignBeforeSend (Mat paper){
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
@@ -608,6 +593,12 @@ public class TouchActivity extends AppCompatActivity {
         return align_to_template;
     }
 
+    /**
+     * create jpg file from img
+     * @param img is image
+     * @param adding is some extras for the name of the jpg file.
+     * @return Path of jpg file of the img on the disk.
+     */
     static public String send_imageHelper (Mat img, String adding){
         Matrix matrix = new Matrix();
 //        matrix.setRotate(90);
@@ -641,6 +632,11 @@ public class TouchActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * send paper to the next activity
+     * @param paper is the image
+     * @return None
+     */
     private void send_image (Mat paper){
         //srcMat.release();
         String[] res = new String[2];
@@ -662,6 +658,12 @@ public class TouchActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * generate File Object with type <type> .
+     * @param type is the type you want
+     * @param adding is some extras for the name of the file.
+     * @return File with the type and with adding in his name
+     */
     private static File getOutputMediaFile(int type,String adding){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.

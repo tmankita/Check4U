@@ -5,7 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
-//https://stackoverflow.com/questions/6540906/simple-export-and-import-of-a-sqlite-database-on-android
+//from https://stackoverflow.com/questions/6540906/simple-export-and-import-of-a-sqlite-database-on-android
 
 public class FileUtils {
     /**

@@ -11,6 +11,8 @@ import androidx.core.content.ContextCompat;
 
 import com.example.tmankita.check4u.R;
 
+// from https://github.com/jayrambhia/Touch2Focus/blob/master/src/com/fenchtose/touch2focus/DrawingView.java
+
 public class DrawingView extends View {
     /**
      * Extends View. Just used to draw Rect when the screen is touched
@@ -34,7 +36,7 @@ public class DrawingView extends View {
             paint.setStrokeWidth(2);
             haveTouch = false;
         }
-//0xeed7d7d7
+
         public void setHaveTouch(boolean val, Rect rect) {
             haveTouch = val;
             touchArea = rect;

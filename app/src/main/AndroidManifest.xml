@@ -30,17 +30,16 @@
         <meta-data
             android:name="com.google.android.gms.vision.DEPENDENCIES"
             android:value="barcode" />
-        <activity android:name=".ProblematicQuestionsActivity"></activity>
-        <activity android:name=".Camera.TouchActivity" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".Activities.ProblematicQuestionsActivity"></activity>
+        <activity android:name=".Activities.TouchActivity" />
+        <activity android:name=".Activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ImportTemplateActivity" />
-        <activity android:name=".NewTemplateActivity" /> <!-- Dropbox AuthActivity -->
+        <activity android:name=".Activities.NewTemplateActivity" /> <!-- Dropbox AuthActivity -->
         <activity
             android:name="com.dropbox.core.android.AuthActivity"
             android:configChanges="orientation|keyboard"
@@ -56,13 +55,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".oneByOneOrSeries" />
+        <activity android:name=".Activities.oneByOneOrSeries" />
         <activity android:name=".Dropbox.UserDropBoxActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
     </application>
 
