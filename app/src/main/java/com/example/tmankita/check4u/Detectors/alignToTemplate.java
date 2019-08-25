@@ -53,7 +53,9 @@ public class alignToTemplate {
 
 
         Mat tempStrongMarks = new Mat(sizeImage, CvType.CV_8UC1);
-        Imgproc.threshold( grayImage1, tempStrongMarks, 190.5,255,THRESH_BINARY );
+
+        //thresh 190.5
+        Imgproc.threshold( grayImage1, tempStrongMarks, 180,255,THRESH_BINARY );
 
 
         Mat grayImage = new Mat(sizeImage, CvType.CV_8UC1);

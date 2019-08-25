@@ -208,8 +208,8 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT);
         table.setLayoutParams(tableParam);
-        table.setStretchAllColumns(true);
-
+//        table.setStretchAllColumns(true);
+        table.setShrinkAllColumns(true);
 
         TableRow optionsToChooseRow = new TableRow(this);
         ViewGroup.LayoutParams optionsParam = new TableRow.LayoutParams(  // set the layout params for mark
@@ -224,7 +224,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
             Button option_i = new Button(this);
             option_i.setTag(choose_id);
             option_i.setText(String.valueOf(i));
-            option_i.setTextSize(50);
+            option_i.setTextSize(30);
             option_i.setBackgroundResource(R.drawable.square_question);
             option_i.setOnClickListener(new View.OnClickListener() {
                 @Override

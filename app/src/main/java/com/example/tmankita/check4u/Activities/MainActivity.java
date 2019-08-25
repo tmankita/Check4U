@@ -158,10 +158,10 @@ public class MainActivity extends AppCompatActivity {
         else if(requestCode == FILE_PICKER__CONTINUES_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 Uri uri = data.getData();
-                String p = uri.getPath();
-                String[] parts = p.split(":");
+                String p = getRealPath(getApplicationContext(), uri);
+
                 Intent nextIntent = new Intent(getApplicationContext(), oneByOneOrSeries.class);
-                nextIntent.putExtra("dbPath", parts[1] );
+                nextIntent.putExtra("dbPath", p);
                 startActivity(nextIntent);
             }
             if (resultCode == Activity.RESULT_CANCELED) {}

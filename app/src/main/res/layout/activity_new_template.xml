@@ -117,6 +117,7 @@
                 android:layout_width="70dp"
                 android:layout_height="fill_parent"
                 android:layout_marginLeft="55dp"
+                android:inputType="number"
                 android:textStyle="bold" />
             <TextView
                 android:layout_width="fill_parent"
@@ -137,6 +138,7 @@
                 android:layout_width="70dp"
                 android:layout_height="fill_parent"
                 android:layout_marginLeft="55dp"
+                android:inputType="number"
                 android:textAlignment="viewStart"
                 android:textStyle="bold" />
 
@@ -178,14 +180,16 @@
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-        <EditText
-            android:id="@+id/questionID"
-            android:layout_width="70dp"
-            android:layout_height="fill_parent"
-            android:layout_marginLeft="55dp"
-            android:text="1"
-            android:textAlignment="viewStart"
-            android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/questionID"
+                android:layout_width="70dp"
+                android:layout_height="fill_parent"
+                android:layout_marginLeft="55dp"
+                android:inputType="number"
+                android:text="1"
+                android:textAlignment="viewStart"
+                android:textStyle="bold" />
         <TextView
             android:id="@+id/questionText"
             android:layout_width="70dp"
@@ -205,10 +209,10 @@
                 android:layout_width="70dp"
                 android:layout_height="fill_parent"
                 android:layout_marginLeft="55dp"
-                android:text="a"
+                android:inputType="number"
+                android:text="1"
                 android:textAlignment="viewStart"
-                android:textStyle="bold"
-                />
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/answerText"

@@ -7,6 +7,8 @@ import android.view.SurfaceHolder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -44,13 +46,22 @@ public class CameraPreviewFocus implements SurfaceHolder.Callback {
         }
 
         params = mCamera.getParameters();
-        android.hardware.Camera.Size sizePreview = params.getPreviewSize();
-        android.hardware.Camera.Size sizePicture = params.getPictureSize();
 
-        params.setPreviewSize(sizePreview.width, sizePreview.height);
         params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
         params.setJpegQuality(100);
-        params.setPictureSize(sizePicture.width,sizePicture.height);
+
+        supportedSizes = params.getSupportedPictureSizes();
+        Collections.sort(supportedSizes, new Comparator<Camera.Size>() {
+            @Override
+            public int compare(Camera.Size o1, Camera.Size o2) {
+                return Integer.compare(o1.width,o2.width);
+            }
+        });
+        Collections.reverse(supportedSizes);
+        params.setPictureSize(supportedSizes.get(0).width,supportedSizes.get(0).height);
+
+//        params.setPictureSize(1920,1080);
+
 
         try {
             mCamera.setParameters(params);

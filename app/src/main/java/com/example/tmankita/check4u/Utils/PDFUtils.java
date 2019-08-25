@@ -9,6 +9,9 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.util.Log;
+
+import java.io.File;
 
 
 //from https://gist.github.com/HBiSoft/15899990b8cd0723c3a894c1636550a8
@@ -17,19 +20,27 @@ public class PDFUtils {
 
         public static String getRealPath(Context context, Uri fileUri) {
             String realPath;
-            // SDK < API11
-            if (Build.VERSION.SDK_INT < 11) {
-                realPath = PDFUtils.getRealPathFromURI_BelowAPI11(context, fileUri);
+            String p = fileUri.getPath();
+            String[] parts = p.split(":");
+
+            if (parts.length>1) {
+                File f = new File(parts[1]);
+                return f.getAbsolutePath();
+            }else{
+                // SDK < API11
+                if (Build.VERSION.SDK_INT < 11) {
+                    realPath = PDFUtils.getRealPathFromURI_BelowAPI11(context, fileUri);
+                }
+                // SDK >= 11 && SDK < 19
+                else if (Build.VERSION.SDK_INT < 19) {
+                    realPath = PDFUtils.getRealPathFromURI_API11to18(context, fileUri);
+                }
+                // SDK > 19 (Android 4.4) and up
+                else {
+                    realPath = PDFUtils.getRealPathFromURI_API19(context, fileUri);
+                }
+                return realPath;
             }
-            // SDK >= 11 && SDK < 19
-            else if (Build.VERSION.SDK_INT < 19) {
-                realPath = PDFUtils.getRealPathFromURI_API11to18(context, fileUri);
-            }
-            // SDK > 19 (Android 4.4) and up
-            else {
-                realPath = PDFUtils.getRealPathFromURI_API19(context, fileUri);
-            }
-            return realPath;
         }
 
 

@@ -23,6 +23,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import com.example.tmankita.check4u.Camera.CameraPreviewFocus;
@@ -73,6 +74,8 @@ public class TouchActivity extends AppCompatActivity {
     private Button recapture_button;
     private ImageButton capture_button;
     private ImageView test;
+    private LinearLayout buttonsLayout;
+    private LinearLayout setButtonsLayout;
 
     private String VIEW_EDIT_TAG = "coronerMark";
     private int counter_coroner = 1;
@@ -115,6 +118,8 @@ public class TouchActivity extends AppCompatActivity {
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
         testLayout = (RelativeLayout) findViewById(R.id.testlayout);
+        buttonsLayout = (LinearLayout)  findViewById(R.id.buttonsLayout);
+        setButtonsLayout = (LinearLayout)  findViewById(R.id.setButtonsLayout);
         ok_button = (Button) findViewById(R.id.ok_test);
         edit_button = (Button) findViewById(R.id.edit_test);
         set_button = (Button) findViewById(R.id.set_test);
@@ -165,6 +170,7 @@ public class TouchActivity extends AppCompatActivity {
                     }
                 }
         );
+
         test.setOnDragListener(new View.OnDragListener(){
             private String draggedImageTag;
             private  float x_cord ,y_cord;
@@ -254,15 +260,17 @@ public class TouchActivity extends AppCompatActivity {
 
 
             paper_obj = detectDocument.findDocument(orig);
+
+
             ArrayList<Point[]> Rps1;
             Rps1 = paper_obj.allpoints_original;
             for (Point[] ps : Rps1)
             {
 
-                Imgproc.line(origCopy_before_rotate,ps[0],ps[1],new Scalar(0, 255, 0, 150), 4);
-                Imgproc.line(origCopy_before_rotate,ps[1],ps[2],new Scalar(0, 255, 0, 150), 4);
-                Imgproc.line(origCopy_before_rotate,ps[2],ps[3],new Scalar(0, 255, 0, 150), 4);
-                Imgproc.line(origCopy_before_rotate,ps[3],ps[0],new Scalar(0, 255, 0, 150), 4);
+                Imgproc.line(origCopy_before_rotate,ps[0],ps[1],new Scalar(255, 255, 0, 0), 10);
+                Imgproc.line(origCopy_before_rotate,ps[1],ps[2],new Scalar(255, 255, 0, 0), 10);
+                Imgproc.line(origCopy_before_rotate,ps[2],ps[3],new Scalar(255, 255, 0, 0), 10);
+                Imgproc.line(origCopy_before_rotate,ps[3],ps[0],new Scalar(255, 255, 0, 0), 10);
 
             }
             Mat origCopy_rotatetd_with_draw = new Mat();
@@ -294,9 +302,7 @@ public class TouchActivity extends AppCompatActivity {
 
             testLayout.setVisibility(View.VISIBLE);
             test.setVisibility(View.VISIBLE);
-            edit_button.setVisibility(View.VISIBLE);
-            ok_button.setVisibility(View.VISIBLE);
-            recapture_button.setVisibility(View.VISIBLE);
+            setButtonsLayout.setVisibility(View.INVISIBLE);
             capture_button.setVisibility(View.INVISIBLE);
 
             test.setImageBitmap(bOutput);
@@ -306,6 +312,10 @@ public class TouchActivity extends AppCompatActivity {
             M.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.CENTER);
             test.setImageMatrix(M);
             test.invalidate();
+
+
+            buttonsLayout.setVisibility(View.VISIBLE);
+            buttonsLayout.bringToFront();
 
         }
     };
@@ -341,10 +351,10 @@ public class TouchActivity extends AppCompatActivity {
      * @return None
      */
     public void edit_test(View view){
-        set_button.setVisibility(View.VISIBLE);
-        edit_button.setVisibility(View.INVISIBLE);
-        ok_button.setVisibility(View.INVISIBLE);
-        recapture_button.setVisibility(View.INVISIBLE);
+        buttonsLayout.setVisibility(View.INVISIBLE);
+        setButtonsLayout.setVisibility(View.VISIBLE);
+        setButtonsLayout.bringToFront();
+
         test.setImageBitmap(origin_bitmap);
         M1 = test.getImageMatrix();
         RectF drawableRect = new RectF(0, 0, origcopy1.cols(), origcopy1.rows());
@@ -544,7 +554,7 @@ public class TouchActivity extends AppCompatActivity {
         // add ImageView in RelativeLayout
         markLayout.addView(imageView);
 
-        testLayout.addView(markLayout,3);
+        testLayout.addView(markLayout,1);
         marksCoroners.put(newTag,markLayout);
 
     }

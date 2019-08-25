@@ -423,7 +423,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
+     * function start "ONE-BY-0NE" option.
      * @param view is "ONE-BY-0NE" button
      * @return None
      */
@@ -437,7 +437,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
+     * function start "Butch" option.
      * @param view is "Butch" button
      * @return None
      */
@@ -460,7 +460,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
+     * start to check another test in "ONE-BY-0NE" option.
      * @param view is the "yes" button int the statistics dialog
      * @return
      */
@@ -472,7 +472,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
+     * finish to check in "ONE-BY-0NE" option.
      * @param view is the "finish" button
      * @return
      */
@@ -481,7 +481,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
+     * start to check another test in "Butch" option.
      * @param view is the "yes" button in the "Butch" display
      * @return
      */
@@ -585,7 +585,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     * function that get the real path from uri.
+     * function that get the real path from <uri>.
      * @param uri is uri of file
      * @return path in the disk
      */
@@ -603,7 +603,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     * function that create the csv file iff all the tests are checked.
+     * function that create the csv file if all the tests are checked.
      * @return None
      */
     public void finishSeries(){
@@ -612,6 +612,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
+     * crete jpg file of <img>  in <dirpath> with the name <name> on disk.
      * @param img
      * @param dirPath
      * @param name
@@ -739,8 +740,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     /**
      *
-     * @param
-     * @return
+     * @param sheet is a image with barcode that need to detect
+     * @return the number that coded in the barcode
      */
     private int detectBarcode (Mat sheet){
         Answer barcodeInfo = allanswers[0][0];
@@ -769,10 +770,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Point[] sorted_2 = detectDocument.sortPoints(ps);
         Mat barcodeCropped = TouchActivity.fourPointTransform_touch(sheet,sorted_2);
 
-        Imgproc.line(imageForTest,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(imageForTest,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(imageForTest,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
-        Imgproc.line(imageForTest,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
+//        Imgproc.line(imageForTest,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
 
 //        Bitmap bmpBarcodeForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
 //        Utils.matToBitmap(imageForTest, bmpBarcodeForTest);
@@ -842,9 +843,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
-     * @param
-     * @return
+     * function that insert a row in student db - contain all the answers that the student chose and his grade.
+     * @param align_to_template is alignToTemplate Object that contain the align image and the strong marks image.
+     * @param callee is who option calls the  insertStudent function
+     * @return true if success to insert student to student db.
      */
     private boolean insertStudent (alignToTemplate align_to_template, String callee) {
 
@@ -887,8 +889,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 }
             }
 
-        Bitmap bmpForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(imageForTest, bmpForTest);
+//        Bitmap bmpForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(imageForTest, bmpForTest);
 
             //find question with two answers marked or more
             //get all of them -> show the user all the marks that marked let him to choose the right one
@@ -921,7 +923,6 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
                         AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
             }
-//            int in=0;
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
@@ -960,9 +961,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
-     * @param
-     * @return
+     * update all the statistics data.
+     * @return None
      */
     private void checkIfFinalSheetOrContinue(){
 
@@ -990,9 +990,10 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
-     * @param
-     * @return
+     * calculate brightness in the image.
+     * @param img is the image we calculate the brightness
+     * @param answer is the coordinates where to calculate
+     * @return brightness of the <answer> in <img>
      */
     private int calculateBlackLevel(Mat img, Answer answer ){
         double blackLevel=0.0;
@@ -1040,9 +1041,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
     }
 
     /**
-     *
-     * @param
-     * @return
+     * function that extract all the data from the <db_template> to 2-d array.
+     * @param db_template is the db that contain all the data.
+     * @return 2-d array with all the coordinates of the answers for each question
      */
     private Answer[][] extractAllDbTemplateInfo(SQLiteDatabase db_template) {
 
@@ -1088,7 +1089,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
 
-    //    /**
+//    for debug alignment algorithm
+//    /**
 //     *
 //     * @param
 //     * @return

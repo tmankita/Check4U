@@ -8,6 +8,63 @@
     tools:context=".Activities.TouchActivity"
     tools:ignore="MergeRootFrame">
 
+    <LinearLayout
+        android:id="@+id/buttonsLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="invisible"
+        >
+
+
+        <Button
+            android:id="@+id/ok_test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="ok_test"
+            android:text="OK"
+             />
+
+
+
+        <Button
+            android:id="@+id/edit_test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="edit_test"
+            android:text="Edit"
+             />
+
+        <Button
+            android:id="@+id/take_agian"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="recapture"
+            android:text="Recapture"
+            />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/setButtonsLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="invisible">
+
+        <Button
+            android:id="@+id/set_test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:onClick="set_test"
+            android:text="SET" />
+    </LinearLayout>
+
     <com.example.tmankita.check4u.Camera.PreviewSurfaceView
         android:id="@+id/preview_surface"
         android:layout_width="match_parent"
@@ -23,70 +80,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            >
 
-            <Button
-                android:id="@+id/set_test"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentEnd="true"
-                android:onClick="set_test"
-                android:text="SET"
-                android:visibility="invisible" />
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            >
-
-
-            <Button
-                android:id="@+id/ok_test"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="ok_test"
-                android:text="OK"
-                android:visibility="invisible" />
-
-
-
-            <Button
-                android:id="@+id/edit_test"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="edit_test"
-                android:text="Edit"
-                android:visibility="invisible" />
-
-            <Button
-                android:id="@+id/take_agian"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="recapture"
-                android:text="Recapture"
-                android:visibility="invisible" />
-
-
-        </LinearLayout>
 
         <ImageView
             android:id="@+id/test"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentBottom="true"
+            android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true"
-            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
             android:visibility="visible"
             tools:srcCompat="@tools:sample/avatars" />
 

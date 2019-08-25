@@ -414,12 +414,14 @@ public class NewTemplateActivity extends AppCompatActivity {
                 switch(event.getAction()) {
                     case DragEvent.ACTION_DRAG_STARTED:
                         View view =(View) event.getLocalState();
-                        draggedImageTag = (String) view.getTag();
-                        pan_x = zoomLayout.getPanX();
-                        pan_y = zoomLayout.getPanY();
-                        zoomScale = zoomLayout.getRealZoom();
-                        engine.zoomTo(0.8f,false);
-                        v.invalidate();
+                        if(view != null){
+                            draggedImageTag = (String) view.getTag();
+                            pan_x = zoomLayout.getPanX();
+                            pan_y = zoomLayout.getPanY();
+                            zoomScale = zoomLayout.getRealZoom();
+                            engine.zoomTo(0.8f,false);
+                            v.invalidate();
+                        }
                         Log.i("Mark", "Action is DragEvent.ACTION_DRAG_STARTED ");
                         break;
 
@@ -435,40 +437,39 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                     case DragEvent.ACTION_DRAG_LOCATION:
                         Log.i("Mark", "TAG: "+ draggedImageTag+" Action is DragEvent.ACTION_DRAG_LOCATION");
-
-                        x_cord =  event.getX();
-                        y_cord =  event.getY();
-                        Log.i("Mark", "TAG: "+ draggedImageTag+" X: "+x_cord+" Y: "+y_cord);
-
-                        SizeF size_mark_prev;
-
-                            size_mark_prev = marksSize.get(draggedImageTag);
-                            PointF mark_prev_location = marksLocation.get(draggedImageTag);
-                            if(copyModeFlag){
-                                float delta_x = (x_cord - (size_mark_prev.getWidth()/2))  - mark_prev_location.x;
-                                float delta_y = (y_cord - (size_mark_prev.getHeight()/2)) - mark_prev_location.y ;
-                                View s = (View) event.getLocalState();
-                                updateDropAction(draggedImageTag,(y_cord - (size_mark_prev.getHeight()/2)),(x_cord - (size_mark_prev.getWidth()/2)), s);
-                                for (View mark_selected: marksViews.values() ) {
-                                    String MarkTag = (String) mark_selected.getTag();
-                                    if(!MarkTag.equals(draggedImageTag)){
-                                        PointF curr_mark_prev_location = marksLocation.get(MarkTag);
-                                        float new_x_cord = (curr_mark_prev_location.x + delta_x);
-                                        float new_y_cord = (curr_mark_prev_location.y + delta_y);
-                                        updateDropAction(MarkTag, new_y_cord, new_x_cord,mark_selected);
+                        if(draggedImageTag!=null){
+                            x_cord =  event.getX();
+                            y_cord =  event.getY();
+                            Log.i("Mark", "TAG: "+ draggedImageTag+" X: "+x_cord+" Y: "+y_cord);
+                            SizeF size_mark_prev;
+                                size_mark_prev = marksSize.get(draggedImageTag);
+                                PointF mark_prev_location = marksLocation.get(draggedImageTag);
+                                if(copyModeFlag){
+                                    float delta_x = (x_cord - (size_mark_prev.getWidth()/2))  - mark_prev_location.x;
+                                    float delta_y = (y_cord - (size_mark_prev.getHeight()/2)) - mark_prev_location.y ;
+                                    View s = (View) event.getLocalState();
+                                    updateDropAction(draggedImageTag,(y_cord - (size_mark_prev.getHeight()/2)),(x_cord - (size_mark_prev.getWidth()/2)), s);
+                                    for (View mark_selected: marksViews.values() ) {
+                                        String MarkTag = (String) mark_selected.getTag();
+                                        if(!MarkTag.equals(draggedImageTag)){
+                                            PointF curr_mark_prev_location = marksLocation.get(MarkTag);
+                                            float new_x_cord = (curr_mark_prev_location.x + delta_x);
+                                            float new_y_cord = (curr_mark_prev_location.y + delta_y);
+                                            updateDropAction(MarkTag, new_y_cord, new_x_cord,mark_selected);
+                                        }
                                     }
+                                    engine.realZoomTo(zoomScale,false);
+                                    engine.panTo(pan_x,pan_y,false);
+
+
                                 }
-                                engine.realZoomTo(zoomScale,false);
-                                engine.panTo(pan_x,pan_y,false);
-
-
-                            }
-                            else{
-                                View s = (View) event.getLocalState();
-                                updateDropAction(draggedImageTag,(y_cord - (size_mark_prev.getHeight()/2)),(x_cord - (size_mark_prev.getWidth()/2)),s);
-                                engine.realZoomTo(zoomScale,false);
-                                engine.panTo(pan_x,pan_y,false);
-                            }
+                                else{
+                                    View s = (View) event.getLocalState();
+                                    updateDropAction(draggedImageTag,(y_cord - (size_mark_prev.getHeight()/2)),(x_cord - (size_mark_prev.getWidth()/2)),s);
+                                    engine.realZoomTo(zoomScale,false);
+                                    engine.panTo(pan_x,pan_y,false);
+                                }
+                        }
 
                         break;
 
@@ -479,6 +480,7 @@ public class NewTemplateActivity extends AppCompatActivity {
 
                     case DragEvent.ACTION_DROP:
                         v.invalidate();
+                        draggedImageTag = null;
                         handler.removeCallbacks(mLongPressed);
                         Log.i("Answer_Mark", "ACTION_DROP event");
                         break;
@@ -823,7 +825,7 @@ public class NewTemplateActivity extends AppCompatActivity {
 
         markLayout.setOnTouchListener(new View.OnTouchListener() {
             private long lastClickTime = 0;
-            private static final long DOUBLE_CLICK_TIME_DELTA = 300;//milliseconds
+            private static final long DOUBLE_CLICK_TIME_DELTA = 500;//milliseconds
             private long clickTime;
             //onTouch code
             @Override

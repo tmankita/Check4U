@@ -273,7 +273,7 @@ public class UserDropBoxActivity extends DropBoxActivity {
     }
 
     /**
-     *
+     * show the delete dialog on the display
      */
     private void checkIfWantToDelete() {
         shareMenu.setVisibility(View.INVISIBLE);
@@ -282,7 +282,7 @@ public class UserDropBoxActivity extends DropBoxActivity {
     }
 
     /**
-     *
+     * function that delete all the files in directorys that the application was created.
      */
     private void removeImagesAndUnzipDirectories() {
         String DCIM_Path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/DCIM/";
@@ -300,7 +300,9 @@ public class UserDropBoxActivity extends DropBoxActivity {
     }
 
     /**
-     *
+     * function that delete all the files in the directory in <dir>.
+     * @param dir is directory file.
+     * @return None
      */
     private void deleteContentInDir(File dir) {
         if(dir.exists()){
