@@ -55,7 +55,7 @@ public class alignToTemplate {
         Mat tempStrongMarks = new Mat(sizeImage, CvType.CV_8UC1);
 
         //thresh 190.5
-        Imgproc.threshold( grayImage1, tempStrongMarks, 180,255,THRESH_BINARY );
+        Imgproc.threshold( grayImage1, tempStrongMarks, 190.5,255,THRESH_BINARY );
 
 
         Mat grayImage = new Mat(sizeImage, CvType.CV_8UC1);
@@ -171,7 +171,8 @@ public class alignToTemplate {
         Utils.matToBitmap(imgMatches, bmpBarcode23);
         Bitmap bmpBarcode26 = Bitmap.createBitmap(croped.cols(), croped.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(croped, bmpBarcode26);
-
+        Bitmap bmpBarcode28 = Bitmap.createBitmap(cropedStrongMarks.cols(), cropedStrongMarks.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(cropedStrongMarks, bmpBarcode28);
 
 
         align = new Mat(croped.size(),croped.type());

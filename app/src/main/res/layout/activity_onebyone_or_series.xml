@@ -304,7 +304,7 @@
         android:layout_marginEnd="62dp"
         android:layout_marginBottom="146dp"
         android:onClick="series"
-        android:text="Bunch-Processing"
+        android:text="Batch-Processing"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

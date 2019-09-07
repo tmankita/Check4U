@@ -18,7 +18,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -239,6 +238,24 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
             });
             optionsToChooseRow.addView(option_i);
         }
+        String choose_id ="choose_"+(-1);
+        Button option_i = new Button(this);
+        option_i.setTag(choose_id);
+        option_i.setText("1-");
+        option_i.setTextSize(30);
+        option_i.setBackgroundResource(R.drawable.square_wrong_answer);
+        option_i.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String tag =(String)v.getTag();
+                UserUpdateAnswer = Integer.parseInt(tag.split("_")[1]);
+                toFix[UserUpdateQuestion] = UserUpdateAnswer;
+                RelativeLayout mark_to_Highlight_Green = marksImageViews.get(questionToInsertToFix);//marks.get(questionToInsertToTheTable)._mark ;
+                mark_to_Highlight_Green.setBackgroundColor(Color.parseColor("#00FF00"));
+                choose_dialog.setVisibility(View.INVISIBLE);
+            }
+        });
+        optionsToChooseRow.addView(option_i);
 
         table.addView(optionsToChooseRow);
         layout.addView(table);

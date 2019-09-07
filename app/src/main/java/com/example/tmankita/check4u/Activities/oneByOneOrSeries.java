@@ -339,9 +339,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 int currId = data.getIntExtra("id",-1);
                 int[] toFix = data.getIntArrayExtra("toFix");
                 for (i = 1; i < toFix.length; i++) {
-                    if (toFix[i] != 0) {
+                    if(toFix[i] == -1){
+                        studentAnswers[i] = 0;
+                    }
+                    else if (toFix[i] != 0) {
                         studentAnswers[i] = toFix[i];
                     }
+
                 }
                 // make binary array for questions -> 1 - right  , 0 - wrong
                 int[] binaryCorrectFlag = new int[numberOfQuestions + 1];
@@ -849,8 +853,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
      * @return true if success to insert student to student db.
      */
     private boolean insertStudent (alignToTemplate align_to_template, String callee) {
-
+        double threshold=0;
         if(callee.equals("OneByOne")){
+//            threshold=16;
             //import the image from path
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
@@ -863,6 +868,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             Utils.bitmapToMat(bmpStrongMarks, paperMarks);
             paper.copyTo(imageForTest);
         }else if(callee.equals("Series")){
+//            threshold=50;
             align_to_template.align.copyTo(paper);
             align_to_template.strongMarks.copyTo(paperMarks);
             paper.copyTo(imageForTest);
@@ -889,8 +895,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 }
             }
 
-//        Bitmap bmpForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(imageForTest, bmpForTest);
+        Bitmap bmpForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(imageForTest, bmpForTest);
 
             //find question with two answers marked or more
             //get all of them -> show the user all the marks that marked let him to choose the right one
@@ -898,22 +904,36 @@ public class oneByOneOrSeries extends AppCompatActivity {
             int numberOfAnswerThatChoosed = 0;
             for (i = 1; i < sumOfBlacks.length; i++) {
                 int minBlack = Integer.MAX_VALUE;
+                int maxBlack = 0;
                 for (j = 0; j < sumOfBlacks[i].length; j++) {
+                    if(maxBlack <= sumOfBlacks[i][j]){
+                        maxBlack = sumOfBlacks[i][j];
+                    }
                     if (minBlack >= sumOfBlacks[i][j]) {
                         minBlack = sumOfBlacks[i][j];
                         numberOfAnswerThatChoosed = j + 1;
                     }
                 }
+                double epsilon=0;
                 boolean needToAddtheChoosedOne = false;
+                if(callee.equals("OneByOne")){
+//                    threshold = (maxBlack-minBlack)*0.5;
+//                    epsilon = minBlack + threshold;
+                    threshold = (maxBlack-minBlack)*0.7;
+                    epsilon = maxBlack - threshold;
+                }else if(callee.equals("Series")){
+                    threshold = 50;
+                    epsilon = minBlack + threshold;
+                }
                 // make array of answers -> answers[i] = j : i is question number, j is answer number
                 studentAnswers[i] = numberOfAnswerThatChoosed;
                 for (j = 0; j < sumOfBlacks[i].length; j++) {
                     // record all the answers of the i question that marked
                     // the conditions are:
-                    // - j+1 < allanswers[i].length
+                    // - j < allanswers[i].length
                     // - at least sum of black pixels like the min sum of black pixels + 30 .
                     // - and j+1 is not the answer with the max sum of black pixels .
-                    if ((j + 1) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && (minBlack + 15) > sumOfBlacks[i][j]) {
+                    if ((j) < allanswers[i].length && (j + 1) != numberOfAnswerThatChoosed && epsilon > sumOfBlacks[i][j]) {
                         flagNeedToCorrectSomeAnswers = true;
                         needToAddtheChoosedOne = true;
                         AnotherAnswersThatChoosed.add(allanswers[i][j]);
@@ -923,6 +943,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                     if(!AnotherAnswersThatChoosed.contains(allanswers[i][numberOfAnswerThatChoosed-1]))
                         AnotherAnswersThatChoosed.add(allanswers[i][numberOfAnswerThatChoosed-1]);
             }
+            int l=0;
             if (flagNeedToCorrectSomeAnswers) {
                 Intent intent = new Intent(oneByOneOrSeries.this, ProblematicQuestionsActivity.class);
                 intent.putExtra("problematicAnswers", AnotherAnswersThatChoosed);
