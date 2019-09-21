@@ -75,9 +75,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
     //image - student test
     private Mat paper;
+    private Mat barcodePaper;
     private Mat paperMarks;
     private String currentImagePath;
     private String currentImageMarks;
+    private String currentImageBarcode;
 
     //DB
     private Answer[][] allanswers;
@@ -89,6 +91,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
     private int[] correctAnswers;
     private String dbPath;
     private String templatePath;
+    private String barcodePath;
 
     //Views
     private TableLayout need_to_continue;
@@ -131,6 +134,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     paper = new Mat();
+                    barcodePaper = new Mat();
                     imageForTest = new Mat();
                     paperMarks = new Mat();
                 }
@@ -209,10 +213,14 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 zipManager.unzip(dbPath, targetDir);
 
                 String templateName = null;
+                String barcodeName = null;
                 String dbName = null;
                 File yourDir = new File(targetDir);
                 for (File f : yourDir.listFiles()) {
-                    if (f.isFile() && f.getName().toLowerCase().endsWith("jpg"))
+                    String name  = f.getName();
+                    if(f.isFile() && ((name.charAt(name.length() - 5)) == 'B') && f.getName().toLowerCase().endsWith("jpg"))
+                        barcodeName = f.getName();
+                    else if (f.isFile() && ((name.charAt(name.length() - 5)) == 'A') && f.getName().toLowerCase().endsWith("jpg"))
                         templateName = f.getName();
                     else if (f.isFile() && f.getName().toLowerCase().endsWith("db"))
                         dbName = f.getName();
@@ -220,6 +228,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
 
 
                 templatePath = targetDir + "/" + templateName;
+                barcodePath = targetDir + "/" + barcodeName;
 
                 SQLiteDatabase db_template = SQLiteDatabase.openDatabase(targetDir + "/" + dbName, null, OPEN_READONLY);
 
@@ -252,9 +261,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
         if (requestCode == AFTER_ALIGNMENT_CONTINUES_REQUEST_CODE) {
             if (resultCode == Activity.RESULT_OK) {
                 try {
-                    String[] imagesPathes = data.getStringArrayExtra("sheets");
-                    currentImagePath =  imagesPathes[0];
-                    currentImageMarks = imagesPathes[1];
+                    String[] imagesPathes = data.getStringArrayExtra("finalResult");
+                    currentImageBarcode = imagesPathes[0];
+                    currentImagePath    =  imagesPathes[2];
+                    currentImageMarks   = imagesPathes[3];
+
                     //update the status variable
                     totalExamsThatProcessedUntilNow++;
                     //insert the student to DB
@@ -299,8 +310,11 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 } catch (Exception e) {
                     Toast.makeText(this, "The alignment procces go wrong, try again", Toast.LENGTH_LONG).show();
                     File old_pic = new File(currentImagePath);
+                    File old_barcode = new File(currentImageBarcode);
                     if (old_pic.exists())
                         old_pic.delete();
+                    if (old_barcode.exists())
+                        old_barcode.delete();
                     series.setVisibility(View.INVISIBLE);
                     oneByOne.setVisibility(View.INVISIBLE);
 //                    test_align_Layout.setVisibility(View.INVISIBLE);
@@ -308,16 +322,21 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //                    realign_button.setVisibility(View.INVISIBLE);
 //                    ok_align_button.setVisibility(View.INVISIBLE);
                     Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
-                    takePicture.putExtra("templatePath", templatePath);
-                    takePicture.putExtra("caller", "oneByOne");
+                    takePicture.putExtra("templatePath",templatePath);
+                    takePicture.putExtra("barcodeTemplatePath",barcodePath);
+                    takePicture.putExtra("status","Barcode");
+                    takePicture.putExtra("caller","oneByOne");
                     startActivityForResult(takePicture, 1);
                 }
             }
             if (resultCode == Activity.RESULT_CANCELED) {
                 Toast.makeText(this, "The alignment procces go wrong, try again", Toast.LENGTH_LONG).show();
                 File old_pic = new File(currentImagePath);
+                File old_barcode = new File(currentImageBarcode);
                 if (old_pic.exists())
                     old_pic.delete();
+                if (old_barcode.exists())
+                    old_barcode.delete();
                 series.setVisibility(View.INVISIBLE);
                 oneByOne.setVisibility(View.INVISIBLE);
 //                test_align_Layout.setVisibility(View.INVISIBLE);
@@ -325,7 +344,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //                realign_button.setVisibility(View.INVISIBLE);
 //                ok_align_button.setVisibility(View.INVISIBLE);
                 Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
-                takePicture.putExtra("templatePath", templatePath);
+                takePicture.putExtra("templatePath",templatePath);
+                takePicture.putExtra("barcodeTemplatePath",barcodePath);
+                takePicture.putExtra("status","Barcode");
                 takePicture.putExtra("caller", "oneByOne");
                 startActivityForResult(takePicture, 1);
             }
@@ -436,6 +457,8 @@ public class oneByOneOrSeries extends AppCompatActivity {
         oneByOne.setVisibility(View.INVISIBLE);
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
         takePicture.putExtra("templatePath",templatePath);
+        takePicture.putExtra("barcodeTemplatePath",barcodePath);
+        takePicture.putExtra("status","Barcode");
         takePicture.putExtra("caller","oneByOne");
         startActivityForResult(takePicture,1);
     }
@@ -447,7 +470,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
      */
     public void series (View view){
         //picker files view - choose all the tests
-        countSeries = 1;
+        countSeries = 0;
         series.setVisibility(View.INVISIBLE);
         oneByOne.setVisibility(View.INVISIBLE);
 
@@ -471,6 +494,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
     public void continue_check(View view){
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
         takePicture.putExtra("templatePath",templatePath);
+        takePicture.putExtra("barcodeTemplatePath",barcodePath);
+        takePicture.putExtra("status","Barcode");
+        takePicture.putExtra("caller","oneByOne");
         takePicture.putExtra("caller","oneByOne");
         startActivityForResult(takePicture,AFTER_ALIGNMENT_CONTINUES_REQUEST_CODE);
     }
@@ -543,21 +569,33 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //                }
 
                 Mat template = new Mat();
+                Mat barcodeTemplate = new Mat();
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bmp1 = BitmapFactory.decodeFile(templatePath, options);
+                Bitmap bmp2 = BitmapFactory.decodeFile(barcodePath, options);
                 Utils.bitmapToMat(bmp1, template);
+                Utils.bitmapToMat(bmp2, barcodeTemplate);
 
                 alignToTemplate align_to_template = new alignToTemplate();
-                numberOfTest = pageCount+1;
+                numberOfTest = (pageCount)/2;
                 while(pageIndex<pageCount){
                     Page page = doc.loadPage(pageIndex);
                     ctm = AndroidDrawDevice.fitPage(page, (int)template.size().width, (int)template.size().height);
                     Bitmap bitmap = AndroidDrawDevice.drawPage(page,ctm);
                     Mat image = new Mat();
                     Utils.bitmapToMat(bitmap, image);
-                    align_to_template.align1(image, template, null,"Series");
-                    if(align_to_template.align.empty()){
+                    if(pageIndex % 2 == 0){
+                        align_to_template.align1(image, barcodeTemplate, null,"Series");
+                        barcodePaper = align_to_template.align;
+                        pageIndex++;
+                        continue;
+                    }
+                    else{
+                        align_to_template.align1(image, template, null,"Series");
+                    }
+
+                    if(align_to_template.align.empty() || barcodePaper.empty()){
                         countSeries++;
                         continue;
                     }
@@ -570,7 +608,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         Log.e("BARCODE", "Faild: not success to check this test, because there is no barcode in this test");
                     }
                     pageIndex++;
-                    Log.d("series", "test: " + countSeries + "finish");
+                    Log.d("series", "test: " + countSeries + " finish");
 
                 }
 
@@ -774,13 +812,13 @@ public class oneByOneOrSeries extends AppCompatActivity {
         Point[] sorted_2 = detectDocument.sortPoints(ps);
         Mat barcodeCropped = TouchActivity.fourPointTransform_touch(sheet,sorted_2);
 
-//        Imgproc.line(imageForTest,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(imageForTest,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(imageForTest,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
-//        Imgproc.line(imageForTest,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
-
-//        Bitmap bmpBarcodeForTest = Bitmap.createBitmap(imageForTest.cols(), imageForTest.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(imageForTest, bmpBarcodeForTest);
+        Imgproc.line(sheet,sorted_2[0],sorted_2[1],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(sheet,sorted_2[1],sorted_2[2],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(sheet,sorted_2[2],sorted_2[3],new Scalar(0, 255, 0, 150), 4);
+        Imgproc.line(sheet,sorted_2[3],sorted_2[0],new Scalar(0, 255, 0, 150), 4);
+//
+        Bitmap bmpBarcodeForTest = Bitmap.createBitmap(sheet.cols(), sheet.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(sheet, bmpBarcodeForTest);
 //
         Bitmap bmpBarcode = Bitmap.createBitmap(barcodeCropped.cols(), barcodeCropped.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(barcodeCropped, bmpBarcode);
@@ -800,11 +838,19 @@ public class oneByOneOrSeries extends AppCompatActivity {
                         Log.d(LOG_TAG, "Value_" + sparseArray.valueAt(i).rawValue + "_" + sparseArray.valueAt(i).displayValue);
                         id = Integer.parseInt(sparseArray.valueAt(i).rawValue);
                     }catch(Exception e){
+                        if(i < sparseArray.size())
+                            continue;
                         barcodeCropped.release();
 //                        Toast.makeText(this,"Didn't catch the barcode, take the picture again",LENGTH_SHORT).show();
                         File old_pic = new File(currentImagePath);
+//                        File old_barcode = new File(currentImageBarcode);
+                        File old_pic_marks = new File(currentImageMarks);
                         if(old_pic.exists())
                             old_pic.delete();
+//                        if(old_barcode.exists())
+//                            old_barcode.delete();
+                        if(old_pic_marks.exists())
+                            old_pic_marks.delete();
                         series.setVisibility(View.INVISIBLE);
                         oneByOne.setVisibility(View.INVISIBLE);
 //                        test_align_Layout.setVisibility(View.INVISIBLE);
@@ -813,7 +859,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //                        ok_align_button.setVisibility(View.INVISIBLE);
                         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
                         takePicture.putExtra("templatePath",templatePath);
+                        takePicture.putExtra("barcodeTemplatePath",barcodePath);
                         takePicture.putExtra("caller","oneByOne");
+                        takePicture.putExtra("status","Barcode");
                         startActivityForResult(takePicture,1);
                     }
                     break;
@@ -824,8 +872,14 @@ public class oneByOneOrSeries extends AppCompatActivity {
                 Toast.makeText(this, "The Barcode is not clear, take the picture again ",Toast.LENGTH_LONG).show();
                 Log.e(LOG_TAG,"SparseArray null or empty");
                 File old_pic = new File(currentImagePath);
+                File old_pic_marks = new File(currentImageMarks);
+//                File old_barcode = new File(currentImageBarcode);
                 if(old_pic.exists())
                     old_pic.delete();
+//                if(old_barcode.exists())
+//                    old_barcode.delete();
+                if(old_pic_marks.exists())
+                    old_pic_marks.delete();
                 series.setVisibility(View.INVISIBLE);
                 oneByOne.setVisibility(View.INVISIBLE);
 //                test_align_Layout.setVisibility(View.INVISIBLE);
@@ -834,7 +888,9 @@ public class oneByOneOrSeries extends AppCompatActivity {
 //                ok_align_button.setVisibility(View.INVISIBLE);
                 Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
                 takePicture.putExtra("templatePath",templatePath);
-                takePicture.putExtra("caller","oneByOne");
+                takePicture.putExtra("barcodeTemplatePath",barcodePath);
+                takePicture.putExtra("caller", "oneByOne");
+                takePicture.putExtra("status","Barcode");
                 startActivityForResult(takePicture,1);
 
             }
@@ -861,13 +917,17 @@ public class oneByOneOrSeries extends AppCompatActivity {
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
             Bitmap bitmap1 = BitmapFactory.decodeFile(currentImageMarks, options);
+            Bitmap bitmap2 = BitmapFactory.decodeFile(currentImageBarcode, options);
             // to sum the black level in matrix
-            Bitmap bmpBarcode = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+            Bitmap bmpAnswers = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+            Bitmap bmpBarcode = bitmap2.copy(Bitmap.Config.ARGB_8888, true);
             Bitmap bmpStrongMarks = bitmap1.copy(Bitmap.Config.ARGB_8888, true);
-            Utils.bitmapToMat(bmpBarcode, paper);
+            Utils.bitmapToMat(bmpAnswers, paper);
+            Utils.bitmapToMat(bmpBarcode, barcodePaper);
             Utils.bitmapToMat(bmpStrongMarks, paperMarks);
             paper.copyTo(imageForTest);
-        }else if(callee.equals("Series")){
+        }
+        else if(callee.equals("Series")){
 //            threshold=50;
             align_to_template.align.copyTo(paper);
             align_to_template.strongMarks.copyTo(paperMarks);
@@ -875,7 +935,7 @@ public class oneByOneOrSeries extends AppCompatActivity {
         }
 
         // calculate barcode -> student id
-        int id = detectBarcode(paper);
+        int id = detectBarcode(barcodePaper);
         if(id == 0) { return false; }
         else {
             int i;

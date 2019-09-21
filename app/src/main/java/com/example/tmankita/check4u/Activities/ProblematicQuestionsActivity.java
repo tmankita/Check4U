@@ -241,7 +241,7 @@ public class ProblematicQuestionsActivity extends AppCompatActivity {
         String choose_id ="choose_"+(-1);
         Button option_i = new Button(this);
         option_i.setTag(choose_id);
-        option_i.setText("1-");
+        option_i.setText("B");
         option_i.setTextSize(30);
         option_i.setBackgroundResource(R.drawable.square_wrong_answer);
         option_i.setOnClickListener(new View.OnClickListener() {

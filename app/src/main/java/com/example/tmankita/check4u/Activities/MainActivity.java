@@ -143,10 +143,10 @@ public class MainActivity extends AppCompatActivity {
          */
         if (requestCode == CAMERA_CONTINUES_REQUEST_CODE) {
             if(resultCode == Activity.RESULT_OK){
-                String[] imagesPath = data.getStringArrayExtra("sheets");
+                String[] imagesPath = data.getStringArrayExtra("finalResult");
                 Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
                 nextIntent.putExtra("caller_main", "take_picture");
-                nextIntent.putExtra("sheets", imagesPath);
+                nextIntent.putExtra("finalResult", imagesPath);
                 startActivity(nextIntent);
             }
             if (resultCode == Activity.RESULT_CANCELED) {}
@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
                     String[] imagesPath = {fullPath};
                     Intent nextIntent = new Intent(getApplicationContext(), NewTemplateActivity.class);
                     nextIntent.putExtra("caller_main", "importPDF");
-                    nextIntent.putExtra("sheets", imagesPath);
+                    nextIntent.putExtra("finalResult", imagesPath);
                     startActivity(nextIntent);
 
                 }
@@ -245,10 +245,9 @@ public class MainActivity extends AppCompatActivity {
      * @return None
      */
     public void ImportPDF(View view){
-        Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath()
-                + "/Check4U_DB/ZIP/");
+        Uri uri = Uri.parse(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath());
         Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT,uri);
-        chooseFile.setType("application/zip");
+        chooseFile.setType("application/pdf");
         chooseFile = Intent.createChooser(chooseFile, "Choose a file");
         startActivityForResult(chooseFile, FILE_PICKER_TEMPLATE__CONTINUES_REQUEST_CODE);
     }
@@ -261,6 +260,7 @@ public class MainActivity extends AppCompatActivity {
     public void take_picture(View view){
         Intent NewTemplate = new Intent(getApplicationContext(),TouchActivity.class);
         NewTemplate.putExtra("caller","MainActivity");
+        NewTemplate.putExtra("status","Barcode");
         startActivityForResult(NewTemplate,CAMERA_CONTINUES_REQUEST_CODE);
     }
 

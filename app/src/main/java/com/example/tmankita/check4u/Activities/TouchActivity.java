@@ -61,6 +61,7 @@ import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 public class TouchActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_RECAPTURE = 1;
+    private static final int REQUEST_CODE_SHEET = 2;
 
     private  static final String TAG= "TouchActivity";
     private PreviewSurfaceView camView;
@@ -91,7 +92,10 @@ public class TouchActivity extends AppCompatActivity {
     private Matrix M1;
     private String caller;
     private String templatePath;
+    private String barcodeTemplatePath;
     private Bitmap bmp;
+    private String status;
+    private String[] finalResult;
 
     // Used to load the 'native-lib' library on application startup.
 //    static {
@@ -132,10 +136,17 @@ public class TouchActivity extends AppCompatActivity {
 
 
         Bundle extras = getIntent().getExtras();
+        status = extras.getString("status");
         caller = extras.getString("caller");
-        if(caller.equals("oneByOne"))
+        if(caller.equals("oneByOne")){
             templatePath = extras.getString("templatePath");
+            barcodeTemplatePath = extras.getString("barcodeTemplatePath");
 
+        }
+        if(status.equals("Barcode"))
+            finalResult = new String[4];
+        else if(status.equals("Answer"))
+            finalResult = extras.getStringArray("finalResult");
 
         Display display = getWindowManager().getDefaultDisplay();
         android.graphics.Point size = new android.graphics.Point();
@@ -327,12 +338,34 @@ public class TouchActivity extends AppCompatActivity {
          */
         if (requestCode == REQUEST_CODE_RECAPTURE) {
             if (resultCode == Activity.RESULT_OK) {
-                String[] imagesPathes = data.getStringArrayExtra("sheets");
+                finalResult = data.getStringArrayExtra("finalResult");
+                status = data.getStringExtra("status");
+                caller = data.getStringExtra("caller");
                 Intent returnIntent = new Intent();
-                returnIntent.putExtra("sheets",imagesPathes);
+                returnIntent.putExtra("finalResult",finalResult);
+                returnIntent.putExtra("caller", caller);
+                returnIntent.putExtra("status", status);
+                returnIntent.putExtra("templatePath", templatePath);
+                returnIntent.putExtra("barcodeTemplatePath", barcodeTemplatePath);
                 setResult(Activity.RESULT_OK,returnIntent);
                 finish();
             }  if (resultCode == Activity.RESULT_CANCELED) {}
+        }
+        else if(requestCode == REQUEST_CODE_SHEET){
+            if (resultCode == Activity.RESULT_OK){
+                finalResult = data.getStringArrayExtra("finalResult");
+                status = data.getStringExtra("status");
+                caller = data.getStringExtra("caller");
+                Intent returnIntent = new Intent();
+                returnIntent.putExtra("finalResult",finalResult);
+                returnIntent.putExtra("caller", caller);
+                returnIntent.putExtra("status", status);
+                setResult(Activity.RESULT_OK,returnIntent);
+                finish();
+
+            }
+            if (resultCode == Activity.RESULT_CANCELED) {}
+
         }
     }
 
@@ -342,7 +375,55 @@ public class TouchActivity extends AppCompatActivity {
      * @return None
      */
     public void ok_test (View view){
-        send_image(paper_obj.doc_resized);
+
+        String[] res = send_image(paper_obj.doc_resized,status);
+
+        if(caller.equals("oneByOne") && status.equals("Barcode")){
+            finalResult[0] = res[0];
+            finalResult[1] = res[1];
+            Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+            takePicture.putExtra("finalResult", finalResult);
+            takePicture.putExtra("caller", caller);
+            takePicture.putExtra("status", "Answer");
+            takePicture.putExtra("templatePath", templatePath);
+            takePicture.putExtra("barcodeTemplatePath", barcodeTemplatePath);
+            startActivityForResult(takePicture, REQUEST_CODE_SHEET);
+        }
+        else if(caller.equals("oneByOne") && status.equals("Answer")) {
+            finalResult[2] = res[0];
+            finalResult[3] = res[1];
+            Intent returnIntent = new Intent();
+            returnIntent.putExtra("finalResult", finalResult);
+            returnIntent.putExtra("caller", caller);
+            returnIntent.putExtra("status", "Answer");
+            returnIntent.putExtra("templatePath", templatePath);
+            returnIntent.putExtra("barcodeTemplatePath", barcodeTemplatePath);
+            setResult(Activity.RESULT_OK,returnIntent);
+            finish();
+        }
+        else if(caller.equals("MainActivity") && status.equals("Barcode")) {
+            finalResult[0] = res[0];
+            Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
+            takePicture.putExtra("finalResult", finalResult);
+            takePicture.putExtra("caller", caller);
+            takePicture.putExtra("status", "Answer");
+            startActivityForResult(takePicture, REQUEST_CODE_SHEET);
+        }
+        else if(caller.equals("MainActivity") && status.equals("Answer")) {
+            finalResult[1] = res[0];
+            Intent returnIntent = new Intent();
+            returnIntent.putExtra("finalResult", finalResult);
+            returnIntent.putExtra("caller", caller);
+            returnIntent.putExtra("status", "Answer");
+            setResult(Activity.RESULT_OK,returnIntent);
+            finish();
+        }
+
+
+//        Intent returnIntent = new Intent();
+//        returnIntent.putExtra("sheets",res);
+//        setResult(Activity.RESULT_OK,returnIntent);
+//        finish();
     }
 
     /**
@@ -420,7 +501,7 @@ public class TouchActivity extends AppCompatActivity {
         Imgproc.cvtColor(croped,cropedGray,Imgproc.COLOR_RGBA2GRAY);
         croped.release();
 
-        send_image(cropedGray);
+        send_image(cropedGray,status);
     }
 
     /**
@@ -431,7 +512,11 @@ public class TouchActivity extends AppCompatActivity {
     public void recapture (View view){
         Intent takePicture = new Intent(getApplicationContext(), TouchActivity.class);
         takePicture.putExtra("templatePath", templatePath);
-        takePicture.putExtra("caller", "oneByOne");
+        takePicture.putExtra("caller", caller);
+        takePicture.putExtra("status",status);
+        takePicture.putExtra("finalResult", finalResult);
+        takePicture.putExtra("templatePath", templatePath);
+        takePicture.putExtra("barcodeTemplatePath", barcodeTemplatePath);
         startActivityForResult(takePicture, REQUEST_CODE_RECAPTURE);
     }
 
@@ -565,16 +650,26 @@ public class TouchActivity extends AppCompatActivity {
      * @param paper
      * @return alignToTemplate Object that contain align image and strong marks align image
      */
-    private alignToTemplate alignBeforeSend (Mat paper){
+    private alignToTemplate alignBeforeSend (Mat paper,String status){
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
-        Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
-        Mat template = new Mat();
-        Utils.bitmapToMat(bmpT, template);
+        alignToTemplate align_to_template = null;
+        if(status.equals("Barcode")){
+            Bitmap bitmapT = BitmapFactory.decodeFile(barcodeTemplatePath, options);
+            Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
+            Mat template = new Mat();
+            Utils.bitmapToMat(bmpT, template);
+            align_to_template = new alignToTemplate();
+            align_to_template.align1(paper,template,bmp,"OneByOne");
 
-        alignToTemplate align_to_template = new alignToTemplate();
-        align_to_template.align1(paper,template,bmp,"OneByOne"); //coment
+        }else if(status.equals("Answer")){
+            Bitmap bitmapT = BitmapFactory.decodeFile(templatePath, options);
+            Bitmap bmpT = bitmapT.copy(Bitmap.Config.ARGB_8888, true);
+            Mat template = new Mat();
+            Utils.bitmapToMat(bmpT, template);
+            align_to_template = new alignToTemplate();
+            align_to_template.align1(paper,template,bmp,"OneByOne");
+        }
 
 //        TemplateMatching template_matching = new TemplateMatching();
 //        Mat match = template_matching.match2(template, paper);
@@ -644,27 +739,34 @@ public class TouchActivity extends AppCompatActivity {
 
     /**
      * send paper to the next activity
-     * @param paper is the image
      * @return None
      */
-    private void send_image (Mat paper){
+    private String[] send_image (Mat paper, String status){
         //srcMat.release();
         String[] res = new String[2];
 //        img = new Mat();
 //        paper.copyTo(img);
         if(caller.equals("oneByOne")){
-            alignToTemplate align_to_template = alignBeforeSend (paper);
-            res[0] = send_imageHelper(align_to_template.align,"a");
-            res[1] = send_imageHelper(align_to_template.strongMarks,"m");
+            alignToTemplate align_to_template = alignBeforeSend (paper, status);
+            if(status.equals("Barcode")){
+                res[0] = send_imageHelper(align_to_template.align,"Ba");
+                res[1] = send_imageHelper(align_to_template.strongMarks,"Bm");
+            } else if (status.equals("Answer")){
+                res[0] = send_imageHelper(align_to_template.align,"Aa");
+                res[1] = send_imageHelper(align_to_template.strongMarks,"Am");
+            }
         }else {
-            res[0] = send_imageHelper(paper,"");
+            if(status.equals("Barcode"))
+                res[0] = send_imageHelper(paper,"B");
+            else if (status.equals("Answer"))
+                res[0] = send_imageHelper(paper,"A");
         }
 
-
-        Intent returnIntent = new Intent();
-        returnIntent.putExtra("sheets",res);
-        setResult(Activity.RESULT_OK,returnIntent);
-        finish();
+        return res;
+//        Intent returnIntent = new Intent();
+//        returnIntent.putExtra("sheets",res);
+//        setResult(Activity.RESULT_OK,returnIntent);
+//        finish();
 
     }
 

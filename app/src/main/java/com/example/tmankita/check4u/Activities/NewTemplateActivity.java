@@ -110,7 +110,9 @@ public class NewTemplateActivity extends AppCompatActivity {
         private int lastUserUpdateAnswer = 0 ;
         private Bitmap bitmap;
         private String imagePath;
+        private String BarcodePath;
         private boolean keyboardOff;
+        private String mode;
 
 
     //Copy Mode
@@ -210,10 +212,10 @@ public class NewTemplateActivity extends AppCompatActivity {
         questionsNumberEdit     = findViewById(R.id.questionsNumber);
         answersNumberEdit       = findViewById(R.id.answersNumber);
         engine                  = zoomLayout.getEngine(); //comment
+        mode                    = "Barcode";
 
-
-        layoutGetInfo.setVisibility(View.VISIBLE);
-        layoutGetInfo.bringToFront();
+//        layoutGetInfo.setVisibility(View.VISIBLE);
+//        layoutGetInfo.bringToFront();
 
         ViewGroup.LayoutParams params1 =  relativeLayout.getLayoutParams();
         DisplayMetrics displayMetrics = new DisplayMetrics();
@@ -225,28 +227,37 @@ public class NewTemplateActivity extends AppCompatActivity {
         zoomLayout.setVisibility(View.VISIBLE); //comment
 
         Bundle extras = getIntent().getExtras();
-        String[] imagesPaths = extras.getStringArray("sheets");
+        String[] imagesPaths = extras.getStringArray("finalResult");
         String caller_main = extras.getString("caller_main");
-        imagePath = imagesPaths[0];
+
+
 
 
         if(caller_main.equals("importPDF")){
 //            com.artifex.mupdf.fitz.Matrix ctm;
-            File templatePdf = new File(imagePath);
+            File templatePdf = new File(imagesPaths[0]);
             Document doc = Document.openDocument(templatePdf.getAbsolutePath());
-            Page page = doc.loadPage(0);
+            Page pageBarcode = doc.loadPage(0);
+            Page pageAnswers = doc.loadPage(1);
     //        ctm = AndroidDrawDevice.fitPage(page.get);
-            Bitmap bitmap = AndroidDrawDevice.drawPage(page,400);
-            Mat img = new Mat();
-            Utils.bitmapToMat(bitmap, img);
-            imagePath = send_imageHelper(img,"");
+            Bitmap bitmapBarcode = AndroidDrawDevice.drawPage(pageBarcode,400);
+            Bitmap bitmapAnswers = AndroidDrawDevice.drawPage(pageAnswers,400);
+            Mat imgAnswer = new Mat();
+            Mat imgBarcode = new Mat();
+            Utils.bitmapToMat(bitmapAnswers, imgAnswer);
+            Utils.bitmapToMat(bitmapBarcode, imgBarcode);
+            imagePath = send_imageHelper(imgAnswer,"A");
+            BarcodePath = send_imageHelper(imgBarcode,"B");
+        }else {
+            BarcodePath = imagesPaths[0];
+            imagePath = imagesPaths[1];
         }
 
 
         image = (ImageView) findViewById(R.id.NewPicture);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        bitmap = BitmapFactory.decodeFile(imagePath, options);
+        bitmap = BitmapFactory.decodeFile(BarcodePath, options);
         // to sum the black level in matrix
         Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
         Utils.bitmapToMat(bmp, paper);
@@ -491,6 +502,11 @@ public class NewTemplateActivity extends AppCompatActivity {
             }
         });
 
+        layoutGetInfo.setVisibility(View.VISIBLE);
+        layoutGetInfo.bringToFront();
+
+        wrongMark.setVisibility(View.INVISIBLE);
+        rightMark.setVisibility(View.INVISIBLE);
     }
 
     /**
@@ -594,61 +610,216 @@ public class NewTemplateActivity extends AppCompatActivity {
      * @param v is the create\finish button
      * @return None
      */
+//    public void createDataBase( View v ){
+//        if(!marksLocation.containsKey("BarcodeMarker") || !marksSize.containsKey("BarcodeMarker")){
+//            Log.i("createDataBase", "Most mark barcode!!! ");
+//            Toast.makeText(getApplicationContext(),"Most mark barcode!!!",Toast.LENGTH_LONG).show();
+//        }
+//        else {
+//            for (String[] q:questionTable) {
+//                for (int i = 0; i < q.length ; i++) {
+//                    if(q[i]==null){
+//                        Toast.makeText(this,"Need to associate  all the  marks to the relevant answers ",Toast.LENGTH_LONG).show();
+//                        return;
+//                    }
+//                }
+//
+//            }
+//
+//            String filePath = Template.DB_FILEPATH;
+//            File file = new File(filePath);
+//            if (file.exists())
+//                file.delete();
+//            db = new Template(this);
+//            // calculate inverse matrix
+//            final Matrix inverse = new Matrix();
+//
+//            M.invert(inverse);
+//
+//            float[] pForSize1 = new float[2];
+//            float[] p1 = new float[2];
+//            PointF[] ps1 = new PointF[4];
+//            float[] point = new float[2];
+//            PointF[] scalePoint = new PointF[4];
+//
+//
+//
+//            insertToDBAnswers (pForSize1, p1, inverse, ps1, point, scalePoint);
+//            insertToDBBarcode (pForSize1, p1, inverse, ps1, point, scalePoint);
+//
+//            Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
+//            Bundle bundle = new Bundle();
+//            bundle.putString("caller", "newTemplate");
+//            bundle.putString("templatePath", imagePath);
+//            bundle.putString("TemplateDataBase", db.getFilePath());
+//            uploadTemplate.putExtras(bundle);
+//            startActivity(uploadTemplate);
+//        }
+//    }
+
     public void createDataBase( View v ){
+
+        float[] pForSize1 = new float[2];
+        float[] p1 = new float[2];
+        PointF[] ps1 = new PointF[4];
+        float[] point = new float[2];
+        PointF[] scalePoint = new PointF[4];
+
+
+
         if(!marksLocation.containsKey("BarcodeMarker") || !marksSize.containsKey("BarcodeMarker")){
             Log.i("createDataBase", "Most mark barcode!!! ");
             Toast.makeText(getApplicationContext(),"Most mark barcode!!!",Toast.LENGTH_LONG).show();
         }
         else {
-            for (String[] q:questionTable) {
-                for (int i = 0; i < q.length ; i++) {
-                    if(q[i]==null){
-                        Toast.makeText(this,"Need to associate  all the  marks to the relevant answers ",Toast.LENGTH_LONG).show();
-                        return;
+            if (mode.equals("Barcode")){
+                String filePath = Template.DB_FILEPATH;
+                File file = new File(filePath);
+                if (file.exists())
+                    file.delete();
+                db = new Template(this);
+                final Matrix inverse = new Matrix();
+                // calculate inverse matrix
+                M.invert(inverse);
+
+                insertToDBBarcode(pForSize1, p1, inverse, ps1, point, scalePoint);
+
+
+                image = (ImageView) findViewById(R.id.NewPicture);
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                bitmap = BitmapFactory.decodeFile(imagePath, options);
+                // to sum the black level in matrix
+                Bitmap bmp = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+                Utils.bitmapToMat(bmp, paper);
+
+
+                M = new Matrix();
+                image.setImageBitmap(bitmap);
+                image.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        M = image.getImageMatrix();
+
+
+                    }
+                });
+                image.invalidate();
+
+                marks.get("BarcodeMarker")._mark.setVisibility(View.INVISIBLE);
+                engine.zoomTo(0.8f,false);
+
+                barcodeMark.setVisibility(View.INVISIBLE);
+                wrongMark.setVisibility(View.VISIBLE);
+                rightMark.setVisibility(View.VISIBLE);
+                mode = "Answers";
+
+            } else if(mode.equals("Answers")){
+
+                for (String[] q:questionTable) {
+                    for (int i = 0; i < q.length ; i++) {
+                        if(q[i]==null){
+                            Toast.makeText(this,"Need to associate  all the  marks to the relevant answers ",Toast.LENGTH_LONG).show();
+                            return;
+                        }
                     }
                 }
+                final Matrix inverse = new Matrix();
+                // calculate inverse matrix
+                M.invert(inverse);
+                insertToDBAnswers (pForSize1, p1, inverse, ps1, point, scalePoint);
+
+                Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("caller", "newTemplate");
+                bundle.putString("templatePath", imagePath);
+                bundle.putString("barcodePath", BarcodePath);
+                bundle.putString("TemplateDataBase", db.getFilePath());
+                uploadTemplate.putExtras(bundle);
+                startActivity(uploadTemplate);
 
             }
 
-            String filePath = Template.DB_FILEPATH;
-            File file = new File(filePath);
-            if (file.exists())
-                file.delete();
-            db = new Template(this);
-            // calculate inverse matrix
-            final Matrix inverse = new Matrix();
+        }
+    }
 
-            M.invert(inverse);
+    private void insertToDBBarcode (float[] pForSize1,float[] p1, Matrix inverse, PointF[] ps1, float[] point, PointF[] scalePoint ){
+        if (marks.containsKey(VIEW_BARCODE_TAG)) {
+            PointF location;
+            SizeF size;
+            location = marksLocation.get(VIEW_BARCODE_TAG);
+            size = marksSize.get(VIEW_BARCODE_TAG);
+            pForSize1[0]=  (location.x+size.getWidth());
+            pForSize1[1] = (location.y+size.getHeight());
+            p1[0] = location.x;
+            p1[1] = location.y;
 
-            float[] pForSize1 = new float[2];
-            float[] p1 = new float[2];
-            PointF[] ps1 = new PointF[4];
-            float[] point = new float[2];
-            PointF[] scalePoint = new PointF[4];
-            for (int i = 0; i < numberOfQuestions; ++i) {
-                for (int j = 0; j < numberOfOptions; ++j) {
-                    String tag = questionTable[i][j];
-                    PointF location;
-                    SizeF size;
-                    int sumOfBlack=0;
-                    int id;
-                    String[] parts = (tag).split("_");
+            inverse.mapPoints(p1);
+            inverse.mapPoints(pForSize1);
 
-                    location = marksLocation.get(tag);
-                    size = marksSize.get(tag);
-                    pForSize1[0]= (location.x+size.getWidth());
-                    pForSize1[1] = (location.y+size.getHeight());
-                    p1[0] =  location.x;
-                    p1[1] =  location.y;
+            ps1[0] = new PointF(p1[0],p1[1]);
+            ps1[1] = new PointF(pForSize1[0] ,p1[1]);
+            ps1[2] = new PointF(p1[0],pForSize1[1]);
+            ps1[3] = new PointF(pForSize1[0],pForSize1[1]);
 
-                    inverse.mapPoints(p1);
-                    inverse.mapPoints(pForSize1);
+            PointF[] sorted_2 = sortPoints_newTemplate(ps1);
 
-                    ps1[0] = new PointF(p1[0],p1[1]);
-                    ps1[1] = new PointF(pForSize1[0] ,p1[1]);
-                    ps1[2] = new PointF(p1[0],pForSize1[1]);
-                    ps1[3] = new PointF(pForSize1[0],pForSize1[1]);
-                    PointF[] sorted_2 = sortPoints_newTemplate(ps1);
+//                Point[] ps2 = new Point[4];
+//                ps2[0] = new Point(p1[0],p1[1]);
+//                ps2[1] = new Point(pForSize1[0] ,p1[1]);
+//                ps2[2] = new Point(p1[0],pForSize1[1]);
+//                ps2[3] = new Point(pForSize1[0],pForSize1[1]);
+//
+//                Imgproc.line(paper,ps2[0],ps2[1],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,ps2[1],ps2[2],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,ps2[2],ps2[3],new Scalar(0, 255, 0, 150), 4);
+//                Imgproc.line(paper,ps2[3],ps2[0],new Scalar(0, 255, 0, 150), 4);
+//                 Utils.matToBitmap(paper, bmpBarcode23);
+
+
+            Matrix scaleToRealSize = new Matrix();
+            RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
+            RectF viewRect = new RectF(0, 0, realA4Width, realA4Height);
+            scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
+            int i=0;
+            for (PointF p: sorted_2) {
+                point[0] =p.x; point[1] = p.y;
+                scaleToRealSize.mapPoints(point);
+                scalePoint[i] = new PointF(point[0],point[1]);
+                i++;
+            }
+            SizeF newSize = new SizeF(Math.abs(scalePoint[0].x-scalePoint[1].x),Math.abs(scalePoint[0].y-scalePoint[3].y));
+
+
+            PointF transfer_barcode = new PointF(scalePoint[0].x, scalePoint[0].y);
+            db.insertData(0,  transfer_barcode.x,  transfer_barcode.y,  newSize.getHeight(),  newSize.getWidth(), 0, 0,numberOfQuestions,numberOfOptions);
+        }
+    }
+    private void insertToDBAnswers (float[] pForSize1,float[] p1, Matrix inverse, PointF[] ps1, float[] point, PointF[] scalePoint ){
+        for (int i = 0; i < numberOfQuestions; ++i) {
+            for (int j = 0; j < numberOfOptions; ++j) {
+                String tag = questionTable[i][j];
+                PointF location;
+                SizeF size;
+                int sumOfBlack=0;
+                int id;
+                String[] parts = (tag).split("_");
+
+                location = marksLocation.get(tag);
+                size = marksSize.get(tag);
+                pForSize1[0]= (location.x+size.getWidth());
+                pForSize1[1] = (location.y+size.getHeight());
+                p1[0] =  location.x;
+                p1[1] =  location.y;
+
+                inverse.mapPoints(p1);
+                inverse.mapPoints(pForSize1);
+
+                ps1[0] = new PointF(p1[0],p1[1]);
+                ps1[1] = new PointF(pForSize1[0] ,p1[1]);
+                ps1[2] = new PointF(p1[0],pForSize1[1]);
+                ps1[3] = new PointF(pForSize1[0],pForSize1[1]);
+                PointF[] sorted_2 = sortPoints_newTemplate(ps1);
 
 //                    FOR DEBUG:
 //                    Point[] ps2 = new Point[4];
@@ -665,91 +836,30 @@ public class NewTemplateActivity extends AppCompatActivity {
 //                Imgproc.line(paper,ps2[3],ps2[0],new Scalar(0, 255, 0, 150), 4);
 //                Utils.matToBitmap(paper, bmpBarcode23);
 
-                    Matrix scaleToRealSize = new Matrix();
-                    RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
-                    RectF viewRect = new RectF(0, 0, realA4Width, realA4Height);
-                    scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
-
-                    for (int k = 0; k < 4; k++) {
-                        point[0] =(float)sorted_2[k].x; point[1] = (float)sorted_2[k].y;
-                        scaleToRealSize.mapPoints(point);
-                        scalePoint[k] = new PointF(point[0],point[1]);
-                    }
-                    SizeF newSize = new SizeF(Math.abs(scalePoint[0].x-scalePoint[1].x),Math.abs(scalePoint[0].y-scalePoint[3].y));
-
-
-                    PointF transfer_point = new PointF(scalePoint[0].x, scalePoint[0].y);
-                    id = (i + 1) * 10 + (j + 1);
-                    switch (parts[0]) {
-                        case VIEW_WRONG_TAG:
-                            db.insertData(id, transfer_point.x,  transfer_point.y,  newSize.getHeight(),  newSize.getWidth(), sumOfBlack, 0,0,0);
-                            break;
-                        case VIEW_RIGHT_TAG:
-                            db.insertData(id,  transfer_point.x,  transfer_point.y,  newSize.getHeight(),  newSize.getWidth(), sumOfBlack, 1,0,0);
-                            break;
-                    }
-                }
-            }
-            if (marks.containsKey(VIEW_BARCODE_TAG)) {
-                PointF location;
-                SizeF size;
-                location = marksLocation.get(VIEW_BARCODE_TAG);
-                size = marksSize.get(VIEW_BARCODE_TAG);
-                pForSize1[0]=  (location.x+size.getWidth());
-                pForSize1[1] = (location.y+size.getHeight());
-                p1[0] = location.x;
-                p1[1] = location.y;
-
-                inverse.mapPoints(p1);
-                inverse.mapPoints(pForSize1);
-
-                ps1[0] = new PointF(p1[0],p1[1]);
-                ps1[1] = new PointF(pForSize1[0] ,p1[1]);
-                ps1[2] = new PointF(p1[0],pForSize1[1]);
-                ps1[3] = new PointF(pForSize1[0],pForSize1[1]);
-
-                PointF[] sorted_2 = sortPoints_newTemplate(ps1);
-
-//                Point[] ps2 = new Point[4];
-//                ps2[0] = new Point(p1[0],p1[1]);
-//                ps2[1] = new Point(pForSize1[0] ,p1[1]);
-//                ps2[2] = new Point(p1[0],pForSize1[1]);
-//                ps2[3] = new Point(pForSize1[0],pForSize1[1]);
-//
-//                Imgproc.line(paper,ps2[0],ps2[1],new Scalar(0, 255, 0, 150), 4);
-//                Imgproc.line(paper,ps2[1],ps2[2],new Scalar(0, 255, 0, 150), 4);
-//                Imgproc.line(paper,ps2[2],ps2[3],new Scalar(0, 255, 0, 150), 4);
-//                Imgproc.line(paper,ps2[3],ps2[0],new Scalar(0, 255, 0, 150), 4);
-//                 Utils.matToBitmap(paper, bmpBarcode23);
-
-
                 Matrix scaleToRealSize = new Matrix();
-//                scaleToRealSize.postScale((realA4Width/paper.cols()),(realA4Height/paper.rows()));
                 RectF drawableRect = new RectF(0, 0, paper.cols(), paper.rows());
                 RectF viewRect = new RectF(0, 0, realA4Width, realA4Height);
                 scaleToRealSize.setRectToRect(drawableRect, viewRect, Matrix.ScaleToFit.FILL);
-                int i=0;
-                for (PointF p: sorted_2) {
-                    point[0] =p.x; point[1] = p.y;
+
+                for (int k = 0; k < 4; k++) {
+                    point[0] =(float)sorted_2[k].x; point[1] = (float)sorted_2[k].y;
                     scaleToRealSize.mapPoints(point);
-                    scalePoint[i] = new PointF(point[0],point[1]);
-                    i++;
+                    scalePoint[k] = new PointF(point[0],point[1]);
                 }
                 SizeF newSize = new SizeF(Math.abs(scalePoint[0].x-scalePoint[1].x),Math.abs(scalePoint[0].y-scalePoint[3].y));
 
 
-                PointF transfer_barcode = new PointF(scalePoint[0].x, scalePoint[0].y);
-                db.insertData(0,  transfer_barcode.x,  transfer_barcode.y,  newSize.getHeight(),  newSize.getWidth(), 0, 0,numberOfQuestions,numberOfOptions);
+                PointF transfer_point = new PointF(scalePoint[0].x, scalePoint[0].y);
+                id = (i + 1) * 10 + (j + 1);
+                switch (parts[0]) {
+                    case VIEW_WRONG_TAG:
+                        db.insertData(id, transfer_point.x,  transfer_point.y,  newSize.getHeight(),  newSize.getWidth(), sumOfBlack, 0,0,0);
+                        break;
+                    case VIEW_RIGHT_TAG:
+                        db.insertData(id,  transfer_point.x,  transfer_point.y,  newSize.getHeight(),  newSize.getWidth(), sumOfBlack, 1,0,0);
+                        break;
+                }
             }
-
-
-            Intent uploadTemplate = new Intent(getApplicationContext(), UserDropBoxActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putString("caller", "newTemplate");
-            bundle.putString("templatePath", imagePath);
-            bundle.putString("TemplateDataBase", db.getFilePath());
-            uploadTemplate.putExtras(bundle);
-            startActivity(uploadTemplate);
         }
     }
 

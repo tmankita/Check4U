@@ -39,6 +39,7 @@ import java.util.Date;
 public class UserDropBoxActivity extends DropBoxActivity {
     private String path;
     private String templatePath;
+    private String barcodePath;
     private String inputPath;
     private String caller;
     private TableLayout dialog_delete;
@@ -65,7 +66,8 @@ public class UserDropBoxActivity extends DropBoxActivity {
         } else if (caller.equals("newTemplate")) {
             path = bundle.getString("TemplateDataBase");
             templatePath = bundle.getString("templatePath");
-            if (!createZipFile(path, templatePath)) {
+            barcodePath = bundle.getString("barcodePath");
+            if (!createZipFile(path, templatePath,barcodePath)) {
                 Toast.makeText(this, "can't make zip file!!!", Toast.LENGTH_LONG).show();
             }
         }
@@ -247,9 +249,10 @@ public class UserDropBoxActivity extends DropBoxActivity {
     private boolean createZipFile(String... params) {
         String localUriDB = params[0];
         String localUriTemplate = params[1];
+        String localUriBarcode = params[2];
 
 
-        String[] s = new String[]{localUriDB, localUriTemplate};
+        String[] s = new String[]{localUriDB, localUriTemplate, localUriBarcode};
         inputPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath() + "/Check4U_DB/ZIP/" + getOutputName();
 
         ZipManager zipManager = new ZipManager();
