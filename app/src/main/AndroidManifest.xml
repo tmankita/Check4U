@@ -49,7 +49,7 @@
             <intent-filter>
 
                 <!-- Insert your app key after “db-  ...” -->
-                <data android:scheme="db-7dlg1oe6botrxzx" />
+                <data android:scheme="" />
 
                 <action android:name="android.intent.action.VIEW" />
 
